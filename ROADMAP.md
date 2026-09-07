@@ -225,20 +225,20 @@ Learn the core logic that almost every automation uses.
 
 ### Build
 
-* [ ] Create sample incoming JSON
-* [ ] Read fields from incoming data
-* [ ] Rename fields
-* [ ] Remove unnecessary fields
-* [ ] Combine fields
-* [ ] Transform values
-* [ ] Format final output
-* [ ] Add JavaScript transformation example
-* [ ] Add guided build
-* [ ] Add successful test
-* [ ] Add failure scenario
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete lab documentation
+* ~~Create sample incoming JSON~~
+* ~~Read fields from incoming data~~
+* ~~Rename fields~~
+* ~~Remove unnecessary fields~~
+* ~~Combine fields~~
+* ~~Transform values~~
+* ~~Format final output~~
+* ~~Add JavaScript transformation example~~
+* ~~Add guided build~~
+* ~~Add successful test~~
+* ~~Add failure scenario~~
+* ~~Add debugging exercise~~
+* ~~Add challenge~~
+* ~~Complete lab documentation~~
 
 ### Main Learning Outcome
 

@@ -1,0 +1,245 @@
+{
+  "name": "AEP Lab 01 - Data Mapping & Transformation",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52d08f52-9d95-40b3-b02c-fb9821f97386",
+              "name": "first_name",
+              "value": "Alex",
+              "type": "string"
+            },
+            {
+              "id": "af36a279-f07b-4278-85dd-d2034dc89f65",
+              "name": "last_name",
+              "value": "Rivera",
+              "type": "string"
+            },
+            {
+              "id": "6431589b-ede4-4a1a-ad8f-f62a91b76869",
+              "name": "email_address",
+              "value": "ALEX@EXAMPLE.COM",
+              "type": "string"
+            },
+            {
+              "id": "bb01557e-8bdc-4e7a-971e-0ba136c31244",
+              "name": "company",
+              "value": "Northstar Commerce",
+              "type": "string"
+            },
+            {
+              "id": "4a6b258f-bce9-4c1f-97b2-a355f4be44b8",
+              "name": "source",
+              "value": "Facebook Lead Form",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -80
+      ],
+      "id": "223bc3f7-54da-4fde-bb8f-7ea599f60447",
+      "name": "Sample Lead Input"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1751194-bc93-4017-92fc-6d6dbc4a43cb",
+              "name": "name",
+              "value": "={{ $json.first_name }} {{ $json.last_name }}",
+              "type": "string"
+            },
+            {
+              "id": "7875d42e-2a8d-4c86-aed1-6239939a0076",
+              "name": "email",
+              "value": "={{ $json.email_address.trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "d3444187-3a0c-4c0c-b9ba-88ea7a62d888",
+              "name": "company",
+              "value": "={{ $json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "1ee491c7-d648-46cd-95bf-25cae4405d89",
+              "name": "lead_source",
+              "value": "={{ $json.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -80
+      ],
+      "id": "5633cc58-1d80-4446-83e5-df136088944e",
+      "name": "Transform for CRM"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        16
+      ],
+      "id": "dc7c4018-b9d5-4d9c-a99c-2916cce4c10a",
+      "name": "Manual trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1751194-bc93-4017-92fc-6d6dbc4a43cb",
+              "name": "full_name",
+              "value": "={{ $json.contact.first.trim() }} {{ $json.contact.last.toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "7875d42e-2a8d-4c86-aed1-6239939a0076",
+              "name": "email",
+              "value": "={{ $json.contact.email.trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "d3444187-3a0c-4c0c-b9ba-88ea7a62d888",
+              "name": "company_name",
+              "value": "={{ $json.company.name.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "1ee491c7-d648-46cd-95bf-25cae4405d89",
+              "name": "job_title",
+              "value": "={{ $json.company.role }}",
+              "type": "string"
+            },
+            {
+              "id": "28144286-622d-4dab-95a5-0d9c8ab1ab0c",
+              "name": "lead_source",
+              "value": "={{ $json.marketing.source }}",
+              "type": "string"
+            },
+            {
+              "id": "cb3ceff9-1085-481a-bc18-b7a3e3b24f1f",
+              "name": "campaign_name",
+              "value": "={{ $json.marketing.campaign }}",
+              "type": "string"
+            },
+            {
+              "id": "079ab967-b52c-4483-8c35-05fead08be57",
+              "name": "interests",
+              "value": "={{ $json.interests.join(', ') }}",
+              "type": "string"
+            },
+            {
+              "id": "bf209742-4420-4e1d-97fd-540438810197",
+              "name": "location",
+              "value": "={{ $json.location.city.trim() + ', ' + $json.location.country.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "38c0c635-26b6-4701-82f0-b478a42ea062",
+              "name": "tags",
+              "value": "={{ $json.tags.join('| ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        144
+      ],
+      "id": "45accb50-6d81-439d-a864-da775091a880",
+      "name": "Challenge | Transform for CRM"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"contact\": {\n    \"first\": \"  jamie \",\n    \"last\": \"LEE  \",\n    \"email\": \" JAMIE.LEE@EMAIL.COM \"\n  },\n  \"company\": {\n    \"name\": \" Northstar Commerce \",\n    \"role\": \"operations manager\"\n  },\n  \"marketing\": {\n    \"source\": \"facebook\",\n    \"campaign\": \"AEP September Campaign\"\n  },\n  \"interests\": [\n    \"Automation\",\n    \"CRM\",\n    \"AI\"\n  ],\n  \"location\": {\n    \"city\": \"  Perth \",\n    \"country\": \"AU\"\n  },\n  \"tags\": [\n    \"Hot Lead\",\n    \"Facebook\",\n    \"Automation\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        144
+      ],
+      "id": "339bb1ce-960a-4518-aa64-d55492a21778",
+      "name": "Challenge | Sample Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Sample Lead Input": {
+      "main": [
+        [
+          {
+            "node": "Transform for CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual trigger": {
+      "main": [
+        [
+          {
+            "node": "Challenge | Sample Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sample Lead Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Challenge | Sample Data": {
+      "main": [
+        [
+          {
+            "node": "Challenge | Transform for CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d12aea58-f6c7-4b3d-8030-2109a6335563",
+  "meta": {
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "EUuASVaTV2X2Rm1t",
+  "tags": []
+}

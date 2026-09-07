@@ -1,0 +1,29 @@
+{
+  "contact": {
+    "first": "  jamie ",
+    "last": "LEE  ",
+    "email": " JAMIE.LEE@EMAIL.COM "
+  },
+  "company": {
+    "name": " Northstar Commerce ",
+    "role": "operations manager"
+  },
+  "marketing": {
+    "source": "facebook",
+    "campaign": "AEP September Campaign"
+  },
+  "interests": [
+    "Automation",
+    "CRM",
+    "AI"
+  ],
+  "location": {
+    "city": "  Perth ",
+    "country": "AU"
+  },
+  "tags": [
+    "Hot Lead",
+    "Facebook",
+    "Automation"
+  ]
+}
