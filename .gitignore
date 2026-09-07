@@ -1,0 +1,44 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node / JavaScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Build output
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Local databases / test artifacts
+*.sqlite
+*.db
+
+# Secrets / credentials
+credentials/
+secrets/
+*.pem
+*.key
