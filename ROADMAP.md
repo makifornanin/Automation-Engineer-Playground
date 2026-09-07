@@ -40,24 +40,24 @@ Create the project repository, rules, documentation, and basic structure before 
 
 ## Build Checklist
 
-* [ ] Create GitHub repository
-* [ ] Create local `AEP Project` folder
-* [ ] Connect local project to GitHub
-* [ ] Initialize Git
-* [ ] Add `.gitignore`
-* [ ] Create `CLAUDE.md`
-* [ ] Create `AGENTS.md`
-* [ ] Create `FEATURES.md`
-* [ ] Create `ROADMAP.md`
-* [ ] Create main `README.md`
-* [ ] Create initial project folder structure
-* [ ] Create documentation folder
-* [ ] Create labs folder
-* [ ] Create capstone folder
-* [ ] Create sample-data folder
-* [ ] Create database folder if needed
-* [ ] Create scripts/helpers folder if needed
-* [ ] Make initial Git commit
+* ~~Create GitHub repository~~
+* ~~Create local `AEP Project` folder~~
+* ~~Connect local project to GitHub~~
+* ~~Initialize Git~~
+* ~~Add `.gitignore`~~
+* ~~Create `CLAUDE.md`~~
+* ~~Create `AGENTS.md`~~
+* ~~Create `FEATURES.md`~~
+* ~~Create `ROADMAP.md`~~
+* ~~Create main `README.md`~~
+* ~~Create initial project folder structure~~
+* ~~Create documentation folder~~
+* ~~Create labs folder~~
+* ~~Create capstone folder~~
+* ~~Create sample-data folder~~
+* ~~Create database folder if needed~~
+* ~~Create scripts/helpers folder if needed~~
+* ~~Make initial Git commit~~
 
 ## Expected Structure
 
