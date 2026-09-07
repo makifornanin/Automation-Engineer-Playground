@@ -250,17 +250,17 @@ Understand how data is transformed as it moves between different systems.
 
 ### Build
 
-* [ ] Create sample business scenario
-* [ ] Add IF / ELSE condition
-* [ ] Add multiple routing paths
-* [ ] Add AND condition
-* [ ] Add OR condition
-* [ ] Add fallback path
-* [ ] Test each route
-* [ ] Add invalid/unexpected input scenario
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete lab documentation
+* [/] Create sample business scenario
+* [/] Add IF / ELSE condition
+* [/] Add multiple routing paths
+* [/] Add AND condition
+* [/] Add OR condition
+* [/] Add fallback path
+* [/] Test each route
+* [/] Add invalid/unexpected input scenario
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete lab documentation
 
 ### Main Learning Outcome
 

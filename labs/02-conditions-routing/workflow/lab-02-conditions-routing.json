@@ -1,0 +1,348 @@
+{
+  "name": "AEP Lab 02 - Conditions & Routing",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c624ca1c-6187-4327-a252-b828b1456f8a",
+      "name": "Manual trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      name: \"Alex Rivera\",\n      lead_temperature: \"Hot\",\n      budget: 5000,\n      contacted_before: false,\n      country: \"AU\"\n    }\n  },\n   {\n    json: {\n      name: \"Mark Milca\",\n      lead_temperature: \"Hot\",\n      budget: 5000,\n      contacted_before: false,\n      country: \"Pilipins\"\n    }\n  },\n  {\n    json: {\n      name: \"Jamie Lee\",\n      lead_temperature: \"Warm\",\n      budget: 4200,\n      contacted_before: false,\n      country: \"AU\"\n    }\n  },\n    {\n    json: {\n       name: \"Jordan Patel\",\n    lead_temperature: \"Warm\",\n    budget: 4500,\n    contacted_before: false,\n    country: \"US\"\n    }\n  },\n  {\n  json: {\n    name: \"Casey Wong\",\n    lead_temperature: \"Warm\",\n    budget: 2000,\n    contacted_before: false,\n    country: \"AU\"\n    }\n  },\n  {\n    json: {\n      name: \"Taylor Kim\",\n      lead_temperature: \"Warm\",\n      budget: 1500,\n      contacted_before: true,\n      country: \"US\"\n    }\n  },\n  {\n    json: {\n      name: \"Morgan Cruz\",\n      lead_temperature: \"Cold\",\n      budget: 6000,\n      contacted_before: false,\n      country: \"AU\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1c6a7a07-23d9-4d7f-878c-a5975b85b1b0",
+      "name": "Sample Leads"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "56404173-94b2-46a7-bd59-894630317c8d",
+              "leftValue": "={{ $json.lead_temperature }}",
+              "rightValue": "Hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "28719cc8-9102-4bc5-9613-c19415614da3",
+              "leftValue": "={{ $json.budget }}",
+              "rightValue": 3000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "76ad9df1-4a94-4c3e-9db7-dc2b2d4ece0c",
+              "leftValue": "={{ $json.contacted_before }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "cff460df-169b-47bb-9683-4c7a0faeef91",
+      "name": "Check Priority Sales"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f8fcab80-0ab7-4405-afe9-293f68a407b4",
+              "leftValue": "={{ $json.lead_temperature }}",
+              "rightValue": "Warm",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        288
+      ],
+      "id": "333f6232-c985-489a-94f3-a21a395399bc",
+      "name": "Check Warm Lead"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d8b979b-c311-43d7-989e-49a28dd7aa54",
+              "name": "route",
+              "value": "Priority Sales",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        -160
+      ],
+      "id": "fc22e81c-ce91-4226-a98e-c2a7f3117eea",
+      "name": "Priority Sales"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d8b979b-c311-43d7-989e-49a28dd7aa54",
+              "name": "route",
+              "value": "Nurture",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "2a2f8fc1-34cc-4812-933d-9756a73cae08",
+      "name": "Nurture"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d8b979b-c311-43d7-989e-49a28dd7aa54",
+              "name": "route",
+              "value": "Low Priority",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        464
+      ],
+      "id": "20b12c9a-66a1-4bd5-8922-6b887ba16079",
+      "name": "Low Priority"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d8b979b-c311-43d7-989e-49a28dd7aa54",
+              "name": "route",
+              "value": "Manual Review",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -32
+      ],
+      "id": "1a3ae384-5823-4905-b4c5-50353a6768c7",
+      "name": "Manual Review"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e487f597-7a75-473a-98e7-5062c2b8dbc1",
+              "leftValue": "={{ $json.budget }}",
+              "rightValue": 4000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "dcd68e6d-a7ba-46db-a001-ea7389471fde",
+              "leftValue": "={{ $json.country }}",
+              "rightValue": "AU",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        80
+      ],
+      "id": "4f43c4fb-d1fc-4b22-8ba7-fcdae234775d",
+      "name": "Check Manual Review"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual trigger": {
+      "main": [
+        [
+          {
+            "node": "Sample Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Leads": {
+      "main": [
+        [
+          {
+            "node": "Check Priority Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Priority Sales": {
+      "main": [
+        [
+          {
+            "node": "Priority Sales",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Warm Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Warm Lead": {
+      "main": [
+        [
+          {
+            "node": "Check Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Low Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nurture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "46208b4f-7806-48f4-9f18-8544531ba5a4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "1fyZgi4htkMmXYIN",
+  "tags": []
+}

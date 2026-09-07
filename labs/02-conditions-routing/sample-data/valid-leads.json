@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Alex Rivera",
+    "lead_temperature": "Hot",
+    "budget": 5000,
+    "contacted_before": false
+  },
+  {
+    "name": "Jamie Lee",
+    "lead_temperature": "Warm",
+    "budget": 2500,
+    "contacted_before": false
+  },
+  {
+    "name": "Taylor Kim",
+    "lead_temperature": "Cold",
+    "budget": 800,
+    "contacted_before": true
+  }
+]

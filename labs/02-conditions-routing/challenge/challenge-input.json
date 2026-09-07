@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Alex Rivera",
+    "lead_temperature": "Hot",
+    "budget": 5000,
+    "contacted_before": false,
+    "country": "AU"
+  },
+  {
+    "name": "Mark Milca",
+    "lead_temperature": "Hot",
+    "budget": 5000,
+    "contacted_before": false,
+    "country": "Pilipins"
+  },
+  {
+    "name": "Jamie Lee",
+    "lead_temperature": "Warm",
+    "budget": 4200,
+    "contacted_before": false,
+    "country": "AU"
+  },
+  {
+    "name": "Jordan Patel",
+    "lead_temperature": "Warm",
+    "budget": 4500,
+    "contacted_before": false,
+    "country": "US"
+  },
+  {
+    "name": "Casey Wong",
+    "lead_temperature": "Warm",
+    "budget": 2000,
+    "contacted_before": false,
+    "country": "AU"
+  },
+  {
+    "name": "Taylor Kim",
+    "lead_temperature": "Warm",
+    "budget": 1500,
+    "contacted_before": true,
+    "country": "US"
+  },
+  {
+    "name": "Morgan Cruz",
+    "lead_temperature": "Cold",
+    "budget": 6000,
+    "contacted_before": false,
+    "country": "AU"
+  }
+]
