@@ -169,47 +169,47 @@ Prepare the tools and services needed throughout AEP.
 
 ### n8n
 
-* [ ] Confirm local n8n is working
-* [ ] Create AEP workspace/project organization
-* [ ] Confirm webhooks work locally
-* [ ] Confirm workflows can receive test data
+* ~~Confirm local n8n is working~~
+* ~~Create AEP workspace/project organization~~
+* ~~Confirm webhooks work locally~~
+* ~~Confirm workflows can receive test data~~
 
 ### Supabase
 
-* [ ] Create or choose AEP Supabase project
-* [ ] Configure connection safely
-* [ ] Set up environment variables
-* [ ] Confirm n8n can read from Supabase
-* [ ] Confirm n8n can write to Supabase
+* ~~Create or choose AEP Supabase project~~
+* ~~Configure connection safely~~
+* ~~Set up environment variables~~
+* ~~Confirm n8n can read from Supabase~~
+* ~~Confirm n8n can write to Supabase~~
 
 ### Postman
 
-* [ ] Create AEP Postman collection
-* [ ] Add sample GET request
-* [ ] Add sample POST request
-* [ ] Test n8n webhook from Postman
+* ~~Create AEP Postman collection~~
+* ~~Add sample GET request~~
+* ~~Add sample POST request~~
+* ~~Test n8n webhook from Postman~~
 
 ### JavaScript
 
-* [ ] Decide where reusable helper code will live
-* [ ] Set basic code conventions
-* [ ] Confirm JavaScript can be tested independently when necessary
+* ~~Decide where reusable helper code will live~~
+* ~~Set basic code conventions~~
+* ~~Confirm JavaScript can be tested independently when necessary~~
 
 ### Secrets
 
-* [ ] Create `.env.example` if needed
-* [ ] Keep real secrets outside Git
-* [ ] Confirm `.env` is ignored
-* [ ] Confirm no API keys are committed
+* ~~Create `.env.example` if needed~~
+* ~~Keep real secrets outside Git~~
+* ~~Confirm `.env` is ignored~~
+* ~~Confirm no API keys are committed~~
 
 ## Phase Complete When
 
-* [ ] n8n works
-* [ ] Supabase connection works
-* [ ] Postman works
-* [ ] Local testing works
-* [ ] Secrets are protected
-* [ ] We can safely begin Lab 01
+* ~~n8n works~~
+* ~~Supabase connection works~~
+* ~~Postman works~~
+* ~~Local testing works~~
+* ~~Secrets are protected~~
+* ~~We can safely begin Lab 01~~
 
 ---
 
