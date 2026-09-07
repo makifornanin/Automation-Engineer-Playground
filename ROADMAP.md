@@ -40,24 +40,24 @@ Create the project repository, rules, documentation, and basic structure before 
 
 ## Build Checklist
 
-* ~~Create GitHub repository~~
-* ~~Create local `AEP Project` folder~~
-* ~~Connect local project to GitHub~~
-* ~~Initialize Git~~
-* ~~Add `.gitignore`~~
-* ~~Create `CLAUDE.md`~~
-* ~~Create `AGENTS.md`~~
-* ~~Create `FEATURES.md`~~
-* ~~Create `ROADMAP.md`~~
-* ~~Create main `README.md`~~
-* ~~Create initial project folder structure~~
-* ~~Create documentation folder~~
-* ~~Create labs folder~~
-* ~~Create capstone folder~~
-* ~~Create sample-data folder~~
-* ~~Create database folder if needed~~
-* ~~Create scripts/helpers folder if needed~~
-* ~~Make initial Git commit~~
+* [/] Create GitHub repository
+* [/] Create local `AEP Project` folder
+* [/] Connect local project to GitHub
+* [/] Initialize Git
+* [/] Add `.gitignore`
+* [/] Create `CLAUDE.md`
+* [/] Create `AGENTS.md`
+* [/] Create `FEATURES.md`
+* [/] Create `ROADMAP.md`
+* [/] Create main `README.md`
+* [/] Create initial project folder structure
+* [/] Create documentation folder
+* [/] Create labs folder
+* [/] Create capstone folder
+* [/] Create sample-data folder
+* [/] Create database folder if needed
+* [/] Create scripts/helpers folder if needed
+* [/] Make initial Git commit
 
 ## Expected Structure
 
@@ -81,7 +81,7 @@ AEP Project/
 
 ## Phase Complete When
 
-* [ ] Repository works locally
+* [/] Repository works locally
 * [ ] Repository is connected to GitHub
 * [ ] Claude Code can read `CLAUDE.md`
 * [ ] Codex can read `AGENTS.md`
@@ -100,24 +100,24 @@ This prevents us from designing each lab differently later.
 
 ## Build Checklist
 
-* ~~Define standard lab folder structure~~
-* ~~Create reusable lab README template~~
-* ~~Add difficulty level~~
-* ~~Add learning objectives section~~
-* ~~Add simple explanation section~~
-* ~~Add business problem section~~
-* ~~Add business example section~~
-* ~~Add architecture / workflow section~~
-* ~~Add prerequisites section~~
-* ~~Add guided build section~~
-* ~~Add sample data section~~
-* ~~Add successful test section~~
-* ~~Add failure scenario section~~
-* ~~Add debugging section~~
-* ~~Add independent challenge section~~
-* ~~Add optional hints section~~
-* ~~Add expected result section~~
-* ~~Add "What You Learned" section~~
+* [/] Define standard lab folder structure
+* [/] Create reusable lab README template
+* [/] Add difficulty level
+* [/] Add learning objectives section
+* [/] Add simple explanation section
+* [/] Add business problem section
+* [/] Add business example section
+* [/] Add architecture / workflow section
+* [/] Add prerequisites section
+* [/] Add guided build section
+* [/] Add sample data section
+* [/] Add successful test section
+* [/] Add failure scenario section
+* [/] Add debugging section
+* [/] Add independent challenge section
+* [/] Add optional hints section
+* [/] Add expected result section
+* [/] Add "What You Learned" section
 
 ## Standard Lab Flow
 
@@ -143,10 +143,10 @@ Review What You Learned
 
 ## Phase Complete When
 
-* ~~One reusable lab template exists~~
-* ~~Template is simple enough for a beginner~~
-* ~~Template works for both basic and advanced labs~~
-* ~~Every future lab can follow the same structure~~
+* [/] One reusable lab template exists
+* [/] Template is simple enough for a beginner
+* [/] Template works for both basic and advanced labs
+* [/] Every future lab can follow the same structure
 
 ---
 
@@ -169,47 +169,47 @@ Prepare the tools and services needed throughout AEP.
 
 ### n8n
 
-* ~~Confirm local n8n is working~~
-* ~~Create AEP workspace/project organization~~
-* ~~Confirm webhooks work locally~~
-* ~~Confirm workflows can receive test data~~
+* [/] Confirm local n8n is working
+* [/] Create AEP workspace/project organization
+* [/] Confirm webhooks work locally
+* [/] Confirm workflows can receive test data
 
 ### Supabase
 
-* ~~Create or choose AEP Supabase project~~
-* ~~Configure connection safely~~
-* ~~Set up environment variables~~
-* ~~Confirm n8n can read from Supabase~~
-* ~~Confirm n8n can write to Supabase~~
+* [/] Create or choose AEP Supabase project
+* [/] Configure connection safely
+* [/] Set up environment variables
+* [/] Confirm n8n can read from Supabase
+* [/] Confirm n8n can write to Supabase
 
 ### Postman
 
-* ~~Create AEP Postman collection~~
-* ~~Add sample GET request~~
-* ~~Add sample POST request~~
-* ~~Test n8n webhook from Postman~~
+* [/] Create AEP Postman collection
+* [/] Add sample GET request
+* [/] Add sample POST request
+* [/] Test n8n webhook from Postman
 
 ### JavaScript
 
-* ~~Decide where reusable helper code will live~~
-* ~~Set basic code conventions~~
-* ~~Confirm JavaScript can be tested independently when necessary~~
+* [/] Decide where reusable helper code will live
+* [/] Set basic code conventions
+* [/] Confirm JavaScript can be tested independently when necessary
 
 ### Secrets
 
-* ~~Create `.env.example` if needed~~
-* ~~Keep real secrets outside Git~~
-* ~~Confirm `.env` is ignored~~
-* ~~Confirm no API keys are committed~~
+* [/] Create `.env.example` if needed
+* [/] Keep real secrets outside Git
+* [/] Confirm `.env` is ignored
+* [/] Confirm no API keys are committed
 
 ## Phase Complete When
 
-* ~~n8n works~~
-* ~~Supabase connection works~~
-* ~~Postman works~~
-* ~~Local testing works~~
-* ~~Secrets are protected~~
-* ~~We can safely begin Lab 01~~
+* [/] n8n works
+* [/] Supabase connection works
+* [/] Postman works
+* [/] Local testing works
+* [/] Secrets are protected
+* [/] We can safely begin Lab 01
 
 ---
 
@@ -225,20 +225,20 @@ Learn the core logic that almost every automation uses.
 
 ### Build
 
-* ~~Create sample incoming JSON~~
-* ~~Read fields from incoming data~~
-* ~~Rename fields~~
-* ~~Remove unnecessary fields~~
-* ~~Combine fields~~
-* ~~Transform values~~
-* ~~Format final output~~
-* ~~Add JavaScript transformation example~~
-* ~~Add guided build~~
-* ~~Add successful test~~
-* ~~Add failure scenario~~
-* ~~Add debugging exercise~~
-* ~~Add challenge~~
-* ~~Complete lab documentation~~
+* [/] Create sample incoming JSON
+* [/] Read fields from incoming data
+* [/] Rename fields
+* [/] Remove unnecessary fields
+* [/] Combine fields
+* [/] Transform values
+* [/] Format final output
+* [/] Add JavaScript transformation example
+* [/] Add guided build
+* [/] Add successful test
+* [/] Add failure scenario
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete lab documentation
 
 ### Main Learning Outcome
 
@@ -270,13 +270,13 @@ Understand how automation makes decisions.
 
 ## Phase Complete When
 
-* [ ] Lab 01 complete
-* [ ] Lab 02 complete
-* [ ] Tests pass
-* [ ] Failure scenarios verified
-* [ ] Challenges verified
-* [ ] Documentation complete
-* [ ] Learner understands data flow and automation logic
+* [/] Lab 01 complete
+* [/] Lab 02 complete
+* [/] Tests pass
+* [/] Failure scenarios verified
+* [/] Challenges verified
+* [/] Documentation complete
+* [/] Learner understands data flow and automation logic
 
 ---
 
@@ -292,21 +292,21 @@ Learn how automation systems communicate with external applications and process 
 
 ### Build
 
-* [ ] Create n8n webhook
-* [ ] Trigger webhook using Postman
-* [ ] Receive JSON payload
-* [ ] Send GET request
-* [ ] Send POST request
-* [ ] Add request headers
-* [ ] Add request body
-* [ ] Add query parameters
-* [ ] Inspect API response
-* [ ] Explore common HTTP status codes
-* [ ] Test successful request
-* [ ] Test failed request
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete lab documentation
+* [/] Create n8n webhook
+* [/] Trigger webhook using Postman
+* [/] Receive JSON payload
+* [/] Send GET request
+* [/] Send POST request
+* [/] Add request headers
+* [/] Add request body
+* [/] Add query parameters
+* [/] Inspect API response
+* [/] Explore common HTTP status codes
+* [/] Test successful request
+* [/] Test failed request
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete lab documentation
 
 ### Main Learning Outcome
 
