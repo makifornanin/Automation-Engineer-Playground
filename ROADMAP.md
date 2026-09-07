@@ -100,24 +100,24 @@ This prevents us from designing each lab differently later.
 
 ## Build Checklist
 
-* [ ] Define standard lab folder structure
-* [ ] Create reusable lab README template
-* [ ] Add difficulty level
-* [ ] Add learning objectives section
-* [ ] Add simple explanation section
-* [ ] Add business problem section
-* [ ] Add business example section
-* [ ] Add architecture / workflow section
-* [ ] Add prerequisites section
-* [ ] Add guided build section
-* [ ] Add sample data section
-* [ ] Add successful test section
-* [ ] Add failure scenario section
-* [ ] Add debugging section
-* [ ] Add independent challenge section
-* [ ] Add optional hints section
-* [ ] Add expected result section
-* [ ] Add "What You Learned" section
+* ~~Define standard lab folder structure~~
+* ~~Create reusable lab README template~~
+* ~~Add difficulty level~~
+* ~~Add learning objectives section~~
+* ~~Add simple explanation section~~
+* ~~Add business problem section~~
+* ~~Add business example section~~
+* ~~Add architecture / workflow section~~
+* ~~Add prerequisites section~~
+* ~~Add guided build section~~
+* ~~Add sample data section~~
+* ~~Add successful test section~~
+* ~~Add failure scenario section~~
+* ~~Add debugging section~~
+* ~~Add independent challenge section~~
+* ~~Add optional hints section~~
+* ~~Add expected result section~~
+* ~~Add "What You Learned" section~~
 
 ## Standard Lab Flow
 
@@ -143,10 +143,10 @@ Review What You Learned
 
 ## Phase Complete When
 
-* [ ] One reusable lab template exists
-* [ ] Template is simple enough for a beginner
-* [ ] Template works for both basic and advanced labs
-* [ ] Every future lab can follow the same structure
+* ~~One reusable lab template exists~~
+* ~~Template is simple enough for a beginner~~
+* ~~Template works for both basic and advanced labs~~
+* ~~Every future lab can follow the same structure~~
 
 ---
 
