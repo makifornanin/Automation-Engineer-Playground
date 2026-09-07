@@ -1,7 +1,7 @@
 # Lab 02 — Conditions & Routing
 
-**Difficulty:** Beginner  
-**Main Concept:** Conditions, Routing, AND / OR Logic  
+**Difficulty:** Beginner
+**Main Concept:** Conditions, Routing, AND / OR Logic
 **Estimated Time:** 45–60 minutes
 
 ---
