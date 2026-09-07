@@ -1,0 +1,246 @@
+{
+  "name": "AEP Lab 03 - APIs & Webhooks",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-03-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "66028eab-a117-4325-a991-c0f0fb631473",
+      "name": "Receive Lead API Request",
+      "webhookId": "323cddf7-1f0a-4ecc-a962-df398c3014a8"
+    },
+    {
+      "parameters": {
+        "url": "=https://jsonplaceholder.typicode.com/users/{{ $json.body.user_id }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "13f36cab-21da-412c-a113-dace0f7f1e1a",
+      "name": "Fetch External Customer Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7a54a20e-d175-41e8-9c35-9336595801fe",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "14491e40-e40d-4ceb-8294-62805a9bed5c",
+      "name": "Check API Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"External customer data found\",\n  \"customer_name\": \"{{ $json.body.name }}\",\n  \"customer_email\": \"{{ $json.body.email }}\"\n} ",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "698ae124-bedb-4aa0-9ce4-aa1c6baa591a",
+      "name": "Return API Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"message\": \"External customer data not found\"\n}",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        64
+      ],
+      "id": "fcbad7d5-ba88-4ac5-977f-49f864298918",
+      "name": "Return API Not Found"
+    },
+    {
+      "parameters": {
+        "url": "=https://jsonplaceholder.typicode.com/posts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        80,
+        -256
+      ],
+      "id": "c255c156-0ba2-44e4-9905-1b283007c518",
+      "name": "Test Query Parameters"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://jsonplaceholder.typicode.com/posts",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "AEP Lab 03 Outbound POST"
+            },
+            {
+              "name": "body",
+              "value": "Created from n8n"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        -256
+      ],
+      "id": "8de74c36-2abe-416e-89c2-02e5a654172d",
+      "name": "Test Outbound POST"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Lead API Request": {
+      "main": [
+        [
+          {
+            "node": "Fetch External Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch External Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Check API Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check API Success": {
+      "main": [
+        [
+          {
+            "node": "Return API Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return API Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Query Parameters": {
+      "main": [
+        []
+      ]
+    },
+    "Test Outbound POST": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f2ab586d-c45e-4877-8e75-dcb627701e60",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "W2YqgaJuZ0mzQLNG",
+  "tags": []
+}

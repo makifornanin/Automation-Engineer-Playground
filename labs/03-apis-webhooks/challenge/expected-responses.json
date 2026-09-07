@@ -1,0 +1,17 @@
+[
+  {
+    "user_id": 2,
+    "expected_status": 200,
+    "expected_route": "success"
+  },
+  {
+    "user_id": 7,
+    "expected_status": 200,
+    "expected_route": "success"
+  },
+  {
+    "user_id": 999,
+    "expected_status": 404,
+    "expected_route": "not_found"
+  }
+]

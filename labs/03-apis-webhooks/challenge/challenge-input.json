@@ -1,0 +1,14 @@
+[
+  {
+    "test": "Valid customer",
+    "user_id": 2
+  },
+  {
+    "test": "Another valid customer",
+    "user_id": 7
+  },
+  {
+    "test": "Customer does not exist",
+    "user_id": 999
+  }
+]
