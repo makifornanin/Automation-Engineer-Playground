@@ -1,0 +1,29 @@
+[
+  {
+    "event_id": "evt_challenge_001",
+    "event_type": "lead.created",
+    "data": {
+      "lead_id": "lead_201",
+      "name": "Challenge One",
+      "email": "one@example.com"
+    }
+  },
+  {
+    "event_id": "evt_challenge_001",
+    "event_type": "lead.created",
+    "data": {
+      "lead_id": "lead_201",
+      "name": "Challenge One",
+      "email": "one@example.com"
+    }
+  },
+  {
+    "event_id": "evt_challenge_002",
+    "event_type": "lead.created",
+    "data": {
+      "lead_id": "lead_202",
+      "name": "Challenge Two",
+      "email": "two@example.com"
+    }
+  }
+]

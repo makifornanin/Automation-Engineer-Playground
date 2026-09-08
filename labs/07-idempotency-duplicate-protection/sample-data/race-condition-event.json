@@ -1,0 +1,9 @@
+{
+  "event_id": "evt_race_test",
+  "event_type": "lead.created",
+  "data": {
+    "lead_id": "lead_race_002",
+    "name": "Race Collision",
+    "email": "race2@example.com"
+  }
+}

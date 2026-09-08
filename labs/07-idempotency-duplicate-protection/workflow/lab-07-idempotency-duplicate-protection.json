@@ -1,0 +1,396 @@
+{
+  "name": "AEP Lab 07 - Idempotency & Duplicate Protection",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-07-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c7d56ac8-e4ff-4a62-ad3a-475fe7971727",
+      "name": "Receive External Event",
+      "webhookId": "a48436e7-7748-4698-9187-eacc9ffe1f0a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\n\nconst eventId =\n  body.event_id ??\n  `${body.event_type}:${body.data?.lead_id}`;\n\nreturn {\n  json: {\n    event_id: eventId,\n    event_id_source: body.event_id ? 'provider' : 'generated',\n    event_type: body.event_type,\n    data: body.data\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5581075b-a525-44b6-a8f4-eecb6c2ebde9",
+      "name": "Extract Event Identity"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "processed_events",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "event_id",
+              "keyValue": "={{ $json.event_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        432,
+        0
+      ],
+      "id": "8d6a763c-0369-4753-8123-3df83c63aad6",
+      "name": "Check Processed Event",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "37be2542-02d8-46ca-aeee-458ac43c8a83",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "db657d16-164f-4436-893c-aa82ddb5e205",
+      "name": "Already Seen?"
+    },
+    {
+      "parameters": {
+        "tableId": "processed_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_id",
+              "fieldValue": "={{ $('Extract Event Identity').item.json.event_id }}"
+            },
+            {
+              "fieldId": "event_type",
+              "fieldValue": "={{ $('Extract Event Identity').item.json.event_type }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "reserved"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        800,
+        240
+      ],
+      "id": "f6eeb347-4dcd-4c9b-8dab-bea82ed9a7f2",
+      "name": "Reserve Event",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "tableId": "lab07_business_actions",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_id",
+              "fieldValue": "={{ $('Extract Event Identity').item.json.event_id }}"
+            },
+            {
+              "fieldId": "action_type",
+              "fieldValue": "create_lead"
+            },
+            {
+              "fieldId": "lead_id",
+              "fieldValue": "={{ $('Extract Event Identity').item.json.data.lead_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        32
+      ],
+      "id": "cfc6c42e-0a12-40a8-9bb7-90520e295f37",
+      "name": "Execute Business Action",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "processed_events",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "event_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Extract Event Identity').item.json.event_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "processed"
+            },
+            {
+              "fieldId": "processed_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "c4e82f45-49a3-4385-9fdb-2d95551d4dcc",
+      "name": "Mark Processed",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"duplicate\": true,\n  \"message\": \"Duplicate event ignored\",\n  \"event_id\": \"{{ $('Extract Event Identity').item.json.event_id }}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1232,
+        -224
+      ],
+      "id": "8a80ffcd-d2f9-4dff-9ea4-618370432d8a",
+      "name": "Return Duplicate Ignored"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"duplicate\": false,\n  \"message\": \"Event processed successfully\",\n  \"event_id\": \"{{ $json.event_id }}\",\n  \"status\": \"{{ $json.status }}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1664,
+        96
+      ],
+      "id": "cab1daf1-5303-4ddd-b606-1e249fbb5da6",
+      "name": "Return Processed Success"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "80259d91-c613-48fa-aa53-61fb3f58dfc4",
+              "leftValue": "={{ !$json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1024,
+        240
+      ],
+      "id": "98b50675-1540-4854-9c28-0a9cab876bdc",
+      "name": "Reservation Succeeded?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive External Event": {
+      "main": [
+        [
+          {
+            "node": "Extract Event Identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Event Identity": {
+      "main": [
+        [
+          {
+            "node": "Check Processed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Processed Event": {
+      "main": [
+        [
+          {
+            "node": "Already Seen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Seen?": {
+      "main": [
+        [
+          {
+            "node": "Return Duplicate Ignored",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reserve Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reserve Event": {
+      "main": [
+        [
+          {
+            "node": "Reservation Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Business Action": {
+      "main": [
+        [
+          {
+            "node": "Mark Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Processed": {
+      "main": [
+        [
+          {
+            "node": "Return Processed Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reservation Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Execute Business Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Duplicate Ignored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a31f1864-183f-4381-93ed-2f6492b41dde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "qD2T5bk7wUVqKOo1",
+  "tags": []
+}

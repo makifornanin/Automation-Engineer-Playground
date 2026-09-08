@@ -1,0 +1,8 @@
+{
+  "event_type": "lead.created",
+  "data": {
+    "lead_id": "lead_203",
+    "name": "No Event ID",
+    "email": "noevent@example.com"
+  }
+}

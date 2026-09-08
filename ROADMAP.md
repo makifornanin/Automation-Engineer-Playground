@@ -416,19 +416,19 @@ Understand how systems recover from temporary failures automatically.
 
 ### Build
 
-* [ ] Create duplicate webhook scenario
-* [ ] Generate/use unique event ID
-* [ ] Create processed-events storage
-* [ ] Store event IDs
-* [ ] Check event before processing
-* [ ] Stop duplicate event
-* [ ] Allow new event
-* [ ] Test first delivery
-* [ ] Test duplicate delivery
-* [ ] Test different event
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete documentation
+* [/] Create duplicate webhook scenario
+* [/] Generate/use unique event ID
+* [/] Create processed-events storage
+* [/] Store event IDs
+* [/] Check event before processing
+* [/] Stop duplicate event
+* [/] Allow new event
+* [/] Test first delivery
+* [/] Test duplicate delivery
+* [/] Test different event
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete documentation
 
 ### Main Learning Outcome
 
