@@ -1,0 +1,11 @@
+{
+  "event_id": "evt_dlq_001",
+  "event_type": "lead.sync",
+  "scenario": "permanent_failure",
+  "max_attempts": 3,
+  "data": {
+    "lead_id": "lead_301",
+    "name": "DLQ Test Lead",
+    "email": "dlq@example.com"
+  }
+}

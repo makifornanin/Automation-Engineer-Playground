@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_dlq_002",
+  "event_type": "lead.sync",
+  "scenario": "eventual_success",
+  "max_attempts": 3,
+  "success_on_attempt": 3,
+  "data": {
+    "lead_id": "lead_302",
+    "name": "Recovery Test Lead",
+    "email": "recover@example.com"
+  }
+}

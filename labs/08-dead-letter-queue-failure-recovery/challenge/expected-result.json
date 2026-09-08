@@ -1,0 +1,20 @@
+{
+  "expected_dlq_records": 2,
+  "recovery_tests": [
+    {
+      "event_id": "evt_dlq_challenge_001",
+      "recovery_scenario": "success",
+      "expected_status": "recovered",
+      "expected_recovered_at": "populated"
+    },
+    {
+      "event_id": "evt_dlq_challenge_002",
+      "recovery_scenario": "failure",
+      "expected_status": "pending",
+      "expected_recovered_at": null
+    }
+  ],
+  "make_it_your_own": {
+    "recovery_attempts_should_increment": true
+  }
+}

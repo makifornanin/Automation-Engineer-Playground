@@ -440,20 +440,20 @@ Understand how to stop duplicate events from causing duplicate actions.
 
 ### Build
 
-* [ ] Define unrecoverable failure
-* [ ] Create DLQ storage
-* [ ] Save original payload
-* [ ] Save error message
-* [ ] Save retry count
-* [ ] Save timestamps
-* [ ] Save status
-* [ ] View failed item
-* [ ] Create manual reprocessing flow
-* [ ] Mark successful reprocessing
-* [ ] Test failed item
-* [ ] Test recovery
-* [ ] Add challenge
-* [ ] Complete documentation
+* [/] Define unrecoverable failure
+* [/] Create DLQ storage
+* [/] Save original payload
+* [/] Save error message
+* [/] Save retry count
+* [/] Save timestamps
+* [/] Save status
+* [/] View failed item
+* [/] Create manual reprocessing flow
+* [/] Mark successful reprocessing
+* [/] Test failed item
+* [/] Test recovery
+* [/] Add challenge
+* [/] Complete documentation
 
 ### Main Learning Outcome
 
@@ -463,12 +463,12 @@ Understand how to prevent failed data from being permanently lost.
 
 ## Phase Complete When
 
-* [ ] Labs 06–08 complete
-* [ ] Temporary failures recover automatically
-* [ ] Duplicate events are protected
-* [ ] Failed jobs can be recovered
-* [ ] Reliability concepts are documented
-* [ ] Failure scenarios verified
+* [/] Labs 06–08 complete
+* [/] Temporary failures recover automatically
+* [/] Duplicate events are protected
+* [/] Failed jobs can be recovered
+* [/] Reliability concepts are documented
+* [/] Failure scenarios verified
 
 ---
 

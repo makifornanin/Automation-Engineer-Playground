@@ -1,0 +1,659 @@
+{
+  "name": "AEP Lab 08 - Dead Letter Queue & Failure Recovery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-08-dlq",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        -64
+      ],
+      "id": "df58fa1f-dd7f-4fcf-800c-1d929be242ab",
+      "name": "Receive Service Event",
+      "webhookId": "97e12bb6-f04e-4837-9475-62b11a23a6a2"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $json.body;\n\nreturn {\n  json: {\n    event_id: body.event_id,\n    event_type: body.event_type,\n    scenario: body.scenario,\n    max_attempts: body.max_attempts ?? 3,\n    success_on_attempt: body.success_on_attempt ?? 3,\n    attempt: 1,\n    first_failed_at: null,\n    original_payload: body\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        -64
+      ],
+      "id": "7ec3bb1f-7f29-4402-8d60-8bc1f220fc44",
+      "name": "Prepare Processing Attempt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const scenario = $json.scenario;\nconst attempt = $json.attempt;\nconst successOnAttempt = $json.success_on_attempt;\n\nlet success = false;\nlet statusCode;\nlet errorMessage = null;\n\nif (scenario === 'permanent_failure') {\n  statusCode = 503;\n  errorMessage = 'Downstream service unavailable';\n} else if (scenario === 'eventual_success') {\n  if (attempt >= successOnAttempt) {\n    success = true;\n    statusCode = 200;\n  } else {\n    statusCode = 503;\n    errorMessage = 'Temporary downstream failure';\n  }\n} else {\n  success = true;\n  statusCode = 200;\n}\n\nreturn {\n  json: {\n    ...$json,\n    processing_result: {\n      success,\n      status_code: statusCode,\n      error_message: errorMessage\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -64
+      ],
+      "id": "afb60020-7369-4465-84c6-d5daa1b447ad",
+      "name": "Simulate Downstream Processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dfa863a1-d0e7-4780-8155-721479598eea",
+              "leftValue": "={{ $json.processing_result.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        -64
+      ],
+      "id": "a390472a-bac9-4baa-bbd2-b1b598135700",
+      "name": "Processing Successful?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e8e04814-4b17-49ea-a664-b01edf0a9011",
+              "leftValue": "={{ $json.attempt < $json.max_attempts }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        144
+      ],
+      "id": "e82d78f1-df70-4349-aabb-9379ad3dcfee",
+      "name": "Retry Allowed?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  json: {\n    ...$json,\n    attempt: $json.attempt + 1,\n    first_failed_at: $json.first_failed_at ?? new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -64
+      ],
+      "id": "d78fc45c-080c-40c3-91b7-f75d040d92b8",
+      "name": "Increase Retry Count"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nreturn {\n  json: {\n    event_id: $json.event_id,\n    event_type: $json.event_type,\n    original_payload: $json.original_payload,\n    error_message: $json.processing_result.error_message,\n    retry_count: $json.attempt,\n    first_failed_at: $json.first_failed_at ?? now,\n    last_failed_at: now,\n    status: 'pending'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        288
+      ],
+      "id": "63c73b06-ac17-43f3-9c77-0ca69a93c51b",
+      "name": "Build DLQ Record"
+    },
+    {
+      "parameters": {
+        "tableId": "dlq_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_id",
+              "fieldValue": "={{ $json.event_id }}"
+            },
+            {
+              "fieldId": "event_type",
+              "fieldValue": "={{ $json.event_type }}"
+            },
+            {
+              "fieldId": "original_payload",
+              "fieldValue": "={{ $json.original_payload }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error_message }}"
+            },
+            {
+              "fieldId": "retry_count",
+              "fieldValue": "={{ $json.retry_count }}"
+            },
+            {
+              "fieldId": "first_failed_at",
+              "fieldValue": "={{ $json.first_failed_at }}"
+            },
+            {
+              "fieldId": "last_failed_at",
+              "fieldValue": "={{ $json.last_failed_at }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        288
+      ],
+      "id": "78b3b00d-caf3-4c19-8a84-9ec6da2d653e",
+      "name": "Save to DLQ",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"queued_for_recovery\": true,\n  \"message\": \"Event moved to dead letter queue\",\n  \"event_id\": \"{{$json.event_id}}\",\n  \"retry_count\": {{$json.retry_count}},\n  \"status\": \"{{$json.status}}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1392,
+        288
+      ],
+      "id": "33d84fc1-cae8-4085-b9fa-604eb01fcbc5",
+      "name": "Return Queued for Recovery"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"queued_for_recovery\": false,\n  \"message\": \"Event processed successfully\",\n  \"event_id\": \"{{$json.event_id}}\",\n  \"attempts_used\": {{$json.attempt}}\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        -240
+      ],
+      "id": "7e6e4068-ba0c-4d5e-bcb8-0e0b510918b9",
+      "name": "Return Processing Success"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        624
+      ],
+      "id": "c561796a-fdea-42c1-829f-23641b146ba0",
+      "name": "Start DLQ Recovery"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e9982d8-c7d7-4ae4-a199-4760b7916a9e",
+              "name": "dlq_id",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "5ed2996d-e810-4320-9e3d-a0d42931d728",
+              "name": "recovery_scenario",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        624
+      ],
+      "id": "3f1e85ae-80df-4482-bdc1-592ad52346f8",
+      "name": "Set Recovery Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const recoveryConfig = $('Set Recovery Config').item.json;\n\nreturn {\n  json: {\n    dlq_id: $json.id,\n    event_id: $json.event_id,\n    event_type: $json.event_type,\n    original_payload: $json.original_payload,\n    replay_payload: $json.original_payload,\n    recovery_attempts: ($json.recovery_attempts ?? 0) + 1,\n    recovery_scenario: recoveryConfig.recovery_scenario\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        624
+      ],
+      "id": "152f9575-a98a-4ada-b7f8-f03a4b284c26",
+      "name": "Prepare Replay Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const recoveryScenario =\n  $('Prepare Replay Payload').item.json.recovery_scenario;\n\nconst success = recoveryScenario === 'success';\n\nreturn {\n  json: {\n    ...$json,\n    recovery_result: {\n      success,\n      status_code: success ? 200 : 503,\n      error_message: success ? null : 'Recovery attempt failed'\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        624
+      ],
+      "id": "e458b0f1-4c0c-4328-98f6-41a21570911a",
+      "name": "Simulate Recovery Processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "37fdd48a-f607-4455-a115-2d9d7cbb9460",
+              "leftValue": "={{ $json.recovery_result.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        624
+      ],
+      "id": "188eaf5f-7bdd-4131-8ae7-c9a78c7fe8e9",
+      "name": "Recovery Successful?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "dlq_events",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.dlq_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "recovered"
+            },
+            {
+              "fieldId": "recovered_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        528
+      ],
+      "id": "48afab15-b150-472c-b31b-8819056b6d2d",
+      "name": "Mark DLQ Recovered",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    dlq_id: $json.dlq_id,\n    event_id: $json.event_id,\n    recovery_success: false,\n    status: 'pending',\n    error_message: $json.recovery_result.error_message\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        752
+      ],
+      "id": "7e529957-6f79-4bef-9a30-f904f1090c6f",
+      "name": "Keep DLQ Pending"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "dlq_events",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.dlq_id }}"
+            },
+            {
+              "keyName": "status",
+              "keyValue": "pending"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        128,
+        624
+      ],
+      "id": "307a1610-ca5b-49b9-a678-e3c3041ad141",
+      "name": "Fetch Pending DLQ Event",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "dlq_events",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.dlq_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "recovery_attempts",
+              "fieldValue": "={{ $json.recovery_attempts }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        544,
+        624
+      ],
+      "id": "45148ae8-3352-4cab-808e-d0c7d4dcf6b8",
+      "name": "Increment Recovery Attempts",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Service Event": {
+      "main": [
+        [
+          {
+            "node": "Prepare Processing Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Processing Attempt": {
+      "main": [
+        [
+          {
+            "node": "Simulate Downstream Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate Downstream Processing": {
+      "main": [
+        [
+          {
+            "node": "Processing Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processing Successful?": {
+      "main": [
+        [
+          {
+            "node": "Return Processing Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry Allowed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Allowed?": {
+      "main": [
+        [
+          {
+            "node": "Increase Retry Count",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build DLQ Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build DLQ Record": {
+      "main": [
+        [
+          {
+            "node": "Save to DLQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increase Retry Count": {
+      "main": [
+        [
+          {
+            "node": "Simulate Downstream Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to DLQ": {
+      "main": [
+        [
+          {
+            "node": "Return Queued for Recovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start DLQ Recovery": {
+      "main": [
+        [
+          {
+            "node": "Set Recovery Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Recovery Config": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending DLQ Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Replay Payload": {
+      "main": [
+        [
+          {
+            "node": "Increment Recovery Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate Recovery Processing": {
+      "main": [
+        [
+          {
+            "node": "Recovery Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recovery Successful?": {
+      "main": [
+        [
+          {
+            "node": "Mark DLQ Recovered",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Keep DLQ Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending DLQ Event": {
+      "main": [
+        [
+          {
+            "node": "Prepare Replay Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Recovery Attempts": {
+      "main": [
+        [
+          {
+            "node": "Simulate Recovery Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ea7fb61-c57d-4e95-815b-7cc6b0e0b07b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "l1uvx6a1BqA2kq35",
+  "tags": []
+}
