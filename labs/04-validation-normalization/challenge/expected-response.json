@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "message": "Lead accepted",
+  "data": {
+    "name": "Alex Rivera",
+    "company": "Northstar Commerce",
+    "email": "alex.rivera@example.com",
+    "phone": "639175551234",
+    "country": "AU",
+    "preferred_contact_date": "2026-09-09"
+  }
+}

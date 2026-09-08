@@ -1,0 +1,183 @@
+{
+  "name": "AEP Lab 04 - Validation and Normalization",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-04-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2ae27d78-02eb-425a-87bd-7b8ed44288ad",
+      "name": "Receive Lead Request",
+      "webhookId": "d3c6eef9-5e00-425d-bad9-e9c219b00a02"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body ?? {};\n\nfunction normalizeDate(value) {\n  const date = String(value ?? '').trim();\n\n  // Already in our standard format\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) {\n    return date;\n  }\n\n  // For this lab, we accept DD/MM/YYYY\n  const match = date.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n\n  if (match) {\n    const [, day, month, year] = match;\n\n    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;\n  }\n\n  // Don't invent/fix a date we don't understand\n  return date;\n}\n\nreturn {\n  json: {\n    raw_input: input,\n\n    normalized: {\n  name: String(input.name ?? '').trim(),\n\n  company: String(input.company ?? '').trim(),\n\n  email: String(input.email ?? '')\n    .trim()\n    .toLowerCase(),\n\n  phone: String(input.phone ?? '')\n    .replace(/\\D/g, ''),\n\n  country: String(input.country ?? '')\n    .trim()\n    .toUpperCase(),\n\n  preferred_contact_date: normalizeDate(\n    input.preferred_contact_date\n  )\n}\n    \n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ef9c7d4d-9a0c-413d-be7c-689147e7a7b7",
+      "name": "Normalize Lead Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.normalized;\nconst errors = [];\n\n// Required fields\nif (!data.name) {\n  errors.push('name is required');\n}\n\nif (!data.email) {\n  errors.push('email is required');\n}\n\nif (!data.phone) {\n  errors.push('phone is required');\n}\n\nif (!data.preferred_contact_date) {\n  errors.push('preferred_contact_date is required');\n}\n\n// Email validation\nif (\n  data.email &&\n  !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(data.email)\n) {\n  errors.push('email is invalid');\n}\n\n// Phone validation\nif (\n  data.phone &&\n  !/^\\d{10,15}$/.test(data.phone)\n) {\n  errors.push('phone must contain 10 to 15 digits');\n}\n\n// Date validation\nif (data.preferred_contact_date) {\n  const match = data.preferred_contact_date.match(\n    /^(\\d{4})-(\\d{2})-(\\d{2})$/\n  );\n\n  let validDate = false;\n\n  if (match) {\n    const [, year, month, day] = match;\n\n    const date = new Date(\n      Number(year),\n      Number(month) - 1,\n      Number(day)\n    );\n\n    validDate =\n      date.getFullYear() === Number(year) &&\n      date.getMonth() === Number(month) - 1 &&\n      date.getDate() === Number(day);\n  }\n\n  if (!validDate) {\n    errors.push('preferred_contact_date is invalid');\n  }\n}\n\nreturn {\n  json: {\n    ...$json,\n\n    validation: {\n      is_valid: errors.length === 0,\n      errors\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "22ad4131-3adb-4016-a9ac-6ae040beab1e",
+      "name": "Validate Lead Data"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: false,\n    message: \"Lead validation failed\",\n    errors: $json.validation.errors,\n    data: $json.normalized\n  }\n}}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        112
+      ],
+      "id": "35bc1533-145a-4a48-813c-1d684469b2e2",
+      "name": "Return Validation Errors"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "381be1f7-770d-4aac-ba48-24a1ba923b56",
+              "leftValue": "={{ $json.validation.is_valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a6924aba-7904-4ba3-b0e4-749e6c467372",
+      "name": "Is Lead Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  {\n    success: true,\n    message: \"Lead accepted\",\n    data: $json.normalized\n  }\n}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        -128
+      ],
+      "id": "ba22f5c0-dd3c-4f33-bb2a-6b38f6b8baa6",
+      "name": "Return Valid Lead"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Lead Request": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Is Lead Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Lead Valid?": {
+      "main": [
+        [
+          {
+            "node": "Return Valid Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Validation Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "01a7db34-3d1d-4858-8f2c-a929361a4392",
+  "meta": {
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "f1vJmjQhchM2m1J8",
+  "tags": []
+}

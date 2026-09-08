@@ -318,20 +318,20 @@ Understand how applications communicate with each other.
 
 ### Build
 
-* [ ] Define required fields
-* [ ] Validate incoming payload
-* [ ] Detect missing fields
-* [ ] Validate email
-* [ ] Normalize email
-* [ ] Normalize phone number
-* [ ] Normalize dates
-* [ ] Trim unwanted spaces
-* [ ] Route invalid data separately
-* [ ] Test valid data
-* [ ] Test invalid data
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete lab documentation
+* [/] Define required fields
+* [/] Validate incoming payload
+* [/] Detect missing fields
+* [/] Validate email
+* [/] Normalize email
+* [/] Normalize phone number
+* [/] Normalize dates
+* [/] Trim unwanted spaces
+* [/] Route invalid data separately
+* [/] Test valid data
+* [/] Test invalid data
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete lab documentation
 
 ### Main Learning Outcome
 
