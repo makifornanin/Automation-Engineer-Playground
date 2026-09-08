@@ -1,0 +1,263 @@
+{
+  "name": "AEP Lab 05 - Pagination and Large Data Processing",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        48
+      ],
+      "id": "54238439-8984-47de-bc7b-27029e96ce06",
+      "name": "Manual trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bdb04d41-622a-4b46-a0e2-a725a1ff7c44",
+              "name": "limit",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "bdd5f539-af65-4863-b14a-76a49b060690",
+              "name": "skip",
+              "value": "=0",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        48
+      ],
+      "id": "2d1741ab-30aa-4911-9c9f-b93aa73854d2",
+      "name": "Set Pagination Config"
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/users",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "={{ $json.limit }}"
+            },
+            {
+              "name": "skip",
+              "value": "={{ $json.skip }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "f8ad9e9f-b360-4db6-be2d-193791a34cb6",
+      "name": "Fetch First Customer Page"
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = $json.total;\nconst skip = $json.skip;\nconst limit = $json.limit;\n\nconst nextSkip = skip + limit;\nconst hasMore = nextSkip < total;\n\nreturn {\n  json: {\n    total,\n    current_skip: skip,\n    limit,\n    next_skip: nextSkip,\n    has_more: hasMore\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -48
+      ],
+      "id": "a02e0fc3-38c0-4f3f-8a0c-099ee3695991",
+      "name": "Read Pagination Info"
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/users",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "={{ $json.limit }}"
+            },
+            {
+              "name": "skip",
+              "value": "={{ $json.next_skip }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        -48
+      ],
+      "id": "c92d4266-960e-4e4d-9704-53076e0867ce",
+      "name": "Fetch Next Customer Page"
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/users",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "=7"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "skip",
+                    "value": "={{ $pageCount * 5 }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.skip + $response.body.limit >= $response.body.total }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        160
+      ],
+      "id": "d5648aa0-006a-41e4-9167-8b662e8a5a51",
+      "name": "Fetch All Customer Pages"
+    },
+    {
+      "parameters": {
+        "jsCode": "const pages = $input.all();\n\nconst customers = pages.flatMap(page => {\n  return page.json.users ?? [];\n});\n\nreturn [\n  {\n    json: {\n      pages_fetched: pages.length,\n      total_records: customers.length,\n      customers\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        160
+      ],
+      "id": "91f9177b-a7d4-4edc-92bf-6c2e22410605",
+      "name": "Combine Customer Records"
+    },
+    {
+      "parameters": {
+        "jsCode": "const customers = $json.customers ?? [];\n\nreturn customers.map(customer => ({\n  json: {\n    customer_id: customer.id,\n    full_name: `${customer.firstName} ${customer.lastName}`,\n    company: customer.company?.name ?? '',\n    email: customer.email,\n    phone: customer.phone\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        160
+      ],
+      "id": "ace2d9be-8850-4525-a97b-b51d2a0cb49f",
+      "name": "Prepare Customers for Processing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Pagination Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Pagination Config": {
+      "main": [
+        [
+          {
+            "node": "Fetch First Customer Page",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch All Customer Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch First Customer Page": {
+      "main": [
+        [
+          {
+            "node": "Read Pagination Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Pagination Info": {
+      "main": [
+        [
+          {
+            "node": "Fetch Next Customer Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Customer Pages": {
+      "main": [
+        [
+          {
+            "node": "Combine Customer Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Customer Records": {
+      "main": [
+        [
+          {
+            "node": "Prepare Customers for Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a59e3005-7370-4288-b15c-2338a036add1",
+  "meta": {
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "dQopvQvhKZ77MrhG",
+  "tags": []
+}

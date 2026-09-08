@@ -343,20 +343,20 @@ Understand why incoming data should never be trusted automatically.
 
 ### Build
 
-* [ ] Connect to paginated API or mock endpoint
-* [ ] Retrieve first page
-* [ ] Read pagination information
-* [ ] Retrieve next page
-* [ ] Create looping logic
-* [ ] Stop loop correctly
-* [ ] Combine results
-* [ ] Process records safely
-* [ ] Test small dataset
-* [ ] Test multiple pages
-* [ ] Test pagination failure
-* [ ] Add debugging exercise
-* [ ] Add challenge
-* [ ] Complete lab documentation
+* [/] Connect to paginated API or mock endpoint
+* [/] Retrieve first page
+* [/] Read pagination information
+* [/] Retrieve next page
+* [/] Create looping logic
+* [/] Stop loop correctly
+* [/] Combine results
+* [/] Process records safely
+* [/] Test small dataset
+* [/] Test multiple pages
+* [/] Test pagination failure
+* [/] Add debugging exercise
+* [/] Add challenge
+* [/] Complete lab documentation
 
 ### Main Learning Outcome
 
@@ -366,13 +366,13 @@ Understand how automation handles datasets larger than one API response.
 
 ## Phase Complete When
 
-* [ ] Labs 03–05 complete
-* [ ] Webhooks work
-* [ ] API requests work
-* [ ] Validation works
-* [ ] Pagination works
-* [ ] Failure scenarios tested
-* [ ] Documentation complete
+* [/] Labs 03–05 complete
+* [/] Webhooks work
+* [/] API requests work
+* [/] Validation works
+* [/] Pagination works
+* [/] Failure scenarios tested
+* [/] Documentation complete
 
 ---
 

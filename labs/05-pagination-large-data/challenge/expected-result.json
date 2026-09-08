@@ -1,0 +1,11 @@
+{
+  "expected_pages_fetched": 30,
+  "expected_total_records": 208,
+  "expected_skip_sequence_start": [
+    0,
+    7,
+    14,
+    21,
+    28
+  ]
+}
