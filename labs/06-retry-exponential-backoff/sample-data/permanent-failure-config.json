@@ -1,0 +1,7 @@
+{
+  "scenario": "permanent_failure",
+  "max_attempts": 4,
+  "success_on_attempt": 3,
+  "base_delay_seconds": 1,
+  "attempt": 1
+}

@@ -390,21 +390,21 @@ This is one of the most important phases in AEP.
 
 ### Build
 
-* [ ] Create temporary API failure scenario
-* [ ] Detect failed request
-* [ ] Add retry logic
-* [ ] Add retry counter
-* [ ] Add maximum retry limit
-* [ ] Add delay
-* [ ] Implement exponential backoff
-* [ ] Handle HTTP 429
-* [ ] Handle temporary server errors
-* [ ] Stop retries when necessary
-* [ ] Log attempts
-* [ ] Test eventual success
-* [ ] Test permanent failure
-* [ ] Add challenge
-* [ ] Complete documentation
+* [/] Create temporary API failure scenario
+* [/] Detect failed request
+* [/] Add retry logic
+* [/] Add retry counter
+* [/] Add maximum retry limit
+* [/] Add delay
+* [/] Implement exponential backoff
+* [/] Handle HTTP 429
+* [/] Handle temporary server errors
+* [/] Stop retries when necessary
+* [/] Log attempts
+* [/] Test eventual success
+* [/] Test permanent failure
+* [/] Add challenge
+* [/] Complete documentation
 
 ### Main Learning Outcome
 

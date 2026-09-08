@@ -1,0 +1,383 @@
+{
+  "name": "AEP Lab 06 - Retry Logic and Exponential Backoff",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        -80
+      ],
+      "id": "18ff5b55-374a-489e-a445-d595fa8e1a21",
+      "name": "Manual trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c939a7d6-2d80-448b-8051-782004479cc0",
+              "name": "scenario",
+              "value": "eventual_success",
+              "type": "string"
+            },
+            {
+              "id": "2e8ae42e-66bc-470b-97ab-e3c5c738528a",
+              "name": "max_attempts",
+              "value": 4,
+              "type": "number"
+            },
+            {
+              "id": "c0b1eb63-f39a-4195-bbc1-e9232f28e1fa",
+              "name": "success_on_attempt",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "9212bc1d-be98-4f34-85b1-4524af8356e7",
+              "name": "base_delay_seconds",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "1a01e784-a6f1-40c3-abfb-41ac058c0160",
+              "name": "attempt",
+              "value": 1,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -368,
+        -80
+      ],
+      "id": "02b7f288-38e0-4af1-a267-159756a25cb1",
+      "name": "Set Retry Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "const attempt = $json.attempt;\nconst successOnAttempt = $json.success_on_attempt;\nconst scenario = $json.scenario;\n\nlet statusCode;\nlet message;\n\nif (scenario === 'non_retryable_failure') {\n  statusCode = 400;\n  message = 'Bad request';\n} else if (scenario === 'permanent_failure') {\n  statusCode = 503;\n  message = 'Service unavailable';\n} else if (attempt >= successOnAttempt) {\n  statusCode = 200;\n  message = 'Request successful';\n} else if (attempt === 1) {\n  statusCode = 429;\n  message = 'Too many requests';\n} else {\n  statusCode = 503;\n  message = 'Service unavailable';\n}\n\nreturn {\n  json: {\n    ...$json,\n    response: {\n      status_code: statusCode,\n      message\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -80
+      ],
+      "id": "1b488602-f17c-4f1e-8ba9-864082da7033",
+      "name": "Simulate API Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "640ecfc6-a187-46a3-b845-49cc281fdd61",
+              "leftValue": "={{ $json.response.status_code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        -80
+      ],
+      "id": "8b56def3-a802-41f1-a2f9-5e1740fde831",
+      "name": "Was Request Successful?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const statusCode = $json.response.status_code;\n\nconst retryableStatusCodes = [429, 500, 502, 503, 504];\n\nconst isRetryable = retryableStatusCodes.includes(statusCode);\n\nreturn {\n  json: {\n    ...$json,\n    failure: {\n      status_code: statusCode,\n      retryable: isRetryable\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        64
+      ],
+      "id": "bc222096-9abc-4e63-8500-00b186440648",
+      "name": "Classify Failure"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7edacb13-5253-481e-81e1-310801369a01",
+              "leftValue": "={{ $json.failure.retryable }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c6c1f951-431c-4004-b379-f0ac4af12b29",
+              "leftValue": "={{ $json.attempt }}",
+              "rightValue": "={{ $json.max_attempts }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        -64
+      ],
+      "id": "e4474f24-e397-45bf-9e41-a49a1ca2b764",
+      "name": "Should Retry?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const attempt = $json.attempt;\nconst baseDelay = $json.base_delay_seconds;\n\nconst backoffSeconds =\n  baseDelay * Math.pow(2, attempt - 1);\n\n// Add up to 1 second of random jitter\nconst jitterSeconds = Math.random();\n\nconst delaySeconds =\n  backoffSeconds + jitterSeconds;\n\nreturn {\n  json: {\n    ...$json,\n    retry: {\n      backoff_seconds: backoffSeconds,\n      jitter_seconds: jitterSeconds,\n      delay_seconds: delaySeconds\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -208
+      ],
+      "id": "57544f1f-7b3a-4014-8091-3bf6085cbed4",
+      "name": "Calculate Backoff"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.retry.delay_seconds }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        -32
+      ],
+      "id": "e5cb621b-fead-4ac8-a57e-f265927c4986",
+      "name": "Wait Before Retry",
+      "webhookId": "86c9656f-3cb9-49cb-9a9a-47d5aa006eac"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    ...$json,\n    attempt: $json.attempt + 1\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        192
+      ],
+      "id": "e314ce2a-673a-4321-abc1-f4df498c894d",
+      "name": "Increase Retry Counter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const retryLog = $json.retry_log ?? [];\n\nreturn {\n  json: {\n    success: true,\n    final_status_code: $json.response.status_code,\n    message: $json.response.message,\n    attempts_used: $json.attempt,\n    retries_performed: retryLog.length,\n    retry_log: retryLog\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -176
+      ],
+      "id": "56bccdb7-777f-44c5-92d0-08f55ca7bc22",
+      "name": "Return Success"
+    },
+    {
+      "parameters": {
+        "jsCode": "const retryLog = $json.retry_log ?? [];\nconst isRetryable = $json.failure?.retryable ?? false;\n\nconst message = isRetryable\n  ? 'Request failed after maximum retry attempts'\n  : 'Request failed with a non-retryable error';\n\nreturn {\n  json: {\n    success: false,\n    final_status_code: $json.response.status_code,\n    message,\n    attempts_used: $json.attempt,\n    failed_attempts: retryLog.length,\n    retries_performed: Math.max($json.attempt - 1, 0),\n    retry_log: retryLog\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        128
+      ],
+      "id": "87a56aad-4765-4b38-865a-2687460ed1a0",
+      "name": "Return Permanent Failure"
+    },
+    {
+      "parameters": {
+        "jsCode": "const retryLog = $json.retry_log ?? [];\n\nretryLog.push({\n  attempt: $json.attempt,\n  status_code: $json.response.status_code,\n  message: $json.response.message\n});\n\nreturn {\n  json: {\n    ...$json,\n    retry_log: retryLog\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        48
+      ],
+      "id": "230f4ebb-b31d-4d13-a939-e61f8985a375",
+      "name": "Log Failed Attempt"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Retry Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Retry Config": {
+      "main": [
+        [
+          {
+            "node": "Simulate API Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate API Request": {
+      "main": [
+        [
+          {
+            "node": "Was Request Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Was Request Successful?": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Failure": {
+      "main": [
+        [
+          {
+            "node": "Log Failed Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Retry?": {
+      "main": [
+        [
+          {
+            "node": "Calculate Backoff",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Permanent Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Backoff": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Retry": {
+      "main": [
+        [
+          {
+            "node": "Increase Retry Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increase Retry Counter": {
+      "main": [
+        [
+          {
+            "node": "Simulate API Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Failed Attempt": {
+      "main": [
+        [
+          {
+            "node": "Should Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d530afd5-7980-4403-adf0-d9bc8016101f",
+  "meta": {
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "O5xXiLZC725IJzlE",
+  "tags": []
+}

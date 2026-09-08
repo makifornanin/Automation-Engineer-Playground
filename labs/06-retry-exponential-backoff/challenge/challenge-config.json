@@ -1,0 +1,7 @@
+{
+  "scenario": "eventual_success",
+  "max_attempts": 5,
+  "success_on_attempt": 4,
+  "base_delay_seconds": 2,
+  "attempt": 1
+}

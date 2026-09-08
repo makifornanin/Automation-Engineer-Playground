@@ -1,0 +1,18 @@
+{
+  "expected_success": true,
+  "expected_attempts_used": 4,
+  "expected_retries_performed": 3,
+  "expected_failed_attempts": 3,
+  "expected_status_sequence": [
+    429,
+    503,
+    503,
+    200
+  ],
+  "expected_backoff_seconds": [
+    2,
+    4,
+    8
+  ],
+  "note": "Jitter adds a random value between 0 and 1 second, so final delay_seconds will be slightly higher than each backoff value."
+}
