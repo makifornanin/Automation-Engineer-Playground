@@ -1,0 +1,7 @@
+{
+    "output":  {
+                   "reason":  "The intent may be sales-related, but it is unclear.",
+                   "recommended_action":  "send_to_sales",
+                   "confidence":  0.6
+               }
+}

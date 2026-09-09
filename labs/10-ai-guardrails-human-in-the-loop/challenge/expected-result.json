@@ -1,0 +1,22 @@
+{
+    "low_confidence_path":  {
+                                "reason":  "low_confidence",
+                                "expected_action":  "send_to_sales",
+                                "requires_approval":  true,
+                                "expected_status":  "pending_approval"
+                            },
+    "automatic_path":  {
+                           "expected_action":  "send_to_sales",
+                           "requires_approval":  false,
+                           "expected_status":  "auto_executed"
+                       },
+    "human_decisions":  {
+                            "reject":  "rejected",
+                            "approve":  "approved_and_executed"
+                        },
+    "restricted_path":  {
+                            "expected_action":  "cancel_account",
+                            "requires_approval":  true,
+                            "expected_status":  "pending_approval"
+                        }
+}

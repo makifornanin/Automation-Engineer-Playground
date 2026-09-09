@@ -1,0 +1,18 @@
+[
+    {
+        "scenario":  "automatic",
+        "message":  "I\u0027d like to know your pricing and speak with someone about your plans.",
+        "request_id":  "req_guard_challenge_001"
+    },
+    {
+        "scenario":  "restricted",
+        "message":  "Please cancel my account today.",
+        "request_id":  "req_guard_challenge_002"
+    },
+    {
+        "scenario":  "low_confidence_simulated",
+        "recommended_action":  "send_to_sales",
+        "confidence":  0.6,
+        "request_id":  "req_guard_challenge_003"
+    }
+]

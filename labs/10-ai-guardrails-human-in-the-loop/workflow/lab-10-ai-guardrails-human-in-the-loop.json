@@ -1,0 +1,937 @@
+{
+  "name": "AEP Lab 10 - AI Guardrails & Human-in-the-Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-10-guardrails",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        -48
+      ],
+      "id": "bf4c6614-b4c3-4606-befb-be16046b4473",
+      "name": "Receive Service Request",
+      "webhookId": "4633c8aa-6848-4c6a-9deb-af9e9aca7964"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1024032f-2cb9-48d4-a334-ba9e6b4fc1db",
+              "name": "request_id",
+              "value": "={{ $json.body.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "1045bab9-abc0-4e15-9b45-07b1cb2b15ea",
+              "name": "=message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "f9850181-4fd1-435b-b56f-1ef3b252d5e4",
+              "name": "allowed_automatic_actions",
+              "value": "send_to_sales,create_support_ticket,send_to_billing",
+              "type": "string"
+            },
+            {
+              "id": "fd4acdd8-1006-4213-a8ac-2261acce54bc",
+              "name": "restricted_actions",
+              "value": "issue_refund,cancel_account",
+              "type": "string"
+            },
+            {
+              "id": "99114dc2-a07b-469d-8755-ab02bc5c4b6c",
+              "name": "confidence_threshold",
+              "value": 0.85,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        -48
+      ],
+      "id": "cf62fa46-d285-4199-8641-03c0cddf8167",
+      "name": "Prepare Guardrail Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI service-request decision assistant.\n\nCustomer request:\n{{ $json.message }}\n\nAllowed automatic actions:\n{{ $json.allowed_automatic_actions }}\n\nRestricted actions:\n{{ $json.restricted_actions }}\n\nChoose the single best recommended action for the request.\n\nPossible actions:\n- send_to_sales\n- create_support_ticket\n- send_to_billing\n- issue_refund\n- cancel_account\n- manual_review\n\nReturn:\n- recommended_action\n- confidence from 0 to 1\n- a short reason\n\nImportant decision rules:\n\n- If the customer explicitly asks to cancel, close, terminate, or delete their account, recommend \"cancel_account\".\n- If the customer explicitly requests a refund, recommend \"issue_refund\".\n- If the request is about billing but does NOT explicitly ask for a refund, recommend \"send_to_billing\".\n- If the request is a technical/account-access problem, recommend \"create_support_ticket\".\n- If the request is about buying, pricing, plans, or speaking with sales, recommend \"send_to_sales\".\n- Use \"manual_review\" only when the intent is genuinely unclear.\n\nDo not replace restricted actions with safer alternatives.\nYour job is to recommend the action that best matches the user's request.\nThe guardrail system will decide whether it can run automatically.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        64,
+        -48
+      ],
+      "id": "4c3cda6f-a65e-4b62-ad7a-b11d6cb291e0",
+      "name": "Gemini Guardrail Decision"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        112
+      ],
+      "id": "ea98a87b-f8ee-4f7f-b7c6-00359788338f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X8vGNL7vOqXOnHt4",
+          "name": "GoHa Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"send_to_sales\",\n        \"create_support_ticket\",\n        \"send_to_billing\",\n        \"issue_refund\",\n        \"cancel_account\",\n        \"manual_review\"\n      ]\n    },\n    \"confidence\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1\n    },\n    \"reason\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"recommended_action\",\n    \"confidence\",\n    \"reason\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        160
+      ],
+      "id": "52d4cca5-9212-4075-a8dc-b0d72551979f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ai = $json.output;\nconst input = $('Prepare Guardrail Input').item.json;\n\nconst allowedAutomaticActions = input.allowed_automatic_actions\n  .split(',')\n  .map(action => action.trim());\n\nconst restrictedActions = input.restricted_actions\n  .split(',')\n  .map(action => action.trim());\n\nconst threshold = Number(input.confidence_threshold);\n\nconst isAllowedAutomatic = allowedAutomaticActions.includes(\n  ai.recommended_action\n);\n\nconst isRestricted = restrictedActions.includes(\n  ai.recommended_action\n);\n\nconst highConfidence = ai.confidence >= threshold;\n\nconst canAutoExecute =\n  isAllowedAutomatic &&\n  highConfidence &&\n  !isRestricted;\n\nlet guardrailReason;\n\nif (isRestricted) {\n  guardrailReason = 'restricted_action';\n} else if (!highConfidence) {\n  guardrailReason = 'low_confidence';\n} else if (!isAllowedAutomatic) {\n  guardrailReason = 'not_allowed_automatically';\n} else {\n  guardrailReason = 'automatic_action_allowed';\n}\n\nreturn {\n  json: {\n    request_id: input.request_id,\n    recommended_action: ai.recommended_action,\n    confidence: ai.confidence,\n    reason: ai.reason,\n    is_allowed_automatic: isAllowedAutomatic,\n    is_restricted: isRestricted,\n    high_confidence: highConfidence,\n    can_auto_execute: canAutoExecute,\n    requires_approval: !canAutoExecute,\n    guardrail_reason: guardrailReason\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -48
+      ],
+      "id": "65e04608-5b4e-4f98-9d7b-c186a3a1d789",
+      "name": "Apply Guardrails"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bb927964-477c-4056-8b8f-396377de95a5",
+              "leftValue": "={{ $json.can_auto_execute }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        -48
+      ],
+      "id": "9720b96e-1d7e-4105-b04e-350bedc56c44",
+      "name": "Can Auto Execute?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e2e6261-baa0-4ee0-867a-d6f09c72cc68",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "d0e2599e-f017-4389-ab1a-ec508ec08b97",
+              "name": "status",
+              "value": "auto_executed",
+              "type": "string"
+            },
+            {
+              "id": "dcf4a150-bde1-4dff-ab4e-40da9c73abda",
+              "name": "request_id",
+              "value": "={{ $json.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "02beef95-c0f5-46fa-af09-771d140de057",
+              "name": "action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "0498c0ef-efa8-45bb-bdfa-da252fb90aa1",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "064fc634-2984-4d71-a127-45a62f561aaa",
+              "name": "requires_approval",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "0e588043-5779-4006-9d25-e5abff95c225",
+              "name": "decision_source",
+              "value": "ai_guardrail",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        -144
+      ],
+      "id": "ff3eb8c2-ef4a-4519-8580-1227486c6aab",
+      "name": "Execute Automatic Action"
+    },
+    {
+      "parameters": {
+        "tableId": "approval_requests",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "request_id",
+              "fieldValue": "={{ $json.request_id }}"
+            },
+            {
+              "fieldId": "recommended_action",
+              "fieldValue": "={{ $json.recommended_action }}"
+            },
+            {
+              "fieldId": "confidence",
+              "fieldValue": "={{ $json.confidence }}"
+            },
+            {
+              "fieldId": "reason",
+              "fieldValue": "={{ $json.reason }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        48
+      ],
+      "id": "8e86a6c8-cc92-422d-a04b-89e72c4db8ab",
+      "name": "Create Pending Approval",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e2e6261-baa0-4ee0-867a-d6f09c72cc68",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "d0e2599e-f017-4389-ab1a-ec508ec08b97",
+              "name": "status",
+              "value": "pending_approval",
+              "type": "string"
+            },
+            {
+              "id": "dcf4a150-bde1-4dff-ab4e-40da9c73abda",
+              "name": "request_id",
+              "value": "={{ $json.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "02beef95-c0f5-46fa-af09-771d140de057",
+              "name": "action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "0498c0ef-efa8-45bb-bdfa-da252fb90aa1",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "064fc634-2984-4d71-a127-45a62f561aaa",
+              "name": "requires_approval",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "b0dc76c8-aba4-4844-b1c4-fcf8ef040cd5",
+              "name": "decision_source ",
+              "value": "ai_guardrail",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1264,
+        48
+      ],
+      "id": "a07f5e13-557a-4a52-b2b6-f7f3e56fed26",
+      "name": "Return Pending Approval"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    output: {\n      recommended_action: 'send_to_sales',\n      confidence: 0.68,\n      reason: 'The intent may be sales-related, but it is unclear.'\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -304
+      ],
+      "id": "4edfbd53-415f-4302-bf5f-669c5221b01e",
+      "name": "Simulate Restricted Decision"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-10-approval-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -368,
+        736
+      ],
+      "id": "507912b1-3424-4808-99cc-c5e2579a1ce7",
+      "name": "Receive Human Decision",
+      "webhookId": "4acc451c-3796-4fb1-9f2f-9aa641374af8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4d35c45f-90aa-4432-bbf3-804802b8011b",
+              "name": "approval_id",
+              "value": "={{ $json.body.approval_id }}",
+              "type": "string"
+            },
+            {
+              "id": "5bd545a8-3f86-4329-8400-331180333d9f",
+              "name": "decision",
+              "value": "={{ $json.body.decision }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        736
+      ],
+      "id": "8c099857-be6a-4e79-8fbe-c54b3161e4af",
+      "name": "Prepare Human Decision"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c6bd8740-f68d-4b67-a610-4ab865b172f0",
+              "leftValue": "={{ $('Prepare Human Decision').item.json.decision }}",
+              "rightValue": "approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        736
+      ],
+      "id": "36423766-8765-4404-b5bd-6a24c07bc18c",
+      "name": "Approve or Reject?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "approval_requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "approved"
+            },
+            {
+              "fieldId": "human_decision",
+              "fieldValue": "approved"
+            },
+            {
+              "fieldId": "decided_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        512,
+        592
+      ],
+      "id": "c7746c62-6b87-46ca-9305-0eec79b50d0e",
+      "name": "Mark Approved",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e2e6261-baa0-4ee0-867a-d6f09c72cc68",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "d0e2599e-f017-4389-ab1a-ec508ec08b97",
+              "name": "status",
+              "value": "approved_and_executed",
+              "type": "string"
+            },
+            {
+              "id": "bd63a82c-8991-457d-9452-741bc7d737e5",
+              "name": "approval_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "28535148-2f7e-4357-8f8a-59eb47db49c9",
+              "name": "request_id",
+              "value": "={{ $json.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e62fabec-5273-4c3a-b519-c64e26057ff8",
+              "name": "action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "2d5582ac-4d33-49b3-9f7e-e677383d999e",
+              "name": "human_decision",
+              "value": "approve",
+              "type": "string"
+            },
+            {
+              "id": "7fbb3d79-c982-4ec0-b591-afc685b56e1a",
+              "name": "decision_source ",
+              "value": "ai_guardrail",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        592
+      ],
+      "id": "52eac8d7-2fb1-4434-8af8-4796203fbae4",
+      "name": "Execute Approved Action"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "approval_requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "rejected"
+            },
+            {
+              "fieldId": "human_decision",
+              "fieldValue": "rejected"
+            },
+            {
+              "fieldId": "decided_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        512,
+        816
+      ],
+      "id": "158f7d02-3c76-4beb-a759-7a405c04f0c8",
+      "name": "Mark Rejected",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e2e6261-baa0-4ee0-867a-d6f09c72cc68",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "d0e2599e-f017-4389-ab1a-ec508ec08b97",
+              "name": "status",
+              "value": "rejected",
+              "type": "string"
+            },
+            {
+              "id": "bd63a82c-8991-457d-9452-741bc7d737e5",
+              "name": "approval_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "28535148-2f7e-4357-8f8a-59eb47db49c9",
+              "name": "request_id",
+              "value": "={{ $json.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e62fabec-5273-4c3a-b519-c64e26057ff8",
+              "name": "action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "2d5582ac-4d33-49b3-9f7e-e677383d999e",
+              "name": "human_decision",
+              "value": "rejected",
+              "type": "string"
+            },
+            {
+              "id": "4145d7d4-530b-474e-8292-a6d345b13dad",
+              "name": "decision_source",
+              "value": "ai_guardrail",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        816
+      ],
+      "id": "9dc6f2f7-bc32-461e-a41c-efa7eb251f16",
+      "name": "Return Rejected Decision"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "approval_requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.approval_id }}"
+            },
+            {
+              "keyName": "status",
+              "keyValue": "pending"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        48,
+        736
+      ],
+      "id": "61a441dd-2c55-4f83-a586-5c0874850cdd",
+      "name": "Fetch Pending Approval",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    output: {\n      recommended_action: 'send_to_sales',\n      confidence: 0.60,\n      reason: 'The intent may be sales-related, but it is unclear.'\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -320
+      ],
+      "id": "a298e39f-ffb9-470c-ae51-63a1ad15f9e9",
+      "name": "Simulate Low Confidence Decision"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        704
+      ],
+      "id": "594cb90e-c73c-4b95-82eb-8e8a0efa3285",
+      "name": "Return Human Decision Result"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1552,
+        -112
+      ],
+      "id": "a4b8b2fc-ac98-40fc-b325-bad2297c6567",
+      "name": "Return Guardrail Decision"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Service Request": {
+      "main": [
+        [
+          {
+            "node": "Prepare Guardrail Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Guardrail Input": {
+      "main": [
+        [
+          {
+            "node": "Gemini Guardrail Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Guardrail Decision": {
+      "main": [
+        [
+          {
+            "node": "Apply Guardrails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini Guardrail Decision",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Gemini Guardrail Decision",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Guardrails": {
+      "main": [
+        [
+          {
+            "node": "Can Auto Execute?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Auto Execute?": {
+      "main": [
+        [
+          {
+            "node": "Execute Automatic Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Automatic Action": {
+      "main": [
+        [
+          {
+            "node": "Return Guardrail Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Pending Approval": {
+      "main": [
+        [
+          {
+            "node": "Return Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Pending Approval": {
+      "main": [
+        [
+          {
+            "node": "Return Guardrail Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate Restricted Decision": {
+      "main": [
+        []
+      ]
+    },
+    "Receive Human Decision": {
+      "main": [
+        [
+          {
+            "node": "Prepare Human Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Human Decision": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approve or Reject?": {
+      "main": [
+        [
+          {
+            "node": "Mark Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Approved": {
+      "main": [
+        [
+          {
+            "node": "Execute Approved Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Approved Action": {
+      "main": [
+        [
+          {
+            "node": "Return Human Decision Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Rejected": {
+      "main": [
+        [
+          {
+            "node": "Return Rejected Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Rejected Decision": {
+      "main": [
+        [
+          {
+            "node": "Return Human Decision Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending Approval": {
+      "main": [
+        [
+          {
+            "node": "Approve or Reject?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7cfdb68a-1539-4cf8-aa9a-418390c155e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "E2ONNFWJBFIDA9qu",
+  "tags": []
+}

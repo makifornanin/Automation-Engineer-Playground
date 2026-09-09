@@ -542,21 +542,21 @@ Understand how AI can produce predictable information that automation systems ca
 
 ### Build
 
-* [ ] Define allowed automatic actions
-* [ ] Define restricted actions
-* [ ] Create confidence threshold
-* [ ] Route high-confidence decisions
-* [ ] Route low-confidence decisions
-* [ ] Create pending approval record
-* [ ] Create approval flow
-* [ ] Create rejection flow
-* [ ] Resume workflow after approval
-* [ ] Log human decision
-* [ ] Test automatic path
-* [ ] Test approval path
-* [ ] Test rejection path
-* [ ] Add challenge
-* [ ] Complete documentation
+* [/] Define allowed automatic actions
+* [/] Define restricted actions
+* [/] Create confidence threshold
+* [/] Route high-confidence decisions
+* [/] Route low-confidence decisions
+* [/] Create pending approval record
+* [/] Create approval flow
+* [/] Create rejection flow
+* [/] Resume workflow after approval
+* [/] Log human decision
+* [/] Test automatic path
+* [/] Test approval path
+* [/] Test rejection path
+* [/] Add challenge
+* [/] Complete documentation
 
 ### Main Learning Outcome
 
@@ -567,12 +567,12 @@ Understand when AI should act automatically and when a human should take control
 ## Phase Complete When
 
 * [/] Lab 09 complete
-* [ ] Lab 10 complete
+* [/] Lab 10 complete
 * [/] AI output is structured
 * [/] AI responses are validated
-* [ ] Guardrails work
-* [ ] Human approval works
-* [ ] Failure scenarios tested
+* [/] Guardrails work
+* [/] Human approval works
+* [/] Failure scenarios tested
 
 ---
 
