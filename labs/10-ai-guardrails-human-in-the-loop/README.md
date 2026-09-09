@@ -110,6 +110,30 @@ human approval required
 
 ---
 
+# Prerequisites
+
+Before starting this lab you need:
+
+- [ ] n8n running
+- [ ] A Supabase project and an n8n Supabase credential
+- [ ] A Google Gemini API key configured as an n8n credential
+- [ ] A way to send a webhook test request
+- [ ] Lab 09 completed, or an understanding of structured AI output and validation
+
+Setup steps are in [`docs/environment-setup.md`](../../docs/environment-setup.md).
+
+This lab needs the most setup in the course: it combines the Gemini credential
+from Lab 09 with the Supabase credential from Labs 07 and 08.
+
+> **How to send these requests:** this lab has **two** webhooks — one for the
+> incoming service request, one for the human decision. Both are plain POSTs with
+> `Content-Type: application/json`. See
+> [`docs/environment-setup.md`](../../docs/environment-setup.md) for curl and
+> Postman examples. In the future AEP Website the service request becomes
+> **Send Test**, and the human decision becomes the approval UI.
+
+---
+
 # Main Workflow
 
 ```text
@@ -338,10 +362,30 @@ Example:
 }
 ```
 
+> **Use your own ID, not this one.** `1` is only an example. The
+> `approval_requests` table assigns `id` in insert order, so the pending record
+> created by *your* run will usually have a different number.
+>
+> Find yours in the Supabase table editor, or run:
+>
+> ```sql
+> select id, request_id, recommended_action, status
+> from approval_requests
+> where status = 'pending'
+> order by id desc;
+> ```
+>
+> The `approval_id` values in `sample-data/approve-decision.json` and
+> `sample-data/reject-decision.json` are placeholders — replace them with your
+> own pending IDs before testing.
+>
+> The future AEP Website will resolve this automatically, because the approver
+> will click a real pending request rather than type an ID.
+
 The workflow fetches only:
 
 ```text
-id = 1
+id = <the approval_id you sent>
 AND
 status = pending
 ```

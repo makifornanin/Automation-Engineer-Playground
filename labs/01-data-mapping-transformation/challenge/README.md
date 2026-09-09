@@ -1,4 +1,4 @@
-# Lab 01 Challenge — Nested Lead Payload to CRM
+# Lab 01 Challenge â€” Nested Lead Payload to CRM
 
 ## Challenge
 
@@ -26,7 +26,7 @@ If stuck, use the hints one at a time.
 
 ---
 
-## Hint 1 — Data Types
+## Hint 1 â€” Data Types
 
 Look carefully at the data types.
 
@@ -40,7 +40,7 @@ Think about:
 
 ---
 
-## Hint 2 — Cleaning Data
+## Hint 2 â€” Cleaning Data
 
 Some strings contain spaces that should not be stored in the CRM.
 
@@ -48,7 +48,7 @@ Think about the string method used to remove whitespace from the beginning and e
 
 ---
 
-## Hint 3 — Arrays
+## Hint 3 â€” Arrays
 
 Do not manually reference:
 

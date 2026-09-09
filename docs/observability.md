@@ -34,3 +34,4 @@ Each log record can contain:
   "retry_count": 3,
   "recovered": true
 }
+```

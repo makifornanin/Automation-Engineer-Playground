@@ -207,6 +207,22 @@ Recovery Successful?
 
 ---
 
+# Prerequisites
+
+Before starting this lab you need:
+
+- [ ] n8n running
+- [ ] A Supabase project and an n8n Supabase credential
+- [ ] A way to send a webhook test request
+- [ ] Lab 06 completed, or an understanding of retries and retry limits
+
+Setup steps are in [`docs/environment-setup.md`](../../docs/environment-setup.md).
+
+This lab picks up exactly where retries give up, so the Lab 06 concepts matter
+more here than the Lab 06 workflow does.
+
+---
+
 # DLQ Storage
 
 The main DLQ table is:
@@ -766,6 +782,11 @@ This makes it clear that processing did not succeed, but the event was safely pr
 
 # Permanent Failure Test
 
+> **How to send these requests:** POST the file contents to your webhook URL with
+> `Content-Type: application/json`. See
+> [`docs/environment-setup.md`](../../docs/environment-setup.md) for curl and
+> Postman examples. In the future AEP Website this will be handled by **Send Test**.
+
 Use:
 
 ```text
@@ -910,6 +931,23 @@ recovery_scenario = success
 ```
 
 The `dlq_id` identifies which DLQ record should be recovered.
+
+> **Use your own ID, not this one.** `1` is only an example. Postgres assigns
+> `id` values in insert order, so the row created by *your* run will almost
+> certainly have a different number.
+>
+> Find yours in the Supabase table editor, or run:
+>
+> ```sql
+> select id, event_id, status from dlq_events order by id desc;
+> ```
+>
+> Use the `id` of the record you just created. The same applies to the
+> `dlq_id` values in `sample-data/recovery-success-config.json` and
+> `sample-data/recovery-failure-config.json` — treat those as placeholders and
+> replace them before testing.
+>
+> The future AEP Website will look this ID up for you.
 
 ---
 
@@ -1127,6 +1165,7 @@ recovered_at = populated
 Example:
 
 ```sql
+-- replace 1 with the dlq_id you recovered
 select id, event_id, status, recovered_at
 from dlq_events
 where id = 1;

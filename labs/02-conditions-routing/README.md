@@ -1,8 +1,8 @@
 # Lab 02 — Conditions & Routing
 
-**Difficulty:** Beginner
-**Main Concept:** Conditions, Routing, AND / OR Logic
-**Estimated Time:** 45–60 minutes
+- **Difficulty:** Beginner
+- **Main Concept:** Conditions, Routing, AND / OR Logic
+- **Estimated Time:** 45–60 minutes
 
 ---
 
@@ -501,6 +501,30 @@ correct business behavior
 
 ---
 
+## Unexpected Input Test
+
+Test the workflow with:
+
+```json
+{
+  "name": "Broken Lead",
+  "lead_temperature": "",
+  "budget": null,
+  "contacted_before": false,
+  "country": "AU"
+}
+```
+
+Expected routing:
+
+```text
+Priority Sales → false
+Warm Lead → false
+Low Priority → true
+```
+
+---
+
 # Challenge — Smart Lead Routing
 
 Now build a more advanced routing system.
@@ -532,7 +556,7 @@ The challenge includes leads such as:
 
 ```text
 Alex Rivera
-Mark Milca
+Dana Reyes
 Jamie Lee
 Jordan Patel
 Casey Wong
@@ -704,7 +728,7 @@ Expected results:
 
 ```text
 Alex Rivera   → Priority Sales
-Mark Milca    → Priority Sales
+Dana Reyes    → Priority Sales
 Jamie Lee     → Manual Review
 Jordan Patel  → Manual Review
 Casey Wong    → Manual Review
@@ -1006,7 +1030,7 @@ During development of this lab, an additional personal experiment was created.
 A specific lead:
 
 ```text
-Mark Milca
+Dana Reyes
 ```
 
 was checked using an IF condition.

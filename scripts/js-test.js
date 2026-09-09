@@ -1,6 +1,6 @@
 const input = {
-  first_name: "Mark",
-  last_name: "Milca"
+  first_name: "Alex",
+  last_name: "Rivera"
 };
 
 const output = {

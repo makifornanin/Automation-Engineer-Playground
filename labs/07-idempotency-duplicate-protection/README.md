@@ -157,6 +157,21 @@ The second layer protects against race conditions.
 
 ---
 
+# Prerequisites
+
+Before starting this lab you need:
+
+- [ ] n8n running
+- [ ] A Supabase project and an n8n Supabase credential
+- [ ] A way to send a webhook test request
+
+Setup steps for all three are in [`docs/environment-setup.md`](../../docs/environment-setup.md).
+
+This is the first lab that needs a database, so if you have not set up Supabase
+yet, do that before continuing.
+
+---
+
 # Database Tables
 
 ## processed_events
@@ -656,6 +671,11 @@ Example:
 ---
 
 # First Delivery Test
+
+> **How to send these requests:** POST the JSON to your webhook URL with
+> `Content-Type: application/json`. See
+> [`docs/environment-setup.md`](../../docs/environment-setup.md) for curl and
+> Postman examples. In the future AEP Website this will be handled by **Send Test**.
 
 Send:
 

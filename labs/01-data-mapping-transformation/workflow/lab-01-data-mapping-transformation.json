@@ -102,79 +102,6 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "e1751194-bc93-4017-92fc-6d6dbc4a43cb",
-              "name": "full_name",
-              "value": "={{ $json.contact.first.trim() }} {{ $json.contact.last.toLowerCase() }}",
-              "type": "string"
-            },
-            {
-              "id": "7875d42e-2a8d-4c86-aed1-6239939a0076",
-              "name": "email",
-              "value": "={{ $json.contact.email.trim().toLowerCase() }}",
-              "type": "string"
-            },
-            {
-              "id": "d3444187-3a0c-4c0c-b9ba-88ea7a62d888",
-              "name": "company_name",
-              "value": "={{ $json.company.name.trim() }}",
-              "type": "string"
-            },
-            {
-              "id": "1ee491c7-d648-46cd-95bf-25cae4405d89",
-              "name": "job_title",
-              "value": "={{ $json.company.role }}",
-              "type": "string"
-            },
-            {
-              "id": "28144286-622d-4dab-95a5-0d9c8ab1ab0c",
-              "name": "lead_source",
-              "value": "={{ $json.marketing.source }}",
-              "type": "string"
-            },
-            {
-              "id": "cb3ceff9-1085-481a-bc18-b7a3e3b24f1f",
-              "name": "campaign_name",
-              "value": "={{ $json.marketing.campaign }}",
-              "type": "string"
-            },
-            {
-              "id": "079ab967-b52c-4483-8c35-05fead08be57",
-              "name": "interests",
-              "value": "={{ $json.interests.join(', ') }}",
-              "type": "string"
-            },
-            {
-              "id": "bf209742-4420-4e1d-97fd-540438810197",
-              "name": "location",
-              "value": "={{ $json.location.city.trim() + ', ' + $json.location.country.trim() }}",
-              "type": "string"
-            },
-            {
-              "id": "38c0c635-26b6-4701-82f0-b478a42ea062",
-              "name": "tags",
-              "value": "={{ $json.tags.join('| ') }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {
-          "ignoreConversionErrors": false
-        }
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        32,
-        144
-      ],
-      "id": "45accb50-6d81-439d-a864-da775091a880",
-      "name": "Challenge | Transform for CRM"
-    },
-    {
-      "parameters": {
         "mode": "raw",
         "jsonOutput": "{\n  \"contact\": {\n    \"first\": \"  jamie \",\n    \"last\": \"LEE  \",\n    \"email\": \" JAMIE.LEE@EMAIL.COM \"\n  },\n  \"company\": {\n    \"name\": \" Northstar Commerce \",\n    \"role\": \"operations manager\"\n  },\n  \"marketing\": {\n    \"source\": \"facebook\",\n    \"campaign\": \"AEP September Campaign\"\n  },\n  \"interests\": [\n    \"Automation\",\n    \"CRM\",\n    \"AI\"\n  ],\n  \"location\": {\n    \"city\": \"  Perth \",\n    \"country\": \"AU\"\n  },\n  \"tags\": [\n    \"Hot Lead\",\n    \"Facebook\",\n    \"Automation\"\n  ]\n}",
         "options": {}
@@ -220,13 +147,7 @@
     },
     "Challenge | Sample Data": {
       "main": [
-        [
-          {
-            "node": "Challenge | Transform for CRM",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },

@@ -78,7 +78,7 @@ Into:
 
 ```json
 {
-  "name": "Mark Milca",
+  "name": "Dana Reyes",
   "email": "mark@email.com"
 }
 ```
@@ -172,13 +172,13 @@ Teach learners how to verify and clean incoming data before using it.
 Input:
 
 ```text
-" MARK@GMAIL.COM "
+" DANA.REYES@EXAMPLE.COM "
 ```
 
 Normalized:
 
 ```text
-mark@gmail.com
+dana.reyes@example.com
 ```
 
 ### Business problem

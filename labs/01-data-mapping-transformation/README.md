@@ -1,8 +1,8 @@
 # Lab 01 — Data Mapping & Transformation
 
-**Difficulty:** Beginner  
-**Main Concept:** Data Mapping & Transformation  
-**Estimated Time:** 30–45 minutes
+- **Difficulty:** Beginner
+- **Main Concept:** Data Mapping & Transformation
+- **Estimated Time:** 30–45 minutes
 
 ---
 
@@ -567,35 +567,53 @@ tags[1]
 tags[2]
 ```
 
+That breaks as soon as the array has a different number of values.
+
 Think about:
 
 ```javascript
 .join()
 ```
 
-For example:
+`.join()` turns every value in an array into one string, and you choose the text placed between the values.
+
+An unrelated example:
 
 ```javascript
-{{ $json.interests.join(', ') }}
+{{ $json.colours.join(' / ') }}
 ```
 
-produces:
+If `colours` is:
+
+```json
+["red", "green", "blue"]
+```
+
+the result is:
 
 ```text
-Automation, CRM, AI
+red / green / blue
 ```
 
-And:
+Now look closely at the expected output for `interests` and `tags`.
 
-```javascript
-{{ $json.tags.join(' | ') }}
-```
+They do **not** use the same separator.
 
-produces:
+Read the expected values character by character, including the spaces, and give each field the separator it actually needs.
 
-```text
-Hot Lead | Facebook | Automation
-```
+---
+
+### Hint 5 — Apply Each Rule Only Where It Belongs
+
+Re-read the requirements list.
+
+Some rules apply to one field only.
+
+For example, the requirements ask you to lowercase the **email**.
+
+They do not ask you to change the casing of any other field.
+
+If a value in your output looks cleaner than the expected result, you have probably applied a transformation somewhere it was not requested.
 
 ---
 
@@ -727,13 +745,25 @@ After completing this lab, you should be able to explain:
 
 ## Workflow File
 
-The completed n8n workflow is available here:
+The completed n8n workflow for the **guided build** is available here:
 
 ```text
 workflow/lab-01-data-mapping-transformation.json
 ```
 
-Try building the lab yourself before importing the completed workflow.
+Try building the lab yourself before importing it.
+
+The export also includes `Challenge | Sample Data`, which gives you the challenge
+payload ready to work with.
+
+The challenge **solution** is intentionally not included. Building that
+transformation yourself is the point of the challenge.
+
+To check your answer, compare your output against:
+
+```text
+challenge/expected-output.json
+```
 
 ---
 

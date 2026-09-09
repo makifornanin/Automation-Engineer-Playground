@@ -61,25 +61,25 @@ Normalization means:
 Example:
 
 ```text
-"   Mark Milca   "
+"   Dana Reyes   "
 ```
 
 becomes:
 
 ```text
-"Mark Milca"
+"Dana Reyes"
 ```
 
 Another example:
 
 ```text
-"  MARK@GMAIL.COM "
+"  DANA.REYES@EXAMPLE.COM "
 ```
 
 becomes:
 
 ```text
-"mark@gmail.com"
+"dana.reyes@example.com"
 ```
 
 Another:
@@ -109,7 +109,7 @@ Validation means:
 Example:
 
 ```text
-markgmail.com
+dana.reyesexample.com
 ```
 
 is not a valid-looking email address because it does not contain `@`.
@@ -158,9 +158,9 @@ The form sends:
 
 ```json
 {
-  "name": "   Mark Milca   ",
-  "email": "  MARK@GMAIL.COM ",
-  "phone": "0917 123 4567",
+  "name": "   Dana Reyes   ",
+  "email": "  DANA.REYES@EXAMPLE.COM ",
+  "phone": "0917 555 0142",
   "country": " ph ",
   "preferred_contact_date": "08/09/2026"
 }
@@ -174,9 +174,9 @@ The automation should first convert it into:
 
 ```json
 {
-  "name": "Mark Milca",
-  "email": "mark@gmail.com",
-  "phone": "09171234567",
+  "name": "Dana Reyes",
+  "email": "dana.reyes@example.com",
+  "phone": "09175550142",
   "country": "PH",
   "preferred_contact_date": "2026-09-08"
 }
@@ -437,13 +437,13 @@ return {
 Input:
 
 ```text
-"   Mark Milca   "
+"   Dana Reyes   "
 ```
 
 Output:
 
 ```text
-"Mark Milca"
+"Dana Reyes"
 ```
 
 Using:
@@ -459,13 +459,13 @@ Using:
 Input:
 
 ```text
-"  MARK@GMAIL.COM "
+"  DANA.REYES@EXAMPLE.COM "
 ```
 
 Output:
 
 ```text
-"mark@gmail.com"
+"dana.reyes@example.com"
 ```
 
 Using:
@@ -605,9 +605,9 @@ Send this payload:
 
 ```json
 {
-  "name": "   Mark Milca   ",
-  "email": "  MARK@GMAIL.COM ",
-  "phone": "0917 123 4567",
+  "name": "   Dana Reyes   ",
+  "email": "  DANA.REYES@EXAMPLE.COM ",
+  "phone": "0917 555 0142",
   "country": " ph ",
   "preferred_contact_date": "08/09/2026"
 }
@@ -617,9 +617,9 @@ Expected normalized output:
 
 ```json
 {
-  "name": "Mark Milca",
-  "email": "mark@gmail.com",
-  "phone": "09171234567",
+  "name": "Dana Reyes",
+  "email": "dana.reyes@example.com",
+  "phone": "09175550142",
   "country": "PH",
   "preferred_contact_date": "2026-09-08"
 }
@@ -808,7 +808,7 @@ Example 2:
 
 ```json
 {
-  "email": "markgmail.com"
+  "email": "dana.reyesexample.com"
 }
 ```
 
@@ -1054,9 +1054,9 @@ Send:
 
 ```json
 {
-  "name": "   Mark Milca   ",
-  "email": "  MARK@GMAIL.COM ",
-  "phone": "0917 123 4567",
+  "name": "   Dana Reyes   ",
+  "email": "  DANA.REYES@EXAMPLE.COM ",
+  "phone": "0917 555 0142",
   "country": " ph ",
   "preferred_contact_date": "08/09/2026"
 }
@@ -1075,10 +1075,10 @@ Expected response:
   "success": true,
   "message": "Lead accepted",
   "data": {
-    "name": "Mark Milca",
+    "name": "Dana Reyes",
     "company": "",
-    "email": "mark@gmail.com",
-    "phone": "09171234567",
+    "email": "dana.reyes@example.com",
+    "phone": "09175550142",
     "country": "PH",
     "preferred_contact_date": "2026-09-08"
   }
@@ -1094,7 +1094,7 @@ Send:
 ```json
 {
   "name": "   ",
-  "email": "markgmail.com",
+  "email": "dana.reyesexample.com",
   "phone": "123",
   "country": "ph",
   "preferred_contact_date": "31/02/2026"
@@ -1151,7 +1151,7 @@ Send:
 {
   "name": "Alex Rivera",
   "email": "alexexample.com",
-  "phone": "09171234567",
+  "phone": "09175550142",
   "country": "PH",
   "preferred_contact_date": "09/09/2026"
 }
@@ -1173,7 +1173,7 @@ Send:
 {
   "name": "Alex Rivera",
   "email": "alex@example.com",
-  "phone": "09171234567",
+  "phone": "09175550142",
   "country": "PH",
   "preferred_contact_date": "31/02/2026"
 }
@@ -1217,7 +1217,7 @@ Send:
 {
   "name": "Jamie Cruz",
   "email_address": "jamie@example.com",
-  "phone": "09171234567",
+  "phone": "09175550142",
   "country": "PH",
   "preferred_contact_date": "08/09/2026"
 }
