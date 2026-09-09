@@ -586,33 +586,33 @@ Review all 10 labs as one complete learning experience before building the capst
 
 ### Consistency
 
-* [ ] All labs follow standard structure
-* [ ] All labs use clear naming
-* [ ] Difficulty progression makes sense
-* [ ] Explanations stay beginner-friendly
-* [ ] Business examples are realistic
+* [/] All labs follow standard structure
+* [/] All labs use clear naming
+* [/] Difficulty progression makes sense
+* [/] Explanations stay beginner-friendly
+* [/] Business examples are realistic
 
 ### Testing
 
-* [ ] Every guided build works
-* [ ] Every successful test passes
-* [ ] Every failure scenario works
-* [ ] Every debugging guide is accurate
-* [ ] Every challenge can be completed
+* [/] Every guided build works
+* [/] Every successful test passes
+* [/] Every failure scenario works
+* [/] Every debugging guide is accurate
+* [/] Every challenge can be completed
 
 ### Student Experience
 
-* [ ] Instructions are understandable without instructor help
-* [ ] Required accounts/tools are clearly explained
-* [ ] Sample data is provided
-* [ ] Expected results are clear
-* [ ] No private credentials are required
+* [/] Instructions are understandable without instructor help
+* [/] Required accounts/tools are clearly explained
+* [/] Sample data is provided
+* [/] Expected results are clear
+* [/] No private credentials are required
 
 ### Security
 
-* [ ] No secrets committed
-* [ ] No real customer information
-* [ ] No exposed API credentials
+* [/] No secrets committed
+* [/] No real customer information
+* [/] No exposed API credentials
 
 ## Phase Complete When
 

@@ -208,11 +208,14 @@ Example:
 https://dummyjson.com/users?limit=5&skip=0
 ```
 
-During this lab build, the API reported:
+Send that request and look at the `total` field in the response. You should see:
 
 ```text
 total = 208
 ```
+
+That number is the API telling you how much data actually exists — which is the
+one thing your first page cannot tell you on its own. Keep an eye on it.
 
 Because this is a public external API, the exact total could change in the future if the provider changes its dataset.
 

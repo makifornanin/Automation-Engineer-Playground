@@ -535,7 +535,7 @@
             },
             {
               "fieldId": "error_message",
-              "fieldValue": "leave empty"
+              "fieldValue": ""
             },
             {
               "fieldId": "retry_count",
