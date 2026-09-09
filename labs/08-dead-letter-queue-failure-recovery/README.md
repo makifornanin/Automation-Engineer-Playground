@@ -1,5 +1,56 @@
 # Lab 08 - Dead Letter Queue & Failure Recovery
 
+## The Hook
+
+Three retries. Three failures. The downstream service is not coming back this
+afternoon.
+
+Your workflow does the only thing it knows how to do: it stops.
+
+And the customer's order — the actual thing this automation existed to handle —
+is now gone. Not delayed. Gone.
+
+---
+
+## The Business Problem
+
+Retries handle failures that end. Some don't. A service is down for hours, a
+credential expired overnight, a downstream system is mid-migration.
+
+When retries run out, the work has to go *somewhere*. If it doesn't, you lose
+real business events and only find out when a customer asks why nothing
+happened.
+
+The difference between a fragile system and a resilient one is not that the
+resilient one never fails. It's that failed work is still there in the morning.
+
+---
+
+## What You'll Build
+
+Two workflows: one that catches unrecoverable failures and preserves them with
+their full context, and one that replays them once the problem is fixed.
+
+```text
+Processing Successful? → Retry Allowed? → Build DLQ Record → Save to DLQ
+
+Start DLQ Recovery → Fetch Pending DLQ Event → replay → Mark DLQ Recovered
+```
+
+---
+
+## What You Already Know
+
+Lab 06 gave you retries with backoff. Lab 07 gave you duplicate protection and
+your first database table.
+
+You can retry temporary failures and block duplicates. But some failures still
+cannot recover on their own — and right now, those events simply vanish.
+
+Today you build the safety net underneath everything you have made so far.
+
+---
+
 ## What You Learn
 
 In this lab, you will learn what happens after normal retry logic can no longer recover a failed event.
@@ -1388,6 +1439,51 @@ recovered_at = null
 
 ---
 
+# Progressive Hints
+
+Use these only if the recovery run does not behave the way you expected.
+
+### Hint 1 — The symptom
+
+Start by checking what is actually in the queue:
+
+```sql
+select id, event_id, status, retry_count, recovered_at
+from dlq_events
+order by id desc;
+```
+
+If you see fewer than two rows, the problem happened *before* recovery — the
+events never made it into the DLQ in the first place. Fix that before touching
+the recovery flow.
+
+### Hint 2 — The evidence
+
+If `Fetch Pending DLQ Event` returns nothing, there are only two possibilities:
+the `dlq_id` you supplied does not exist, or that row is no longer `pending`.
+
+Both filters have to match. Check the `id` you put in `Set Recovery Config`
+against the IDs the query above actually returned — remember they are yours, not
+the example values.
+
+### Hint 3 — The concept
+
+A failed recovery is not a completed recovery.
+
+If `evt_dlq_challenge_002` ends up marked `recovered` after a failed replay, the
+workflow is treating "we tried" as "we succeeded". Ask yourself which node is
+allowed to change `status`, and on which branch it sits.
+
+### Hint 4 — Where to look
+
+Open `Recovery Successful?` and follow both outputs.
+
+Only the TRUE branch should reach `Mark DLQ Recovered`. If the FALSE branch also
+leads there — directly or indirectly — every failed replay quietly closes the
+row, and the event is lost for the second time.
+
+---
+
 # Challenge Verification
 
 Run:
@@ -1867,3 +1963,21 @@ into:
 ```
 
 That is the foundation of resilient failure recovery.
+
+
+---
+
+# What's Next
+
+Your automation is now genuinely reliable. It validates what arrives, refuses
+duplicates, retries what can recover, and preserves what cannot.
+
+Everything it does is also completely predictable — every decision comes from a
+rule you wrote yourself.
+
+That is about to change. The next two labs introduce AI, which is remarkably good
+at reading intent a human would need a minute to parse, and remarkably willing to
+return something you did not expect. Useful, and not predictable.
+
+**Lab 09 — Structured AI Output** makes an AI answer safe enough for automation
+to act on.

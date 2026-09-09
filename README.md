@@ -21,13 +21,22 @@ The project is designed to go beyond basic automation tutorials by teaching why 
 
 ## Core Technologies
 
-- n8n
+The finished learner experience uses three tools:
+
+- **AEP Website** — lessons, test requests, expected vs actual, hints, approvals
+- **n8n** — where the learner builds the automation
+- **Supabase** — persistence, for the labs that genuinely teach it
+
+Built with:
+
 - JavaScript
-- Supabase
 - REST APIs
 - Webhooks
-- Postman
 - Git / GitHub
+
+While the website is being built, **Postman or curl** can send webhook test
+requests, and **ngrok** is only needed if a local setup requires a public URL.
+Both are temporary testing conveniences, not things AEP sets out to teach.
 
 ## Learning Approach
 

@@ -1,5 +1,55 @@
 # Lab 04 — Validation & Normalization
 
+## The Hook
+
+A lead arrives from your shiny new webhook:
+
+```json
+{ "name": "   ", "email": "danareyesexample.com", "phone": "123" }
+```
+
+No name. An email with no `@`. A phone number three digits long.
+
+Your workflow, being helpful, saves it to the CRM anyway.
+
+---
+
+## The Business Problem
+
+Bad data does not announce itself. It sits in the CRM looking like a real lead
+until someone tries to email it, call it, or report on it.
+
+By then it has been copied into three other systems and nobody remembers where
+it came from. Cleaning it up costs far more than refusing it would have.
+
+The fix is to decide, at the front door, what your business will accept.
+
+---
+
+## What You'll Build
+
+A workflow that cleans up incoming leads, checks them against a data contract,
+and rejects the ones that fail — with a response explaining why.
+
+```text
+Receive Lead Request → Normalize Lead Data → Validate Lead Data
+        → Is Lead Valid? → Return Valid Lead / Return Validation Errors
+```
+
+---
+
+## What You Already Know
+
+Lab 01 taught you to reshape data. Lab 03 opened your workflow to the internet.
+
+Those two facts together are the problem. APIs can send you data — that does not
+mean the data is safe to trust. Anyone who can reach your webhook can send you
+anything at all.
+
+Today you stop bad data before it travels.
+
+---
+
 ## Difficulty
 
 Beginner → Intermediate
@@ -227,8 +277,13 @@ Lead            Errors
 ## Required
 
 - n8n
-- Postman
 - JavaScript
+
+## Sending Test Requests Today
+
+- Postman or curl — see [`docs/environment-setup.md`](../../docs/environment-setup.md)
+
+A temporary convenience, not an AEP tool. Use whichever you prefer.
 
 ## Future AEP Website
 
@@ -1747,3 +1802,20 @@ Continue or Reject
 ```
 
 That pattern becomes much more important as automations grow and start connecting CRMs, databases, APIs, AI systems, and external services.
+
+
+---
+
+# What's Next
+
+Bad data now gets rejected with a clear explanation, and good data arrives in a
+predictable shape.
+
+But "valid" and "complete" are not the same thing. A request can pass every check
+you wrote and still be missing most of the data, because the API only sent you
+the first page of it.
+
+Your validation would happily approve 5 customers out of 208 — and it would be
+right, technically.
+
+**Lab 05 — Pagination & Large Data Processing** goes back for the rest.

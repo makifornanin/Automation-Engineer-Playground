@@ -1,5 +1,57 @@
 # Lab 06 - Retry Logic & Exponential Backoff
 
+## The Hook
+
+Your workflow calls a payment API. The API is having a bad afternoon and returns
+a `503`.
+
+Your automation gives up, marks the job failed, and moves on. Two seconds later
+the API is perfectly fine.
+
+Nothing was actually wrong. You just asked at the worst possible moment.
+
+---
+
+## The Business Problem
+
+Most integration failures are temporary — a rate limit, a brief outage, a
+timeout. Treating those as permanent means real work gets dropped for no reason,
+and someone has to find and re-run it by hand.
+
+But naive retries are their own disaster. Hammering a struggling service every
+100ms is how you turn a brief wobble into a full outage, and how you get your API
+key revoked.
+
+So the engineering question is not *"should we retry?"* — it's *when*, *how
+often*, and *when to stop*.
+
+---
+
+## What You'll Build
+
+A retry loop that separates recoverable failures from permanent ones, waits
+longer after each attempt, and gives up deliberately rather than by accident.
+
+```text
+Simulate API Request → Was Request Successful?
+        ↓ (false)
+Classify Failure → Should Retry? → Calculate Backoff → Wait → retry
+```
+
+---
+
+## What You Already Know
+
+Lab 03 taught you to read HTTP status codes. Lab 05 had you make many API calls
+in sequence.
+
+You can fetch all the data — as long as nothing goes wrong. So: what happens when
+the service fails halfway through?
+
+Today your automation learns to be patient instead of fragile.
+
+---
+
 ## What You Learn
 
 In this lab, you will learn how automation systems recover from temporary failures without retrying forever.
@@ -627,6 +679,11 @@ This distinction is important when reporting automation behavior.
 
 # Step 9 - Calculate Exponential Backoff
 
+The retry works. Unfortunately it fires again immediately — and the service that
+was struggling a moment ago now has two requests instead of one.
+
+Retrying instantly is not patience. It is impatience with a loop around it.
+
 Add a Code node to the TRUE branch of `Should Retry?`.
 
 Rename it:
@@ -794,6 +851,20 @@ Jitter spreads the retry traffic across slightly different times.
 ---
 
 # Step 11 - Wait Before Retrying
+
+### Wait — a new node
+
+**What it does**
+Pauses the workflow for a set amount of time, then carries on from where it left
+off.
+
+**Why we're using it here**
+Everything before this calculated *how long* to wait. Without this node, that
+number is just a value in some JSON — the retry fires instantly and we are back
+to hammering a service that is already struggling.
+
+**Think of it like**
+The bit of a retry that actually shows some manners.
 
 Add a Wait node.
 
@@ -1775,3 +1846,20 @@ WHAT to log
 ```
 
 That is the foundation of resilient automation.
+
+
+---
+
+# What's Next
+
+Temporary failures now recover on their own. Your workflow waits, tries again,
+backs off politely, and stops when stopping is the right answer.
+
+Now consider what a retry actually is: doing the same thing a second time.
+
+If the first attempt failed *after* charging the customer — a timeout on the
+response, not the request — your retry charges them again. The retry logic you
+just built is, from the outside, indistinguishable from a duplicate.
+
+**Lab 07 — Idempotency & Duplicate Protection** makes sure the same event can
+only ever act once.

@@ -1,52 +1,33 @@
 # Lab XX — Lab Title
 
 - **Difficulty:** Beginner / Intermediate / Advanced
-- **Main Concept:** Concept being learned
+- **Main Concept:** The one idea this lab teaches
 - **Estimated Time:** XX minutes
 
 ---
 
-## 1. What You Will Learn
+## The Hook
 
-By the end of this lab, you should understand:
+Two to four sentences. Open with something going wrong, or about to.
 
--
--
--
+> "Your AI says this customer belongs in Sales. Great. One small problem: the
+> answer came back as text pretending to be JSON."
 
----
-
-## 2. Simple Explanation
-
-### What is it?
-
-Explain the concept in simple terms.
-
-### What problem does it solve?
-
-Explain the problem this concept prevents or solves.
-
-### How does this help a real business?
-
-Explain a practical business use case.
+Make the learner want the rest of the lab.
 
 ---
 
-## 3. Business Scenario
+## The Business Problem
 
-Describe the business situation used in this lab.
+What breaks today, and what it costs. Keep it short and realistic.
 
-Example:
-
-> A company receives leads from different sources, but each source sends data in a different format.
-
-### Goal
-
-Explain what the automation needs to accomplish.
+Name the problem the lab exists to solve — not the technology that solves it.
 
 ---
 
-## 4. Automation Flow
+## What You'll Build
+
+One sentence, then the flow.
 
 ```text
 Trigger
@@ -62,139 +43,135 @@ Result
 
 ---
 
-## 5. Tools Used
+## What You Already Know
 
-List only the tools required for this lab.
+Connect to earlier labs in a few lines. Name the concept, not just the number.
 
-Possible examples:
+> "You already know how to route clean data. Now we add the unpredictable
+> teammate."
 
-- n8n
-- JavaScript
-- Supabase
-- Postman
-- External API
+For Lab 01 this is simply: this is where we start.
 
 ---
 
-## 6. Prerequisites
+## Prerequisites
 
-Before starting this lab:
+- [ ] n8n running
+- [ ] Any credential this lab needs
+- [ ] A way to send a webhook test request (only if the lab uses one)
 
-- [ ] Required tools are available
-- [ ] Required credentials are configured
-- [ ] Sample data is available
-- [ ] Previous required labs are complete
+Setup steps: [`docs/environment-setup.md`](../../docs/environment-setup.md).
 
----
-
-# 7. Guided Build
-
-Build the workflow one logical step at a time.
-
-For every important node or component, explain:
-
-### What
-
-What does this step do?
-
-### Purpose
-
-Why is this step needed?
-
-### Business Reason
-
-Why would a real business need this?
-
-### Build
-
-Exact instructions for building this step.
+Do not repeat setup instructions here — link to them.
 
 ---
 
-# 8. Sample Data
+## Meet the New Nodes
 
-Sample files should be stored inside:
+Only nodes appearing for the **first time in the course**.
+
+### Node Name
+
+**What it does**
+One or two sentences.
+
+**Why we're using it here**
+Tie it to this lab's business problem.
+
+**Think of it like**
+Optional one-line analogy.
+
+### Returning friends
+
+One line for nodes already met:
+
+> "**Webhook** — still the front door. **Edit Fields (Set)** — still shaping
+> data."
+
+---
+
+# Guided Build
+
+Create a new workflow. Name it:
 
 ```text
-sample-data/
+AEP Lab XX - Lab Title
 ```
 
----
+## Step 1 — Name the outcome, not the node
 
-# 9. Success Test
+What to add, what to name it, what to set.
 
-## Test Input
+Then say **why** — what problem this step solves, and what the learner should
+notice about it.
 
-Describe or provide the input that will be used for the test.
+## Step 2 — Keep steps small
 
-## Expected Result
+A step should be one logical idea. If a step has three unrelated reasons, it is
+probably two steps.
 
-Describe exactly what should happen when the automation works correctly.
-
-## Run the Test
-
-- [ ] Trigger the workflow
-- [ ] Inspect the execution
-- [ ] Check the output
-- [ ] Check the database or API result if applicable
-- [ ] Compare actual result with expected result
-
-## Pass Condition
-
-The test passes when:
-
--
--
--
+Explain a configuration value only when it is non-obvious or teaches something.
 
 ---
 
-# 10. Break It — Failure Scenario
+# Predict & Test
 
-Now intentionally cause the automation to fail.
+Give the learner an input:
 
-## Failure Scenario
+```text
+sample-data/valid-input.json
+```
 
-Describe what will be intentionally broken.
+**Ask before revealing.** "What do you expect to come back, and why?"
 
-## Expected Failure
+Then run it, show the result, and explain what it proves — in order:
 
-Explain what should happen when the failure occurs.
-
-## Run the Failure Test
-
-- [ ] Trigger the failure
-- [ ] Inspect the error
-- [ ] Identify where the workflow failed
-- [ ] Identify the root cause
+1. what reached the workflow
+2. what the logic decided
+3. why that outcome is correct
 
 ---
 
-# 11. Debug It
+# Break It
 
-Before fixing the problem, answer:
+Have the learner cause a realistic failure on purpose.
+
+State what to change and ask them to predict the outcome before running.
+
+The failure must teach the concept. Prefer a **silently wrong result** over a red
+error — that is the harder and more valuable lesson.
+
+---
+
+# Debug It
+
+**Investigate first.** Ask before answering:
 
 1. What failed?
 2. Where did it fail?
-3. Why did it fail?
-4. What evidence proves the cause?
+3. What does the node actually receive?
+4. Which rule or condition decided this?
+5. What evidence proves the cause?
 
-Then:
+### Hint 1 — The symptom
+Point at what is observably wrong.
 
-- [ ] Apply the fix
-- [ ] Run the same test again
-- [ ] Confirm it succeeds
-- [ ] Confirm nothing else broke
+### Hint 2 — The data
+Point at the shape or value to inspect.
+
+### Hint 3 — The rule
+Point at the concept that was violated.
+
+### Root cause and lesson
+
+Name the cause plainly, then the wider lesson. Tell the learner to restore the
+working version if they broke something.
 
 ---
 
-# 12. Challenge
+# Challenge
 
-Now solve a related problem with less guidance.
-
-## Challenge Problem
-
-Describe the problem the learner needs to solve.
+What the learner must accomplish with less guidance.
 
 ## Requirements
 
@@ -202,82 +179,60 @@ Describe the problem the learner needs to solve.
 - [ ] Requirement 2
 - [ ] Requirement 3
 
-## Input
+## What you must prove
 
-Provide the data or scenario the learner will work with.
+Describe the evidence, not the answer.
 
-## Expected Output
+Check results against:
 
-Describe what the final result should look like.
+```text
+challenge/expected-result.json
+```
 
----
+Open it **after** recording your own predictions.
 
-## Optional Hints
+> Never print the expected answers in this README.
 
-### Hint 1
+## Progressive Hints
 
-Give a small hint.
+**Hint 1** — point at the symptom or the part that looks unusual.
 
-### Hint 2
+**Hint 2** — point at the data to inspect.
 
-Give a more specific hint.
+**Hint 3** — point at the concept or rule involved.
 
-### Hint 3
-
-Give a strong hint without immediately giving the full solution.
-
----
-
-# 13. Challenge Verification
-
-The challenge is complete when:
-
-- [ ] Expected output is correct
-- [ ] Successful case works
-- [ ] Important failure case is handled
-- [ ] Workflow is understandable
-- [ ] No secrets are exposed
-
----
-
-# 14. What You Learned
-
-After completing this lab, the learner should be able to explain:
-
-- What the concept means
-- What problem it solves
-- Why businesses need it
-- How to implement it
-- How it can fail
-- How to debug it
-
----
-
-# Lab Completion Checklist
-
-- [ ] Simple explanation understood
-- [ ] Business problem understood
-- [ ] Guided build completed
-- [ ] Successful test passed
-- [ ] Failure scenario reproduced
-- [ ] Failure debugged
-- [ ] Challenge completed
-- [ ] Expected result verified
-- [ ] Documentation reviewed
+**Hint 4** — where to look. Never the final expression.
 
 ---
 
 # Make It Your Own
 
-Now modify the lab and create your own variation.
+A task for the learner, in the imperative.
 
-Try one or more:
+Then say why it matters in a real system — debugging, auditing, traceability.
 
-- [ ] Change the business scenario
-- [ ] Create your own sample data
-- [ ] Add or remove fields
-- [ ] Change transformation rules
-- [ ] Create a new failure scenario
-- [ ] Test that your modified workflow still works
+Keep it small. One extension that proves understanding.
 
-The goal is to prove that you understand the concept well enough to use it in a different situation.
+---
+
+# What You Learned
+
+**What we built:** one sentence.
+
+**The business problem it solves:** one sentence.
+
+**The technical lesson that mattered most:** the idea worth remembering in six
+months.
+
+**In a real production system**, you would also... (briefly).
+
+---
+
+# What's Next
+
+Name the gap this lab leaves open, and let the next lab fill it.
+
+> "We can now make AI output predictable. But predictable is not the same as
+> permitted."
+
+One short paragraph. Make the next lab feel necessary.

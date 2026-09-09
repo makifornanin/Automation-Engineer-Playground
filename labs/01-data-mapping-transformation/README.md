@@ -6,6 +6,49 @@
 
 ---
 
+## The Hook
+
+A lead form sends you `first_name`, `last_name`, and `email_address`.
+
+Your CRM wants `name` and `email`.
+
+Nobody is wrong. They just disagree — and until something translates between
+them, that lead sits in the gap doing nothing for anybody.
+
+---
+
+## The Business Problem
+
+Businesses run on connected apps: a form, a CRM, a database, an email platform,
+a payment system. Each one names things its own way.
+
+When the shapes don't match, someone ends up copying fields by hand — or worse,
+the integration "works" and quietly stores rubbish. Data mapping is the
+unglamorous work that stops both.
+
+---
+
+## What You'll Build
+
+A workflow that takes a messy lead payload and turns it into exactly the clean
+structure a CRM expects.
+
+```text
+Manual Trigger → Sample Lead Input → Transform for CRM → Final Clean JSON
+```
+
+---
+
+## What You Already Know
+
+This is where we start. No previous labs, no credentials, no external services —
+just n8n and some deliberately untidy data.
+
+Everything in the nine labs after this one moves data between systems. This is
+the skill they all sit on top of.
+
+---
+
 ## 1. What You Will Learn
 
 By the end of this lab, you should understand how to:
@@ -783,3 +826,19 @@ challenge/expected-output.json
 - [ ] Important discoveries understood
 - [ ] Workflow export available
 - [ ] No secrets are exposed
+
+
+---
+
+# What's Next
+
+Your data is clean. Every field is where the CRM expects it, every value is
+trimmed and cased correctly.
+
+And every single lead still takes exactly the same path.
+
+A $5,000 hot prospect and a tyre kicker get identical treatment, because your
+workflow has no way to tell them apart. Clean data is only useful once something
+acts differently on it.
+
+**Lab 02 — Conditions & Routing** teaches your workflow to decide.

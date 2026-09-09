@@ -1,5 +1,51 @@
 # Lab 05 — Pagination & Large Data Processing
 
+## The Hook
+
+You call the customers API and get back a tidy list. Five records. Job done.
+
+Then someone mentions the system has 208 customers.
+
+Your workflow is not broken. It politely accepted page one and assumed that was
+everything.
+
+---
+
+## The Business Problem
+
+Reports built on partial data are worse than no reports, because people trust
+them. A sync that quietly imports the first 5 of 208 customers looks like a
+success in every log you own.
+
+Any real dataset — customers, orders, transactions, tickets — arrives in pieces.
+An automation that cannot ask for the rest can only ever work on a sample.
+
+---
+
+## What You'll Build
+
+A workflow that fetches every page of a paginated API, knows when to stop, and
+combines the results into one clean list.
+
+```text
+Set Pagination Config → Fetch Pages (until done)
+        → Combine Customer Records → Prepare Customers for Processing
+```
+
+---
+
+## What You Already Know
+
+Lab 03 taught you to call an API and read its response. Lab 04 taught you not to
+trust what comes back without checking it.
+
+One API response is easy. Real APIs usually hand you page one and wait to be
+asked for the rest.
+
+Today you learn to ask — and, more importantly, when to stop asking.
+
+---
+
 ## Difficulty
 
 Intermediate
@@ -734,6 +780,14 @@ current skip + limit
 ---
 
 # Automated Pagination
+
+Two pages down. Ten records.
+
+At this rate, fetching all 208 customers means adding 40 more nodes by hand — and
+rebuilding the whole thing the day the customer count changes.
+
+That is not automation, that is data entry with extra steps. Time to let the
+workflow do the counting.
 
 After understanding the first two pages manually, the next goal is:
 
@@ -2056,3 +2110,20 @@ Process records
 ```
 
 This pattern becomes essential when working with real CRMs, databases, reporting APIs, and large production datasets.
+
+
+---
+
+# What's Next
+
+You can now pull a complete dataset out of an API, however many requests that
+takes.
+
+Which means you are now making a *lot* of requests — and every one of them is a
+chance for something to go wrong. Page 1 succeeds, page 2 succeeds, page 37 hits
+a rate limit and the whole run dies with 180 records already fetched and nothing
+to show for it.
+
+Fetching multiple pages works beautifully, right up until the API doesn't.
+
+**Lab 06 — Retry Logic & Exponential Backoff** makes it survive that.

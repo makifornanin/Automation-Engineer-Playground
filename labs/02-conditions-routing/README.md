@@ -6,6 +6,54 @@
 
 ---
 
+## The Hook
+
+Five leads arrive. One is a hot prospect with a $5,000 budget. One is a tyre
+kicker. One has already been contacted three times this month.
+
+Right now your workflow treats all three exactly the same.
+
+Sales is not going to thank you for that.
+
+---
+
+## The Business Problem
+
+Almost no business treats every record identically. High-value leads need
+someone on the phone today. Warm leads need nurturing. Cold leads need a mailing
+list and patience.
+
+Sending everything down one path means either your best leads wait in a queue,
+or your team wastes its day on the wrong ones. A workflow that cannot decide is
+just an expensive pipe.
+
+---
+
+## What You'll Build
+
+A workflow that inspects each lead and sends it down the right path.
+
+```text
+Sample Leads → Check Priority Sales → Priority Sales
+                       ↓ (false)
+               Check Warm Lead → Nurture
+                       ↓ (false)
+                  Low Priority
+```
+
+---
+
+## What You Already Know
+
+In Lab 01 you learned to shape data — pulling fields out, cleaning them up, and
+handing a system exactly what it expects.
+
+You can make data *clean*. Next problem: every record still takes the same path.
+
+Today you teach the workflow to make decisions.
+
+---
+
 ## 1. What You Will Learn
 
 By the end of this lab, you should understand how to:
@@ -1371,8 +1419,17 @@ OR
 
 based on a business requirement, you have completed the core objective of this lab.
 
-Next:
+---
 
-```text
-Lab 03 — APIs & Webhooks
-```
+# What's Next
+
+Your workflow can now shape data and decide what to do with it. Hot leads go one
+way, warm leads another, everything else has a home.
+
+All of it still happens inside n8n, though. You press a button, the workflow
+runs, and the outside world never hears about any of it. The leads were sample
+data you typed yourself.
+
+Real automations get woken up by other systems and have to answer them.
+
+**Lab 03 — APIs & Webhooks** connects your workflow to the outside world.

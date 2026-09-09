@@ -1,5 +1,53 @@
 # Lab 03 — APIs & Webhooks
 
+## The Hook
+
+Everything you have built so far lives inside n8n. It starts when you click a
+button, and it talks to nobody.
+
+Real automation is not like that. A website submits a form, your workflow wakes
+up, asks a CRM a question, and answers back — all in under a second, with nobody
+clicking anything.
+
+Today your automation learns to talk to the outside world.
+
+---
+
+## The Business Problem
+
+A business runs a website, a CRM, booking software, a payment platform, and a
+database. None of them were built knowing about each other.
+
+Without a way to exchange information, somebody has to move it by hand — copying
+a lead from a form into a CRM, checking a customer record, pasting an order
+number. That person is expensive, slow, and occasionally on holiday.
+
+APIs and webhooks are how software does that job instead.
+
+---
+
+## What You'll Build
+
+A webhook that receives a customer request, looks that customer up in an
+external API, and answers with either the record or a clear "not found".
+
+```text
+Receive Lead API Request → Fetch External Customer Data
+        → Check API Success → Return API Success / Return API Not Found
+```
+
+---
+
+## What You Already Know
+
+In Lab 02 you taught a workflow to make decisions — inspect a value, choose a
+path. You will use that again today, on an HTTP status code.
+
+You can route data *inside* n8n. Now your automation needs to talk to systems
+outside it.
+
+---
+
 ## What You Learn
 
 In this lab, you will learn how different systems communicate using APIs and webhooks.
@@ -180,6 +228,11 @@ Postman will remain available as an optional **Developer Mode** tool for learner
 
 # Request Anatomy
 
+Before we send anything, it helps to know what is actually in a request.
+
+When the CRM says "your request was malformed", it is talking about one of the
+four pieces below. Knowing which one saves a lot of guessing later.
+
 An HTTP request can contain several important pieces.
 
 ## URL
@@ -269,9 +322,11 @@ Think of headers as labels attached to the package.
 
 Authentication proves that the caller is allowed to access an endpoint.
 
-During this lab, Header Authentication was tested using a temporary test credential.
+Try it. Switch your Webhook node to **Header Auth**, create a temporary test
+credential, and send the same request three times — once with no auth header,
+once with the wrong value, and once with the right one.
 
-The following behaviors were observed:
+**Predict first:** which of the three do you expect n8n to let through?
 
 ```text
 Missing authentication
@@ -284,11 +339,61 @@ Correct authentication
 → webhook accepted
 ```
 
-Authentication happens before the workflow is allowed to process the request.
+Now look at the execution list for the two rejected requests. There aren't any.
+
+That is the lesson: authentication happens *before* your workflow is allowed to
+run at all. A rejected caller never reaches your first node, so no logic of
+yours can be tricked into handling it.
 
 Do not store real API keys, passwords, or secrets in this repository.
 
 The exported learning workflow should not contain a real authentication secret.
+
+---
+
+# Meet the New Nodes
+
+Three nodes appear here for the first time, and you will use all three for the
+rest of the course.
+
+### Webhook
+
+**What it does**
+Creates a URL that sits and waits. When another system sends a request to it,
+the workflow starts and receives that data.
+
+**Why we're using it here**
+Every lab so far started because *you* clicked Execute. A business automation
+has to start because a *customer* did something.
+
+**Think of it like**
+A doorbell. You don't stand at the door waiting — you get on with your day, and
+it tells you when someone arrives.
+
+### HTTP Request
+
+**What it does**
+Calls someone else's API and hands you back the response.
+
+**Why we're using it here**
+The webhook gives us a `user_id`, but not the customer record. That lives in
+another system, and this is how we go and ask for it.
+
+**Think of it like**
+The Webhook is your phone ringing. HTTP Request is you making the call.
+
+### Respond to Webhook
+
+**What it does**
+Sends the reply back to whoever called your webhook.
+
+**Why we're using it here**
+The caller is still waiting on the line. This decides what they hear — and,
+importantly, *when*. Nothing goes back until our logic has decided what the
+answer is.
+
+**Think of it like**
+Hanging up politely, with an actual answer, instead of just going quiet.
 
 ---
 
@@ -655,7 +760,8 @@ Common examples:
 500 = Server Error
 ```
 
-During this lab, several status codes were observed.
+You'll meet four of these yourself in this lab. Here is what each one is telling
+you.
 
 ### 200 OK
 
@@ -681,7 +787,8 @@ POST /posts
 
 ### 403 Forbidden
 
-The webhook authentication test rejected a missing or incorrect authentication value.
+This is what you get back when the webhook's authentication check rejects a
+missing or incorrect credential.
 
 ### 404 Not Found
 
@@ -1300,3 +1407,19 @@ n8n
 ↓
 External System receives data
 ```
+
+
+---
+
+# What's Next
+
+Your automation can now talk to the outside world. It receives requests it did
+not ask for, calls services it does not control, and answers back.
+
+That is a large amount of new power, and it arrives with a new problem: you no
+longer choose what arrives. Anyone who can reach your webhook can send you an
+empty name, a broken email, or a date that does not exist.
+
+Right now your workflow would cheerfully pass all of it straight through.
+
+**Lab 04 — Validation & Normalization** stops bad data at the door.

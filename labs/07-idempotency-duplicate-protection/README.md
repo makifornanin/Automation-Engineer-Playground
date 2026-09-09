@@ -1,5 +1,57 @@
 # Lab 07 - Idempotency & Duplicate Protection
 
+## The Hook
+
+A CRM sends you a webhook: new lead created. Your workflow handles it perfectly.
+
+Then the CRM's own retry logic fires, because it never saw your response in
+time. The same event arrives again.
+
+Your workflow handles it perfectly. Again. The customer now has two welcome
+emails and two records with their name on them.
+
+---
+
+## The Business Problem
+
+Every serious webhook provider retries. Stripe, Shopify, GitHub, your CRM — all
+of them would rather deliver an event twice than risk delivering it zero times.
+That is the correct decision on their side, and it becomes your problem.
+
+The cost depends entirely on what your workflow does. Duplicate log line? Nobody
+cares. Duplicate refund, duplicate order, duplicate invoice? Now you are on the
+phone to a customer.
+
+---
+
+## What You'll Build
+
+A workflow that recognises an event it has already handled and refuses to do the
+work twice — backed by a database constraint, not just an IF node.
+
+```text
+Receive External Event → Extract Event Identity → Check Processed Event
+        → Already Seen? → Return Duplicate Ignored
+                ↓ (new)
+        Reserve Event → Execute Business Action → Mark Processed
+```
+
+---
+
+## What You Already Know
+
+Lab 06 taught you to retry failures automatically. That was the right call — and
+it quietly created today's problem.
+
+Retrying is useful, right up until the same event performs the same business
+action twice. A retry is just a duplicate you asked for on purpose.
+
+This is also the first lab with a database, and that is not a coincidence. "Have
+I seen this before?" is a question no workflow can answer from memory — the
+answer has to outlive the execution that created it.
+
+---
+
 ## What You Learn
 
 In this lab, you will learn how to prevent duplicate events from causing duplicate business actions.
@@ -325,6 +377,25 @@ Without a stable identity, duplicate detection becomes unreliable.
 ---
 
 # Step 3 - Check Processed Event
+
+### Supabase — a new node
+
+**What it does**
+Reads and writes rows in your Supabase (PostgreSQL) database from inside a
+workflow.
+
+**Why we're using it here**
+A workflow execution forgets everything the moment it ends. To answer "have I
+already handled this event?", the answer has to be written somewhere that
+outlives the run — and be visible to every future run.
+
+**Think of it like**
+The workflow's long-term memory. Everything else it knows disappears when the
+execution finishes.
+
+One detail that matters more than it looks: the database is *shared*. Two
+executions running at the same second see the same table, which is exactly why
+we can use it to stop them both doing the same work.
 
 Add a Supabase node.
 
@@ -1034,6 +1105,51 @@ evt_challenge_002
 
 ---
 
+# Progressive Hints
+
+Use these only if a delivery behaves differently than you predicted.
+
+### Hint 1 — The symptom
+
+Count the rows in `lab07_business_actions` for `evt_challenge_001`.
+
+Three deliveries went out, but only two events were unique. If you see two
+business actions for `evt_challenge_001` instead of one, the duplicate was not
+recognised as a duplicate.
+
+### Hint 2 — The evidence
+
+Look at `processed_events` after delivery 1:
+
+```sql
+select event_id, status, created_at, processed_at
+from processed_events
+order by created_at desc;
+```
+
+Was a row written at all? If not, nothing exists for delivery 2 to find, and
+every delivery will look brand new.
+
+### Hint 3 — The concept
+
+Idempotency depends on a *stable identity*. The same event must produce the same
+key every time it arrives.
+
+Open `Extract Event Identity` on both deliveries of `evt_challenge_001` and
+compare the value it produces. If those two values differ, the workflow is
+technically correct and still broken — it is comparing two different keys.
+
+### Hint 4 — Where to look
+
+Open the `Check Processed Event` node on the **second** delivery and read its
+output, not its input.
+
+An empty result means the lookup found nothing, and `Already Seen?` will send the
+event down the "new" path. From there, work backwards: wrong key, wrong filter,
+or no row written the first time.
+
+---
+
 # Challenge Verification
 
 Run:
@@ -1423,3 +1539,21 @@ The goal is simple:
 same event many times
 → business action once
 ```
+
+
+---
+
+# What's Next
+
+The same event can arrive ten times and your business action runs exactly once.
+Duplicates are handled, and the database enforces it rather than trusting your
+logic.
+
+But look at what happens when an event is genuinely new and genuinely fails —
+permanently. Retries run out. The workflow stops. The event was real, the
+customer is waiting, and there is now no record that it ever existed.
+
+You have controlled duplicates. You have not yet controlled loss.
+
+**Lab 08 — Dead Letter Queue & Failure Recovery** makes sure failed work
+survives.
