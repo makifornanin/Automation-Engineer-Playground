@@ -183,8 +183,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1184,
-        288
+        1168,
+        176
       ],
       "id": "78b3b00d-caf3-4c19-8a84-9ec6da2d653e",
       "name": "Save to DLQ",
@@ -234,8 +234,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -288,
-        624
+        -272,
+        736
       ],
       "id": "c561796a-fdea-42c1-829f-23641b146ba0",
       "name": "Start DLQ Recovery"
@@ -247,7 +247,7 @@
             {
               "id": "5e9982d8-c7d7-4ae4-a199-4760b7916a9e",
               "name": "dlq_id",
-              "value": 1,
+              "value": 10,
               "type": "number"
             },
             {
@@ -263,8 +263,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -80,
-        624
+        -64,
+        736
       ],
       "id": "3f1e85ae-80df-4482-bdc1-592ad52346f8",
       "name": "Set Recovery Config"
@@ -277,8 +277,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        336,
-        624
+        352,
+        736
       ],
       "id": "152f9575-a98a-4ada-b7f8-f03a4b284c26",
       "name": "Prepare Replay Payload"
@@ -290,8 +290,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        752,
-        624
+        768,
+        736
       ],
       "id": "e458b0f1-4c0c-4328-98f6-41a21570911a",
       "name": "Simulate Recovery Processing"
@@ -324,8 +324,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        960,
-        624
+        976,
+        736
       ],
       "id": "188eaf5f-7bdd-4131-8ae7-c9a78c7fe8e9",
       "name": "Recovery Successful?"
@@ -339,7 +339,7 @@
             {
               "keyName": "id",
               "condition": "eq",
-              "keyValue": "={{ $json.dlq_id }}"
+              "keyValue": "={{ $json.id }}"
             }
           ]
         },
@@ -359,8 +359,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1168,
-        528
+        1248,
+        640
       ],
       "id": "48afab15-b150-472c-b31b-8819056b6d2d",
       "name": "Mark DLQ Recovered",
@@ -378,8 +378,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1216,
-        752
+        1232,
+        864
       ],
       "id": "7e529957-6f79-4bef-9a30-f904f1090c6f",
       "name": "Keep DLQ Pending"
@@ -404,8 +404,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        128,
-        624
+        144,
+        736
       ],
       "id": "307a1610-ca5b-49b9-a678-e3c3041ad141",
       "name": "Fetch Pending DLQ Event",
@@ -441,11 +441,121 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        544,
-        624
+        560,
+        736
       ],
       "id": "45148ae8-3352-4cab-808e-d0c7d4dcf6b8",
       "name": "Increment Recovery Attempts",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "execution_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow_name",
+              "fieldValue": "={{ $workflow.name }}"
+            },
+            {
+              "fieldId": "execution_id",
+              "fieldValue": "={{ $execution.id }}"
+            },
+            {
+              "fieldId": "event_id",
+              "fieldValue": "={{ $json.event_id }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "failed"
+            },
+            {
+              "fieldId": "stage",
+              "fieldValue": "dlq_queued"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error_message }}"
+            },
+            {
+              "fieldId": "retry_count",
+              "fieldValue": "={{ $json.retry_count }}"
+            },
+            {
+              "fieldId": "recovered",
+              "fieldValue": "false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        368
+      ],
+      "id": "76a452c5-bc79-4b86-acf0-364d090e3598",
+      "name": "Log DLQ Failure",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ntVotHONv1fYMH9R",
+          "name": "AEP Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "execution_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow_name",
+              "fieldValue": "={{ $workflow.name }}"
+            },
+            {
+              "fieldId": "execution_id",
+              "fieldValue": "={{ $execution.id }}"
+            },
+            {
+              "fieldId": "event_id",
+              "fieldValue": "={{ $('Fetch Pending DLQ Event').item.json.event_id }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "recovered"
+            },
+            {
+              "fieldId": "stage",
+              "fieldValue": "recovery_completed"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "leave empty"
+            },
+            {
+              "fieldId": "retry_count",
+              "fieldValue": "={{ $('Fetch Pending DLQ Event').item.json.retry_count }}"
+            },
+            {
+              "fieldId": "recovered",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        640
+      ],
+      "id": "4a3d6d69-e773-4a41-9c6f-d02aeb014ab9",
+      "name": "Log Recovery Success",
       "credentials": {
         "supabaseApi": {
           "id": "ntVotHONv1fYMH9R",
@@ -530,6 +640,11 @@
         [
           {
             "node": "Save to DLQ",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log DLQ Failure",
             "type": "main",
             "index": 0
           }
@@ -641,14 +756,37 @@
           }
         ]
       ]
+    },
+    "Log DLQ Failure": {
+      "main": [
+        [
+          {
+            "node": "Return Queued for Recovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark DLQ Recovered": {
+      "main": [
+        [
+          {
+            "node": "Log Recovery Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "versionId": "6ea7fb61-c57d-4e95-815b-7cc6b0e0b07b",
+  "versionId": "d96b0e12-19b1-4598-9fd1-45578a741d07",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"

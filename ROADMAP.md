@@ -480,28 +480,28 @@ Make the system easier to understand and debug by recording important events.
 
 ## Build Checklist
 
-* [ ] Define standard execution log structure
-* [ ] Log workflow name
-* [ ] Log execution ID
-* [ ] Log event/request ID
-* [ ] Log timestamps
-* [ ] Log success/failure status
-* [ ] Log error messages
-* [ ] Log retry count when relevant
-* [ ] Avoid logging secrets
-* [ ] Add logs to relevant labs
-* [ ] Confirm failed executions can be traced
-* [ ] Document how to inspect logs
+* [/] Define standard execution log structure
+* [/] Log workflow name
+* [/] Log execution ID
+* [/] Log event/request ID
+* [/] Log timestamps
+* [/] Log success/failure status
+* [/] Log error messages
+* [/] Log retry count when relevant
+* [/] Avoid logging secrets
+* [/] Add logs to relevant labs
+* [/] Confirm failed executions can be traced
+* [/] Document how to inspect logs
 
 ## Phase Complete When
 
 Given an event ID or execution ID, we can understand:
 
-* [ ] What happened
-* [ ] When it happened
-* [ ] Where it failed
-* [ ] Why it failed
-* [ ] Whether it recovered
+* [/] What happened
+* [/] When it happened
+* [/] Where it failed
+* [/] Why it failed
+* [/] Whether it recovered
 
 ---
 
