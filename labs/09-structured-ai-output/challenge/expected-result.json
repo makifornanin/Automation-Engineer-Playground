@@ -1,0 +1,26 @@
+{
+    "expected_routes":  [
+                            {
+                                "request_id":  "req_ai_challenge_001",
+                                "expected_route":  "sales_team",
+                                "expected_classification":  "sales"
+                            },
+                            {
+                                "request_id":  "req_ai_challenge_002",
+                                "expected_route":  "support_team",
+                                "expected_classification":  "support"
+                            },
+                            {
+                                "request_id":  "req_ai_challenge_003",
+                                "expected_route":  "billing_team",
+                                "expected_classification":  "billing"
+                            }
+                        ],
+    "invalid_output_fallback":  {
+                                    "valid":  false,
+                                    "expected_route":  "manual_review",
+                                    "expected_classification":  "other",
+                                    "expected_action":  "manual_review",
+                                    "expected_reason":  "invalid_ai_output"
+                                }
+}

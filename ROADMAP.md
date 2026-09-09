@@ -517,20 +517,20 @@ Learn how to use AI inside automation without relying on unpredictable free-form
 
 ### Build
 
-* [ ] Create business classification scenario
-* [ ] Send input to AI
-* [ ] Define required JSON structure
-* [ ] Receive structured output
-* [ ] Validate required AI fields
-* [ ] Validate values
-* [ ] Add confidence score
-* [ ] Add recommended action
-* [ ] Route based on AI output
-* [ ] Test valid AI response
-* [ ] Test malformed AI response
-* [ ] Add fallback behavior
-* [ ] Add challenge
-* [ ] Complete documentation
+* [/] Create business classification scenario
+* [/] Send input to AI
+* [/] Define required JSON structure
+* [/] Receive structured output
+* [/] Validate required AI fields
+* [/] Validate values
+* [/] Add confidence score
+* [/] Add recommended action
+* [/] Route based on AI output
+* [/] Test valid AI response
+* [/] Test malformed AI response
+* [/] Add fallback behavior
+* [/] Add challenge
+* [/] Complete documentation
 
 ### Main Learning Outcome
 
@@ -566,10 +566,10 @@ Understand when AI should act automatically and when a human should take control
 
 ## Phase Complete When
 
-* [ ] Lab 09 complete
+* [/] Lab 09 complete
 * [ ] Lab 10 complete
-* [ ] AI output is structured
-* [ ] AI responses are validated
+* [/] AI output is structured
+* [/] AI responses are validated
 * [ ] Guardrails work
 * [ ] Human approval works
 * [ ] Failure scenarios tested

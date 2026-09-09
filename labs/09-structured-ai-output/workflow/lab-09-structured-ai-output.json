@@ -1,0 +1,746 @@
+{
+  "name": "AEP Lab 09 - Structured AI Output",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-lab-09-ai-classification",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        0
+      ],
+      "id": "d974a2c8-7bf5-448a-b839-9fd523df6a78",
+      "name": "Receive Customer Inquiry",
+      "webhookId": "ea525cee-f1cd-4aaa-83d6-648a6073b08d"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23886844-e03f-4b9c-890e-72ba43f48fd7",
+              "name": "request_id",
+              "value": "={{ $json.body.request_id }}",
+              "type": "string"
+            },
+            {
+              "id": "55a1d28f-101a-4fc9-937c-aeecf2a0fe5e",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "6e96e1bd-86ea-4379-93cd-afe6c20f7553",
+              "name": "allowed_classifications",
+              "value": "sales,support,billing,other",
+              "type": "string"
+            },
+            {
+              "id": "cb2435d2-751f-419f-8cb7-8ae6e39def24",
+              "name": "allowed_actions",
+              "value": "send_to_sales,create_support_ticket,send_to_billing,manual_review",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        0
+      ],
+      "id": "de5e1f16-49de-455c-bf59-b293b12a0406",
+      "name": "Prepare AI Input"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        192
+      ],
+      "id": "1ac48175-c3cf-49bd-a085-c9ce4fbdda5e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X8vGNL7vOqXOnHt4",
+          "name": "GoHa Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a business inquiry classifier.\n\nClassify this customer message:\n\n{{ $json.message }}\n\nAllowed classifications:\n{{ $json.allowed_classifications }}\n\nAllowed recommended actions:\n{{ $json.allowed_actions }}\n\nReturn ONLY a JSON object with exactly these fields:\n\n{\n  \"classification\": \"sales | support | billing | other\",\n  \"confidence\": 0.00,\n  \"recommended_action\": \"send_to_sales | create_support_ticket | send_to_billing | manual_review\"\n}\n\nRules:\n- confidence must be a number from 0 to 1\n- choose only from the allowed classifications\n- choose only from the allowed actions\n- do not add explanations\n- do not add markdown",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        752,
+        -64
+      ],
+      "id": "6f0fd669-4fd7-421f-8197-d0154e28ff26",
+      "name": "Gemini Classifier"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"classification\": {\n      \"type\": \"string\",\n      \"enum\": [\"sales\", \"support\", \"billing\", \"other\"]\n    },\n    \"confidence\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"send_to_sales\",\n        \"create_support_ticket\",\n        \"send_to_billing\",\n        \"manual_review\"\n      ]\n    }\n  },\n  \"required\": [\n    \"classification\",\n    \"confidence\",\n    \"recommended_action\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "60213eed-6d8e-474c-a6c0-090145397980",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $json.output;\n\nconst validClassifications = ['sales', 'support', 'billing', 'other'];\nconst validActions = [\n  'send_to_sales',\n  'create_support_ticket',\n  'send_to_billing',\n  'manual_review'\n];\n\nconst isValid =\n  output &&\n  validClassifications.includes(output.classification) &&\n  typeof output.confidence === 'number' &&\n  output.confidence >= 0 &&\n  output.confidence <= 1 &&\n  validActions.includes(output.recommended_action);\n\nreturn {\n  json: {\n    ...output,\n    valid: isValid\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "0afc0cba-d3b0-418d-a58f-b1f7d7d40c23",
+      "name": "Validate AI Output"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "47030bc9-1679-4fff-95ef-1d6a19d6ef0a",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1392,
+        0
+      ],
+      "id": "0e47cff6-13c6-4647-aff8-fefaee613743",
+      "name": "AI Output Valid?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.classification }}",
+                    "rightValue": "sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "910c28c2-091a-489e-9a80-92b324ca802e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales route"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "14d6e92a-a297-4050-9ba3-0d5235486134",
+                    "leftValue": "={{ $json.classification }}",
+                    "rightValue": "support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Support route"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "856fe6ef-6395-490b-bca1-388fb8bf8fbf",
+                    "leftValue": "={{ $json.classification }}",
+                    "rightValue": "billing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Billing route"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afb8d917-7dbd-402b-8eef-ea1acc174636",
+                    "leftValue": "={{ $json.classification }}",
+                    "rightValue": "other",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Manual review"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1600,
+        -96
+      ],
+      "id": "cefacb3e-2dcd-465c-a177-3ec3f85f5a91",
+      "name": "Route by Classification"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd02a0cf-6dee-4fc6-99bd-f47bb443aeba",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "89affb24-b957-42a4-b8f9-5c643703b3d1",
+              "name": "classification",
+              "value": "={{ $json.classification }}",
+              "type": "string"
+            },
+            {
+              "id": "e6fd516b-4b5e-409c-8f6a-2e28528618c4",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "daebb38b-6fe3-404a-b591-d96dbd8ef73c",
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "7cfa0ec8-953c-476a-9d6f-059e544e34c2",
+              "name": "route",
+              "value": "sales_team",
+              "type": "string"
+            },
+            {
+              "id": "63bc3ec1-d170-4293-acb7-4fc53e04718d",
+              "name": "decision_source",
+              "value": "ai_classification",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        -304
+      ],
+      "id": "90f314ed-bcad-4992-b3ba-e1124254af1f",
+      "name": "Sales Route"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd02a0cf-6dee-4fc6-99bd-f47bb443aeba",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "89affb24-b957-42a4-b8f9-5c643703b3d1",
+              "name": "classification",
+              "value": "={{ $json.classification }}",
+              "type": "string"
+            },
+            {
+              "id": "e6fd516b-4b5e-409c-8f6a-2e28528618c4",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "daebb38b-6fe3-404a-b591-d96dbd8ef73c",
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "7cfa0ec8-953c-476a-9d6f-059e544e34c2",
+              "name": "route",
+              "value": "support_team",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        -128
+      ],
+      "id": "05c4f30b-814c-46b2-bae2-6a8bff7a4aeb",
+      "name": "Support Route"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd02a0cf-6dee-4fc6-99bd-f47bb443aeba",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "89affb24-b957-42a4-b8f9-5c643703b3d1",
+              "name": "classification",
+              "value": "={{ $json.classification }}",
+              "type": "string"
+            },
+            {
+              "id": "e6fd516b-4b5e-409c-8f6a-2e28528618c4",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "daebb38b-6fe3-404a-b591-d96dbd8ef73c",
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "7cfa0ec8-953c-476a-9d6f-059e544e34c2",
+              "name": "route",
+              "value": "billing_team",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        64
+      ],
+      "id": "ee82daaf-abd5-4d91-a429-ab0d54a5d907",
+      "name": "Billing Route"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd02a0cf-6dee-4fc6-99bd-f47bb443aeba",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "89affb24-b957-42a4-b8f9-5c643703b3d1",
+              "name": "classification",
+              "value": "={{ $json.classification }}",
+              "type": "string"
+            },
+            {
+              "id": "e6fd516b-4b5e-409c-8f6a-2e28528618c4",
+              "name": "confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "daebb38b-6fe3-404a-b591-d96dbd8ef73c",
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "7cfa0ec8-953c-476a-9d6f-059e544e34c2",
+              "name": "route",
+              "value": "manual_review",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1840,
+        240
+      ],
+      "id": "5f70970b-9b7b-4e8e-b696-6bcb729e4eed",
+      "name": "Manual Review Route"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3f2254e9-9017-4dfa-b58f-e51a8e0e6f9a",
+              "name": "success",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "e73ac8ed-f9fd-4b61-b6b8-f145dd7ec3b8",
+              "name": "classification",
+              "value": "other",
+              "type": "string"
+            },
+            {
+              "id": "5206c672-2ca4-47de-b4c0-688abfb15c1c",
+              "name": "confidence",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "3d2bcc56-fcde-4c0e-ada0-3cb63f75b941",
+              "name": "recommended_action",
+              "value": "manual_review",
+              "type": "string"
+            },
+            {
+              "id": "addeb468-e72c-4c51-92c6-ec07974179ab",
+              "name": "route",
+              "value": "manual_review",
+              "type": "string"
+            },
+            {
+              "id": "562dff02-b1eb-42fe-97b6-90fcca368a3a",
+              "name": "reason",
+              "value": "invalid_ai_output",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1840,
+        448
+      ],
+      "id": "0ed3b076-9850-49a1-8c4c-96622fed2141",
+      "name": "Build Safe Fallback"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      output: {\n        classification: \"marketing\",\n        confidence: 1.4,\n        recommended_action: \"auto_delete\"\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        480
+      ],
+      "id": "34985ba0-00c7-4ea1-8b43-5266bc3f8264",
+      "name": "Simulate Invalid AI Output"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2192,
+        -32
+      ],
+      "id": "58ba72df-02ce-4134-8efd-23ff3f15ec37",
+      "name": "Return Classification Result"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Customer Inquiry": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Classifier": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Input": {
+      "main": [
+        [
+          {
+            "node": "Gemini Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Gemini Classifier",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Output": {
+      "main": [
+        [
+          {
+            "node": "AI Output Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Output Valid?": {
+      "main": [
+        [
+          {
+            "node": "Route by Classification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Safe Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Classification": {
+      "main": [
+        [
+          {
+            "node": "Sales Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Support Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Billing Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Manual Review Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Route": {
+      "main": [
+        [
+          {
+            "node": "Return Classification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Support Route": {
+      "main": [
+        [
+          {
+            "node": "Return Classification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Billing Route": {
+      "main": [
+        [
+          {
+            "node": "Return Classification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Review Route": {
+      "main": [
+        [
+          {
+            "node": "Return Classification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Safe Fallback": {
+      "main": [
+        [
+          {
+            "node": "Return Classification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate Invalid AI Output": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "dc972899-f1ac-492f-872f-a65997e00bd4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca107c9748799a721bbfb0f872d57c264350725362d91135785baa3ffbd19818"
+  },
+  "nodeGroups": [],
+  "id": "W2RfeK0Iqxi0ih2E",
+  "tags": []
+}

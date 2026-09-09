@@ -1,0 +1,14 @@
+[
+    {
+        "message":  "Can someone explain your plans and help me choose which one to buy?",
+        "request_id":  "req_ai_challenge_001"
+    },
+    {
+        "message":  "My dashboard keeps showing an error whenever I upload a file.",
+        "request_id":  "req_ai_challenge_002"
+    },
+    {
+        "message":  "My invoice amount doesn\u0027t match what I expected.",
+        "request_id":  "req_ai_challenge_003"
+    }
+]
