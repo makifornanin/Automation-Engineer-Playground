@@ -30,7 +30,7 @@
             },
             {
               "id": "1045bab9-abc0-4e15-9b45-07b1cb2b15ea",
-              "name": "=message",
+              "name": "message",
               "value": "={{ $json.body.message }}",
               "type": "string"
             },
@@ -306,7 +306,7 @@
             },
             {
               "id": "b0dc76c8-aba4-4844-b1c4-fcf8ef040cd5",
-              "name": "decision_source ",
+              "name": "decision_source",
               "value": "ai_guardrail",
               "type": "string"
             }
@@ -325,7 +325,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return {\n  json: {\n    output: {\n      recommended_action: 'send_to_sales',\n      confidence: 0.68,\n      reason: 'The intent may be sales-related, but it is unclear.'\n    }\n  }\n};"
+        "jsCode": "return {\n  json: {\n    output: {\n      recommended_action: 'cancel_account',\n      confidence: 0.95,\n      reason: 'The customer explicitly asked to cancel their account.'\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -503,7 +503,7 @@
             },
             {
               "id": "7fbb3d79-c982-4ec0-b591-afc685b56e1a",
-              "name": "decision_source ",
+              "name": "decision_source",
               "value": "ai_guardrail",
               "type": "string"
             }
