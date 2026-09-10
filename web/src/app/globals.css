@@ -1,0 +1,222 @@
+/*
+ * AEP design tokens.
+ *
+ * Tailwind v4 is CSS-first: there is deliberately NO tailwind.config.ts in this
+ * project. Theme values live in the `@theme` block below and are plain CSS
+ * custom properties, so a theme switch is a `var()` re-resolution rather than a
+ * React re-render. If you are looking for the Tailwind config, this file is it.
+ *
+ * Token groups: surface, text (ink), border (line), accent, glass.
+ * Light is the :root default. Dark overrides under :root[data-theme="dark"].
+ * The prefers-color-scheme block is the no-JS fallback only, and is guarded by
+ * :root:not([data-theme]) so it can never fight an explicit learner choice.
+ */
+
+@import "tailwindcss";
+
+/*
+ * `dark:` utilities follow the same two rules as the tokens: an explicit
+ * data-theme wins, and the OS preference applies only when no choice is set.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+:root {
+  color-scheme: light;
+
+  /* surface */
+  --surface: #f6f7f9;
+  --surface-raised: #ffffff;
+  /* Kept light enough that --ink-muted and --accent still clear AA on it. */
+  --surface-sunken: #f1f2f5;
+
+  /* text */
+  --ink: #14161a;
+  --ink-soft: #4a5160;
+  /* 4.71:1 on --surface. #6F7686 was 4.25:1 and failed AA for normal text. */
+  --ink-muted: #686f7e;
+
+  /* border */
+  --line: rgb(15 18 25 / 0.09);
+  --line-strong: rgb(15 18 25 / 0.16);
+
+  /* accent — calm blue */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgb(37 99 235 / 0.1);
+  /* White on #2563EB is 5.17:1 — passes WCAG AA for body text. */
+  --on-accent: #ffffff;
+  /*
+   * Accent text sitting ON an --accent-soft tint, e.g. the active dock item.
+   * --accent itself composites to only 4.21:1 over that tint and fails AA, so
+   * accent-coloured text on a tinted ground uses this darker value (5.46:1).
+   * Contrast must be measured against the COMPOSITED background, not the token.
+   */
+  --accent-ink: #1d4ed8;
+
+  /* glass */
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-line: rgb(255 255 255 / 0.7);
+  --glass-blur: 18px;
+  --glass-shadow: 0 8px 30px rgb(15 18 25 / 0.1), 0 1px 2px rgb(15 18 25 / 0.06);
+
+  /* Kaz orb glow — blue in light (Kaz §9) */
+  --kaz-glow: rgb(37 99 235 / 0.38);
+  --kaz-core: #6ea8ff;
+}
+
+/* Radii do not change between themes, so they live in @theme directly and
+   generate `rounded-card`, `rounded-dock` and `rounded-pill` utilities. */
+@theme {
+  --radius-card: 1rem;
+  --radius-dock: 1.25rem;
+  --radius-pill: 999px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #0b0c0e;
+  --surface-raised: #16181c;
+  --surface-sunken: #08090b;
+
+  --ink: #edeef0;
+  --ink-soft: #a8aeb8;
+  --ink-muted: #7c838f;
+
+  --line: rgb(255 255 255 / 0.09);
+  --line-strong: rgb(255 255 255 / 0.18);
+
+  /* accent — n8n-inspired coral */
+  --accent: #ff6d5a;
+  --accent-hover: #ff8574;
+  --accent-soft: rgb(255 109 90 / 0.14);
+  /*
+   * White on #FF6D5A is only ~2.9:1 and fails WCAG AA. Accent buttons in dark
+   * mode therefore use near-black label text. Do not "fix" this back to white.
+   */
+  --on-accent: #1a1113;
+  /* Coral on the composited --accent-soft tint is 5.11:1 — no change needed. */
+  --accent-ink: #ff6d5a;
+
+  --glass: rgb(255 255 255 / 0.06);
+  --glass-line: rgb(255 255 255 / 0.12);
+  --glass-blur: 20px;
+  --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+
+  /* Kaz orb glow — coral in dark (Kaz §9) */
+  --kaz-glow: rgb(255 109 90 / 0.4);
+  --kaz-core: #ff9e8f;
+}
+
+/* No-JS fallback. Never applies once the theme script has set data-theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --surface: #0b0c0e;
+    --surface-raised: #16181c;
+    --surface-sunken: #08090b;
+
+    --ink: #edeef0;
+    --ink-soft: #a8aeb8;
+    --ink-muted: #7c838f;
+
+    --line: rgb(255 255 255 / 0.09);
+    --line-strong: rgb(255 255 255 / 0.18);
+
+    --accent: #ff6d5a;
+    --accent-hover: #ff8574;
+    --accent-soft: rgb(255 109 90 / 0.14);
+    --on-accent: #1a1113;
+    /* Coral on the composited --accent-soft tint is 5.11:1 — no change needed. */
+    --accent-ink: #ff6d5a;
+
+    --glass: rgb(255 255 255 / 0.06);
+    --glass-line: rgb(255 255 255 / 0.12);
+    --glass-blur: 20px;
+    --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+
+    --kaz-glow: rgb(255 109 90 / 0.4);
+    --kaz-core: #ff9e8f;
+  }
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+
+  --color-glass: var(--glass);
+  --color-glass-line: var(--glass-line);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  body {
+    background-color: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /*
+   * Frosted chrome surface. `backdrop-filter` degrades to a plain translucent
+   * fill where it is unsupported, which still reads correctly.
+   */
+  .glass-surface {
+    background-color: var(--glass);
+    border: 1px solid var(--glass-line);
+    box-shadow: var(--glass-shadow);
+    /* Prefixed first, standard last: Lightning CSS keeps the last of the two,
+       and dropping the standard property costs Firefox the blur entirely. */
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  }
+}
+
+/*
+ * Reduced motion is honoured globally as well as per component, so a CSS-only
+ * transition can never sneak past the React-level guard.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
