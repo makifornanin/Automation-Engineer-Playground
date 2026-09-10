@@ -1,40 +1,52 @@
 import "server-only";
 
-import { isUserRole, type Session, type UserRole } from "./types";
+import { cache } from "react";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { toSessionUser } from "./map-user";
+import type { Session } from "./types";
 
 /**
- * PHASE 11: delete.
+ * Resolves the caller's session from a verified Supabase user.
  *
- * Dev scaffolding only. It exists so Admin nav visibility can be exercised
- * before real auth exists. It is server-only and must never gain a
- * NEXT_PUBLIC_ prefix — that prefix is inlined into the browser bundle.
+ * Uses `supabase.auth.getUser()`, never Supabase's own client-side
+ * `getSession()` method. That method decodes the auth cookie locally without
+ * checking with the Auth server, so a revoked or forged session would still
+ * read as valid. `getUser()` revalidates against the Auth server on every
+ * call, which is also what makes a future revoke take effect immediately
+ * instead of only on the caller's next login.
  *
- * This is NOT an access control. It decides what the dock renders, nothing
- * more; `/admin` is reachable by URL regardless of its value.
+ * Fails safe to `{ status: "anonymous" }` on every non-success path: missing
+ * env (`createSupabaseServerClient()` returns `null`), no signed-in user, or
+ * a thrown/rejected call anywhere along the way. No path here returns
+ * `"authenticated"` on failure.
  */
-function readPlaceholderRole(): UserRole {
-  const raw = process.env.AEP_PLACEHOLDER_ROLE;
-  return isUserRole(raw) ? raw : "student";
+export async function resolveSession(): Promise<Session> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) {
+      return { status: "anonymous" };
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { status: "anonymous" };
+    }
+
+    return { status: "authenticated", user: toSessionUser(user) };
+  } catch {
+    return { status: "anonymous" };
+  }
 }
 
 /**
- * The single session seam for the whole app.
+ * The single session seam for the whole app. `cache()` dedupes calls within
+ * one render pass — e.g. the app layout's call and Home's call — so a full
+ * page load costs one round trip here, not two.
  *
- * Phase 10 has no authentication, so this returns a placeholder learner. The
- * `status` discriminant is here so Phase 11 can swap in a real Supabase session
- * by replacing this function body, with no call site changes.
- *
- * `import 'server-only'` keeps Phase 11's privileged code from being pulled
- * into a client bundle by an accidental import.
+ * `import "server-only"` keeps this privileged code from being pulled into a
+ * client bundle by an accidental import.
  */
-export async function getSession(): Promise<Session> {
-  return {
-    status: "authenticated",
-    user: {
-      // PHASE 11: replaced by the real Supabase user id.
-      id: "placeholder-learner",
-      displayName: "Learner",
-      role: readPlaceholderRole(),
-    },
-  };
-}
+export const getSession = cache(resolveSession);
