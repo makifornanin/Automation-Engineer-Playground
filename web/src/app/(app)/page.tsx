@@ -2,6 +2,7 @@ import Link from "next/link";
 import { KazOrb } from "@/components/kaz/KazOrb";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { getSession } from "@/lib/session/get-session";
+import { sessionDisplayName } from "@/lib/session/types";
 
 /**
  * Home stays intentionally minimal (Vision §10). Slots only: greeting,
@@ -15,7 +16,7 @@ const LAB_NUMBERS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
 
 export default async function HomePage() {
   const session = await getSession();
-  const name = session.status === "authenticated" ? session.user.displayName : "there";
+  const name = sessionDisplayName(session);
 
   return (
     <div className="flex flex-col gap-10">

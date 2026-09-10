@@ -7,8 +7,10 @@ const SessionContext = createContext<Session | null>(null);
 
 /**
  * Carries the session resolved once on the server down to client components.
- * Phase 10 has no authentication, so this is a placeholder — never treat a
- * value read from here as proof of identity or permission.
+ * `Session` carries no credentials, so this is safe to serialise into the
+ * browser-visible RSC payload — but never treat a value read from here as
+ * proof of identity or permission. It is a display convenience, not a
+ * security check; every protected read/write must be re-verified server-side.
  */
 export function SessionProvider({
   session,
