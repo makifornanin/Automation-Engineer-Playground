@@ -7,9 +7,9 @@ import { SIGN_IN_PATH } from "./protected-routes";
 
 /**
  * The authoritative, server-side check for a protected page or layout.
- * Middleware only provides defence in depth and avoids a shell flash; this
- * is what actually proves a session is real before privileged content
- * renders.
+ * The proxy (`proxy.ts`) only provides defence in depth and avoids a shell
+ * flash; this is what actually proves a session is real before privileged
+ * content renders.
  *
  * `redirect()` throws internally (its return type is `never`), so the
  * `if` block never completes normally on the anonymous path — the return

@@ -7,7 +7,7 @@ vi.mock("@/lib/supabase/middleware-client", () => ({
   updateSession: (...args: unknown[]) => mockUpdateSession(...args),
 }));
 
-import { config, middleware } from "./middleware";
+import { config, proxy } from "./proxy";
 
 function buildRequest(pathname: string): NextRequest {
   return new NextRequest(new URL(pathname, "https://aep.example"));
@@ -19,12 +19,12 @@ function buildRequest(pathname: string): NextRequest {
  * cannot call the shared function. This compares them behaviourally instead
  * of trusting a hand edit kept them in sync.
  */
-function middlewareRunsOn(pathname: string): boolean {
+function proxyRunsOn(pathname: string): boolean {
   const pattern = config.matcher[0];
   return new RegExp(`^${pattern}$`).test(pathname);
 }
 
-describe("middleware matcher", () => {
+describe("proxy matcher", () => {
   it.each([
     ["/", true],
     ["/admin", true],
@@ -36,12 +36,12 @@ describe("middleware matcher", () => {
     ["/_next/static/x.js", false],
     ["/_next/image", false],
     ["/favicon.ico", false],
-  ])("middleware runs on %s: %s", (pathname, expected) => {
-    expect(middlewareRunsOn(pathname)).toBe(expected);
+  ])("proxy runs on %s: %s", (pathname, expected) => {
+    expect(proxyRunsOn(pathname)).toBe(expected);
   });
 });
 
-describe("middleware redirect", () => {
+describe("proxy redirect", () => {
   it("copies cookies from the refreshed response onto the redirect response", async () => {
     const refreshedResponse = NextResponse.next();
     refreshedResponse.cookies.set("sb-access-token", "refreshed-value", {
@@ -52,7 +52,7 @@ describe("middleware redirect", () => {
     });
     mockUpdateSession.mockResolvedValue({ response: refreshedResponse, user: null });
 
-    const result = await middleware(buildRequest("/admin"));
+    const result = await proxy(buildRequest("/admin"));
 
     expect(result.headers.get("location")).toContain("/sign-in");
     const cookie = result.cookies.get("sb-access-token");
@@ -64,7 +64,7 @@ describe("middleware redirect", () => {
     const passthroughResponse = NextResponse.next();
     mockUpdateSession.mockResolvedValue({ response: passthroughResponse, user: null });
 
-    const result = await middleware(buildRequest("/sign-in"));
+    const result = await proxy(buildRequest("/sign-in"));
 
     expect(result).toBe(passthroughResponse);
   });
@@ -76,7 +76,7 @@ describe("middleware redirect", () => {
       user: { id: "user-1" },
     });
 
-    const result = await middleware(buildRequest("/admin"));
+    const result = await proxy(buildRequest("/admin"));
 
     expect(result).toBe(authenticatedResponse);
   });

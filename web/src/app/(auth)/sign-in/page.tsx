@@ -3,7 +3,7 @@ import { GlassSurface } from "@/components/ui/GlassSurface";
 /**
  * Static placeholder. No form, no Supabase call, no new visual language —
  * existing tokens and `GlassSurface` only. It exists so the protection seam
- * (middleware + `requireSession()`) has somewhere to send a signed-out
+ * (the proxy + `requireSession()`) has somewhere to send a signed-out
  * visitor. The real passwordless sign-in flow is Phase 11 Step 2.
  */
 export default function SignInPage() {

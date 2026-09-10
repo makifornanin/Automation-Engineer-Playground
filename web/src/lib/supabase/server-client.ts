@@ -14,7 +14,7 @@ import { getSupabaseConfig } from "./env";
  *
  * `setAll` is a deliberate no-op wrapped in `try/catch`: a Server Component
  * cannot set cookies (Next throws if you try outside a Server Action or
- * Route Handler), and by the time one runs, `middleware.ts` has already
+ * Route Handler), and by the time one runs, `proxy.ts` has already
  * refreshed the session for this request and written any new cookies to the
  * response. There is nothing left for this client to persist here.
  */

@@ -15,8 +15,13 @@ import { updateSession } from "@/lib/supabase/middleware-client";
  * On redirect, those cookies are copied onto the redirect response instead —
  * dropping them here would discard a just-refreshed token and loop the
  * browser straight back through this same redirect on the next request.
+ *
+ * Next 16 renamed the `middleware` file convention to `proxy`. This is not a
+ * cosmetic rename: a `proxy` file always runs on the Node.js runtime (never
+ * Edge), and — unlike a `middleware` file — it cannot export `runtime` to
+ * opt out; Next fails the build if it tries.
  */
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { response, user } = await updateSession(request);
 
   if (!user && isProtectedPath(request.nextUrl.pathname)) {
@@ -34,7 +39,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
  * Next requires `config.matcher` to be statically analysable, so it cannot
  * call `isProtectedPath()` — that is why route protection is expressed twice
  * (here, and in `protected-routes.ts`). This matcher only decides whether
- * middleware runs at all; `sign-in(?:/|$)` matches `/sign-in` and any future
+ * the proxy runs at all; `sign-in(?:/|$)` matches `/sign-in` and any future
  * nested `/sign-in/...` route (e.g. a magic-link callback), not a
  * differently-named route that merely shares the text prefix, such as
  * `/sign-in-help`. Keep this in sync with `PUBLIC_PATHS` by hand — adding a

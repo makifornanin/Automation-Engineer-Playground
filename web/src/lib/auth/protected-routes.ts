@@ -1,7 +1,8 @@
 /**
  * Route protection map. Pure and runtime-neutral — imported by both
- * `middleware.ts` (edge) and `guards.ts` (Node), so it must not import
- * `next/headers`, `server-only`, or anything else runtime-specific.
+ * `proxy.ts` and `guards.ts`, both of which now run on the Node.js runtime
+ * (Next 16's `proxy` file convention cannot run on Edge), so it must not
+ * import `next/headers`, `server-only`, or anything else runtime-specific.
  */
 export const SIGN_IN_PATH = "/sign-in";
 
