@@ -1,6 +1,20 @@
 # AEP Phase 10 — Aim Point 1 Human Browser Verification
 
-> Purpose: Close the remaining browser-only evidence gap for Phase 10 / Aim Point 1 before starting Phase 11.
+> Purpose: Close the remaining browser-only evidence gap for Phase 10 / Aim Point 1.
+
+> **STATUS: BLOCKED as of 2026-09-11 — not merely deferred. Do not delete this file.**
+>
+> Phase 11 Aim Point 1 put every `(app)` route behind `requireSession()`. With no
+> Supabase project configured, `/` redirects to `/sign-in`, so the dock, theme,
+> motion, glass and responsive criteria below are currently **unreachable in a
+> browser**. `/sign-in` lives outside `(app)` and has no dock and no ThemeProvider,
+> so it cannot substitute.
+>
+> This checklist unblocks at the same moment Phase 11 Aim Point 1's L1–L8 do —
+> when a real Supabase project exists and `web/.env.local` is configured. See
+> `AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
+>
+> Section 10 is superseded; see its own note. Everything else stands unchanged.
 
 ## Before You Start
 
@@ -155,18 +169,27 @@ Enable the OS reduced-motion preference.
 - [ ] No major Chrome-vs-Firefox regression.
 - [ ] Hover/focus still works.
 
-## 10. Admin Placeholder Boundary
+## 10. Admin Placeholder Boundary — SUPERSEDED
 
-Run with `AEP_PLACEHOLDER_ROLE=admin`:
+> **Superseded by Phase 11 Aim Point 1 (2026-09-11). Retained, not deleted.**
+> `AEP_PLACEHOLDER_ROLE` no longer exists — it was removed when the real Supabase
+> session seam replaced the placeholder. The procedure below cannot be run as
+> written. The equivalent check now lives in the Phase 11 live-QA checklist as
+> **L3**: set `app_metadata.role` to `admin` in the Supabase dashboard (never
+> `user_metadata`, which the user can write themselves).
 
-- [ ] Admin navigation item appears.
+~~Run with `AEP_PLACEHOLDER_ROLE=admin`:~~
 
-Return to `AEP_PLACEHOLDER_ROLE=student`:
+- [ ] Admin navigation item appears — **now: set `app_metadata.role = "admin"`.**
 
-- [ ] Admin navigation item disappears.
-- [ ] Direct `/admin` still opens.
+~~Return to `AEP_PLACEHOLDER_ROLE=student`:~~
 
-Direct access is expected in Phase 10. Real authorization belongs to Phase 11.
+- [ ] Admin navigation item disappears — **now: remove `app_metadata.role`.**
+- [ ] Direct `/admin` still opens for a signed-in non-admin.
+
+Direct access remains expected. `/admin` now requires a signed-in session, but is
+still reachable by any signed-in user regardless of role. Role authorization is
+Phase 11 Step 3.
 
 ## 11. Production Build Check
 

@@ -876,11 +876,16 @@ Verification classification per `CLAUDE.md`:
   native binary. That is an environment issue, not a lockfile defect, but the
   plan's Definition of Done requires clean-install verification, so it is
   outstanding
-* live verified — **nothing.** No browser pass has been executed. Criteria 2, 7
-  and 13-32 remain unverified, including every criterion that defines the
-  separated-chip revision. A served 200 is not a rendered page. Criterion 27
-  additionally requires written confirmation that `/admin` stayed reachable by
-  direct URL while the role was `student`
+* live verified — **nothing, and now blocked rather than merely deferred.** Phase 11
+  Aim Point 1 put every `(app)` route behind `requireSession()`, so with no Supabase
+  project configured `/` redirects to `/sign-in` and the dock, theme, motion, glass and
+  responsive criteria are unreachable in a browser. `/sign-in` sits outside `(app)` and
+  has no dock or ThemeProvider, so it cannot substitute. The browser checklist is
+  retained in full and unblocks at the same moment Phase 11 Aim Point 1's L1-L8 do.
+  Section 10 of that checklist (`AEP_PLACEHOLDER_ROLE=admin`) is superseded — that
+  variable no longer exists; set `app_metadata.role` in the Supabase dashboard instead.
+  It is annotated, not deleted. Criterion 27's written confirmation that `/admin` stays
+  reachable by a non-admin is now Phase 11 L4
 * not built — authentication, authorization, learner data (Phase 11)
 
 Open questions for the browser pass: dock magnify 1.08 vs neighbour 1.06
@@ -899,11 +904,15 @@ Give invited learners secure passwordless access and create the minimum persiste
 
 * [ ] Configure browser/server Supabase clients correctly
 * [ ] Configure secure environment variables
-* [ ] Confirm service-role/admin credentials never reach browser code
+* [/] Confirm service-role/admin credentials never reach browser code
 * [ ] Add auth/session middleware or equivalent server-safe session handling
-* [ ] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
+* [/] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
 * [ ] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise
-* [ ] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
+* [/] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
+
+The four open bullets are open for one reason: **no Supabase project is configured**, so
+no code path here has ever run against a real Auth server. They are not open because work
+is missing.
 
 ## Step 2 — Invite-Only Authentication
 
@@ -951,6 +960,56 @@ Persist:
 * [ ] notes
 * [ ] lab-specific webhook configuration
 * [ ] optional n8n connection metadata/secrets using a secure design
+
+## Current Status
+
+**Aim Point 1 — Supabase Web Foundation + Real Session Architecture.**
+Plan: `docs/superpowers/plans/2026-09-11-aep-phase-11-aim-point-1-supabase-session-foundation.md`.
+Deferred live criteria: `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
+
+Verification classification per `CLAUDE.md`:
+
+* unit tested — 119 tests across 15 files. Includes 12 adversarial role-escalation
+  vectors (`user_metadata.role`, case and whitespace variants, array, object, getter,
+  `__proto__`, null byte, number) all resolving to `student`; every `resolveSession()`
+  failure path resolving to `anonymous`; an assertion that Supabase's own
+  `auth.getSession()` is never called; a key-shape assertion proving no credential or
+  metadata is copied into the browser-visible session; and the middleware cookie
+  dual-write, `options` forwarding, `headers` forwarding and redirect cookie-copy, each
+  proven to fail when the behaviour is removed
+* structurally verified — `npm run verify` exits 0: lint, typecheck, 119 tests, and a
+  production build of 8 routes plus middleware. The build ran with **no** Supabase env
+  set, which also proves there is no import-time throw. A `node:fs` invariant scan proves
+  `auth.getSession(`, `service_role` and `AEP_PLACEHOLDER_ROLE` appear nowhere. The
+  `server-only` boundary was proven a real build failure by actually importing it from a
+  client component. A fake service-role value was injected, built, and grepped out of
+  `.next/static` — no leak
+* live verified — **only the unconfigured path.** With no Supabase env, `/` and `/admin`
+  return 307 to `/sign-in`, `/sign-in` returns 200, `/favicon.ico` bypasses the matcher,
+  `/sign-in-help` is correctly protected, and there is no redirect loop. The middleware
+  was separately proven to execute via a temporary non-secret marker log
+* not tested — **the entire configured path.** No session has ever resolved as
+  `authenticated` against a real Auth server; `browser-client.ts` is imported by nothing
+  and has never executed; the middleware refresh has never run against a real token.
+  L1–L8 are unperformed
+* blocked — creating `web/.env.local` is blocked on an owner decision: does the website
+  use the labs' existing Supabase project, or a separate one? Code is identical either
+  way; only the values differ. Recommendation on record is a separate project, so a leak
+  of the labs' service-role key cannot compromise learner authentication
+
+Known limitations, recorded not hidden: two `getUser()` calls per full page load
+(middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level
+gating does not re-run on client-side navigation between sibling routes, which the
+middleware redirect covers; middleware is defence in depth and UX, **not** the
+authorization boundary — `requireSession()` in the layout is authoritative.
+
+Forward item: Next 16.3.4 deprecates `middleware` in favour of `proxy`. Not renamed here
+— the plan specified `middleware.ts`. Rename first thing in Aim Point 2, and re-prove
+empirically that the file still executes; do not assume the rename is semantically free.
+
+`/admin` remains honestly ungated by role. It now requires a signed-in session, but any
+role may open it. Role enforcement is Step 3. The on-screen notice was updated to say so
+— the Phase 10 wording had become false.
 
 ## Phase Complete When
 

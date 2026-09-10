@@ -18,7 +18,8 @@ n8n          →  you build the automation yourself
 Supabase     →  the database, where a lab genuinely teaches persistence
 ```
 
-**The AEP Website does not exist yet.** So today the repo experience is:
+**The AEP Website is under construction** (Phase 10 shell built, Phase 11 authentication
+in progress — see "AEP Website environment" below). So today the repo experience is:
 
 | Need | Today | Once the website exists |
 |---|---|---|
@@ -218,6 +219,41 @@ n8n, and you would use the forwarding URL in place of `localhost:5678`.
 
 Once the AEP Website exists, this whole section collapses into one **Send Test**
 button that builds the request, sends it, and shows you expected vs actual.
+
+---
+
+## AEP Website environment
+
+The website has its **own** environment contract, separate from the labs'. It lives in
+`web/`, and Next.js only loads env files from inside that directory — the root `.env` is
+never read by the website.
+
+Copy `web/.env.example` to `web/.env.local` (git-ignored, and it must be **UTF-8**; the
+root `.env` is UTF-16LE, which Node's parser will mangle). Variable names only are
+documented there; never real values.
+
+```text
+NEXT_PUBLIC_SITE_URL            public site origin
+NEXT_PUBLIC_SUPABASE_URL        Supabase project URL — public by design
+NEXT_PUBLIC_SUPABASE_ANON_KEY   anon/publishable key — public by design; RLS is the protection
+# SUPABASE_SERVICE_ROLE_KEY     server-only, not used yet, arrives with the Admin section
+```
+
+Two rules that are not negotiable:
+
+- **`NEXT_PUBLIC_*` is inlined into the browser bundle at build time.** Anything with that
+  prefix is public and permanent. A service-role key must never carry it.
+- **The website's names deliberately differ from the labs' names** (`SUPABASE_URL`,
+  `SUPABASE_SECRET_KEY` at the repo root). That divergence is intentional: it makes it
+  impossible to "fix" a missing website variable by copying the root `.env` across, which
+  would drop a real service-role key into the web app's env space.
+
+**Open owner decision:** whether the website uses the labs' existing Supabase project or a
+separate one. Recommendation on record is a separate project, so a leak of the labs'
+service-role key cannot compromise learner authentication. Until that is decided,
+`web/.env.local` does not exist and the website resolves every session as signed-out —
+which it does safely, logging one sanitized warning rather than crashing. See
+`docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
 
 ---
 
