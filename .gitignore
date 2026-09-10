@@ -17,6 +17,10 @@ desktop.ini
 # VS Code
 .vscode/
 
+# Claude Code local settings — machine-local permissions/preferences, never shared.
+# Deliberately narrow: .claude/agents/ holds the five tracked AEP project agents.
+.claude/settings.local.json
+
 # Logs
 logs/
 *.log
