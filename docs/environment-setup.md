@@ -235,7 +235,7 @@ documented there; never real values.
 ```text
 NEXT_PUBLIC_SITE_URL            public site origin
 NEXT_PUBLIC_SUPABASE_URL        Supabase project URL — public by design
-NEXT_PUBLIC_SUPABASE_ANON_KEY   anon/publishable key — public by design; RLS is the protection
+NEXT_PUBLIC_SUPABASE_ANON_KEY   anon/publishable key — public by design; RLS is the protection, and RLS must actually be enabled
 # SUPABASE_SERVICE_ROLE_KEY     server-only, not used yet, arrives with the Admin section
 ```
 
@@ -248,12 +248,14 @@ Two rules that are not negotiable:
   impossible to "fix" a missing website variable by copying the root `.env` across, which
   would drop a real service-role key into the web app's env space.
 
-**Open owner decision:** whether the website uses the labs' existing Supabase project or a
-separate one. Recommendation on record is a separate project, so a leak of the labs'
-service-role key cannot compromise learner authentication. Until that is decided,
-`web/.env.local` does not exist and the website resolves every session as signed-out —
-which it does safely, logging one sanitized warning rather than crashing. See
-`docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
+**Owner decision — RESOLVED 2026-09-11:** the AEP website reuses the existing AEP
+Supabase project while keeping website-specific application data logically isolated
+from Labs and Capstone. The website's variable names above still deliberately differ
+from the labs' root `.env` names for the reason above — that divergence protects against
+a copy-paste mistake, not against project sharing. No project has been configured for
+the website yet, so `web/.env.local` still does not exist and the website continues to
+resolve every session as signed-out, safely, logging one sanitized warning rather than
+crashing. See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
 
 ---
 

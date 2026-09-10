@@ -26,7 +26,7 @@ accepted and stay exactly as they are.
 
 | # | Decision | Resolution |
 |---|---|---|
-| 1 | Supabase project for the website | **Owner decision required before real values are entered.** Code is identical either way; only `web/.env.local` values differ. Recommendation: a project separate from the labs' project, so a leak of the labs service-role key cannot compromise learner auth. |
+| 1 | Supabase project for the website | **Owner decision required before real values are entered.** Code is identical either way; only `web/.env.local` values differ. Recommendation: a project separate from the labs' project, so a leak of the labs service-role key cannot compromise learner auth. **SUPERSEDED 2026-09-11 — reuse the existing AEP Supabase project.** |
 | 2 | Key variable name | `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the conventional name, still supported. If the dashboard issues `sb_publishable_…` instead, rename to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `env.ts` and `web/.env.example` together. |
 | 3 | Sign-in path | `/sign-in` |
 | 4 | `getSession()` name | Kept. ROADMAP Step 1 names it explicitly. The collision with Supabase's forbidden `auth.getSession()` is guarded by a source-scan invariant test. |

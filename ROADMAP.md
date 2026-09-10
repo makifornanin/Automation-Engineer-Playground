@@ -997,15 +997,32 @@ Verification classification per `CLAUDE.md`:
   way; only the values differ. Recommendation on record is a separate project, so a leak
   of the labs' service-role key cannot compromise learner authentication
 
+**Resolved 2026-09-11** — the owner decided the website reuses the existing AEP Supabase
+project while keeping website-specific application data logically isolated from Labs and
+Capstone. The earlier separate-project recommendation above is superseded but retained
+for the record in `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`. This resolves the open
+question, not the "blocked" verification status: no Supabase project has been configured
+for the website yet, `web/.env.local` still does not exist, and no code path here has run
+against a real Auth server.
+
 Known limitations, recorded not hidden: two `getUser()` calls per full page load
 (middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level
 gating does not re-run on client-side navigation between sibling routes, which the
 middleware redirect covers; middleware is defence in depth and UX, **not** the
 authorization boundary — `requireSession()` in the layout is authoritative.
 
-Forward item: Next 16.3.4 deprecates `middleware` in favour of `proxy`. Not renamed here
-— the plan specified `middleware.ts`. Rename first thing in Aim Point 2, and re-prove
-empirically that the file still executes; do not assume the rename is semantically free.
+Forward item, closed in Aim Point 2: Next 16.3.4 deprecated `middleware` in favour of
+`proxy`, and the rename is not runtime-neutral. `node_modules/next/dist/build/entries.js`
+routes a `proxy` file to `onServer()` (Node.js) unconditionally, while a `middleware`
+file only reaches `onServer()` when `pageRuntime === "nodejs"` is set and otherwise takes
+`onEdgeServer()`. This file exported no `runtime`, so it ran on the Edge runtime as
+`middleware.ts` and now runs on the Node.js runtime as `proxy.ts`. The build's
+`ƒ Proxy (Middleware)` label is unchanged either way and is purely cosmetic — the actual
+evidence is `functions-config-manifest.json`
+(`functions["/_middleware"].runtime === "nodejs"`). Re-proven empirically with
+`GET /sign-in-help` (a path with no App Router segment, so no layout can fire
+`requireSession()`), which returned `307` both before and after the rename. See
+`docs/superpowers/plans/2026-09-11-aep-phase-11-aim-point-2-proxy-migration.md`.
 
 `/admin` remains honestly ungated by role. It now requires a signed-in session, but any
 role may open it. Role enforcement is Step 3. The on-screen notice was updated to say so

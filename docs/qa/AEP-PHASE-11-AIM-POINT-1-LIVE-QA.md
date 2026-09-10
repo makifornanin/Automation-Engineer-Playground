@@ -4,15 +4,32 @@
 > Everything here is currently **not tested**. Nothing in this file may be ticked
 > without actually exercising a live Auth server.
 
-## Blocked on an owner decision
+## Owner decision — RESOLVED 2026-09-11
 
 `web/.env.local` cannot be created until this is answered:
 
-- [ ] **Does the website use the labs' existing Supabase project, or a separate one?**
+- [x] **Does the website use the labs' existing Supabase project, or a separate one?**
 
 Code is identical either way — only the values in `web/.env.local` differ.
 
-Recommendation on record: **a separate project.** The labs' project already holds
+**Decision, recorded verbatim:** "The AEP website reuses the existing AEP Supabase
+project while keeping website-specific application data logically isolated from Labs
+and Capstone."
+
+The recommendation below is **SUPERSEDED** by this decision but **RETAINED for the
+record.** The risk it named — a leak of the labs' service-role key also compromising
+learner authentication — is real. It is accepted by this decision and mitigated, not
+eliminated: this Aim Point introduces no service-role client for the website (none
+exists yet in either Aim Point 1 or Aim Point 2), website application data will be kept
+in logically isolated tables/naming rather than mixed with `processed_events`,
+`dlq_events` and `approval_requests`, and the anon/publishable key the website actually
+uses is public by design either way — Row Level Security, not project separation, is
+what has to hold the line on every table the website reads or writes. No project is
+configured yet, so `web/.env.local` still does not exist and this remains untested
+against a live Auth server; only the open *question* is resolved.
+
+Recommendation on record, superseded but retained for the record: **a separate
+project.** The labs' project already holds
 `processed_events`, `dlq_events` and `approval_requests`, and its service-role key is
 in the root `.env` and configured inside n8n. If the website shares that project, a leak
 of the labs' service-role key also compromises learner authentication. A separate
@@ -130,11 +147,22 @@ Remove `web/.env.local`, restart:
 - Real token-expiry refresh is L6 above. The pure-logic half of the middleware cookie
   path (dual-write to request and response, `options` forwarding, `headers` forwarding,
   redirect cookie copy) is unit-tested and does not need a live project.
-- Renaming `middleware.ts` → `proxy.ts` (Next 16 deprecation) is a separate Aim Point 2
-  task. Do it with a verification gate: read the installed Next's own types to confirm
-  the export name, matcher semantics and runtime are unchanged, then re-prove with a
-  temporary marker log that the file actually executes. A silently non-running
-  `proxy.ts` looks fine until sessions start dying an hour later.
+- `middleware.ts` → `proxy.ts` (Next 16 deprecation) is done, in Aim Point 2. The rename
+  is **not** runtime-neutral: `node_modules/next/dist/build/entries.js` shows
+  `isProxyFile` routing to `onServer()` (Node.js) unconditionally, while
+  `isMiddlewareFile` only reaches `onServer()` when `pageRuntime === "nodejs"` and
+  otherwise takes `onEdgeServer()`. This file exported no `runtime`, so it ran on the
+  Edge runtime as `middleware.ts` and now runs on the Node.js runtime as `proxy.ts`. The
+  build's `ƒ Proxy (Middleware)` label is unchanged either way and is purely cosmetic —
+  it proves nothing about which runtime executed. The actual evidence is
+  `web/.next/server/functions-config-manifest.json`
+  (`functions["/_middleware"].runtime === "nodejs"`) and the emptied
+  `middleware-manifest.json` (no Edge bundle). Re-proven empirically, not just by
+  reading types: `GET /sign-in-help` — a path with no App Router segment, so no layout
+  runs and `requireSession()` cannot fire — returned `307` to `/sign-in` both before and
+  after the rename, which is only possible if the file actually executes; a
+  non-executing file would 404 there instead. See
+  `docs/superpowers/plans/2026-09-11-aep-phase-11-aim-point-2-proxy-migration.md`.
 
 # Final Verdict
 
@@ -143,7 +171,7 @@ Remove `web/.env.local`, restart:
 - [ ] FAIL
 
 ```text
-Supabase project (shared labs / separate):
+Supabase project: shared with Labs (decided 2026-09-11)
 Browser / OS:
 Blocking issues:
 Non-blocking notes:
