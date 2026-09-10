@@ -405,7 +405,7 @@ grep -rIn "service_role\|SUPABASE_SECRET\|eyJ" web/ --exclude-dir=node_modules -
 20. Dark-mode accent buttons use dark label text, not white.
 
 **Dock**
-21. Icon-only at rest, translucent glass, floating — not a full-height sidebar.
+21. Icon-only at rest; on desktop each item is its own translucent glass chip floating independently, with no shared visible panel behind the group — not a full-height sidebar.
 22. Hover expands the item, reveals its label, subtly magnifies it and neighbours.
 23. Tab reaches every dock item in visual order; each focused item reveals its label and shows a visible focus ring — equivalent to hover.
 24. Enter navigates; the press shows compression/release.
@@ -416,7 +416,7 @@ grep -rIn "service_role\|SUPABASE_SECRET\|eyJ" web/ --exclude-dir=node_modules -
 **Motion & responsive**
 28. With OS reduced-motion on: no magnification, no press spring, effectively instant transitions — and labels still appear.
 29. Navigation shows a subtle enter transition with no flash of unstyled or mis-themed content.
-30. ≥768px: vertical left-edge capsule. <768px: horizontal bottom capsule with always-visible captions and safe-area padding.
+30. ≥768px: a vertical left-edge column of independent glass chips with visible spacing and no shared visible panel behind them. <768px: horizontal bottom capsule with always-visible captions and safe-area padding.
 31. At 320 / 768 / 1280 / 1920px: no horizontal page scroll; the dock never occludes content.
 32. Magnification is inactive on a coarse-pointer device.
 

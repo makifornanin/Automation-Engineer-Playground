@@ -469,8 +469,14 @@ Default state:
 
 - icon-only
 - small footprint
-- translucent glass/chrome capsule
+- each item is its own translucent glass/chrome button, floating independently
+  with visible space between items — not one shared capsule behind the group
+- the navigation wrapper stays visually transparent on desktop
 - floats near the side of the screen
+
+Below the mobile breakpoint the items group into a single shared bottom capsule.
+Six separated pills do not fit a 320px viewport, and a grouped bottom strip is
+the established mobile convention.
 
 On hover:
 
