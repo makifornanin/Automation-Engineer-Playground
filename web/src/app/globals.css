@@ -67,6 +67,9 @@
   --glass-line: rgb(255 255 255 / 0.7);
   --glass-blur: 18px;
   --glass-shadow: 0 8px 30px rgb(15 18 25 / 0.1), 0 1px 2px rgb(15 18 25 / 0.06);
+  /* Tuned for a small ~44px chip, not a full panel — --glass-shadow reads
+     foggy when repeated at that size across six dock items. */
+  --glass-shadow-sm: 0 2px 10px rgb(15 18 25 / 0.08), 0 1px 1px rgb(15 18 25 / 0.05);
 
   /* Kaz orb glow — blue in light (Kaz §9) */
   --kaz-glow: rgb(37 99 235 / 0.38);
@@ -111,6 +114,7 @@
   --glass-line: rgb(255 255 255 / 0.12);
   --glass-blur: 20px;
   --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+  --glass-shadow-sm: 0 4px 14px rgb(0 0 0 / 0.45), 0 1px 1px rgb(0 0 0 / 0.35);
 
   /* Kaz orb glow — coral in dark (Kaz §9) */
   --kaz-glow: rgb(255 109 90 / 0.4);
@@ -144,6 +148,7 @@
     --glass-line: rgb(255 255 255 / 0.12);
     --glass-blur: 20px;
     --glass-shadow: 0 10px 34px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+    --glass-shadow-sm: 0 4px 14px rgb(0 0 0 / 0.45), 0 1px 1px rgb(0 0 0 / 0.35);
 
     --kaz-glow: rgb(255 109 90 / 0.4);
     --kaz-core: #ff9e8f;
@@ -190,19 +195,45 @@
   }
 }
 
-@layer utilities {
+/*
+ * Frosted chrome surface. `backdrop-filter` degrades to a plain translucent
+ * fill where it is unsupported, which still reads correctly.
+ *
+ * Declared with `@utility` (not `@layer utilities`) so it can carry a
+ * `max-md:` variant on the dock's mobile capsule.
+ */
+@utility glass-surface {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow);
+  /* Prefixed first, standard last: Lightning CSS keeps the last of the two,
+     and dropping the standard property costs Firefox the blur entirely. */
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+}
+
+/*
+ * Per-item glass chip for the desktop dock: each nav link floats as its own
+ * small surface instead of sharing one large panel. Reuses the same glass
+ * tokens as .glass-surface; only the shadow differs (--glass-shadow-sm),
+ * because --glass-shadow is tuned for one large panel and reads foggy when
+ * repeated at ~44px six times.
+ */
+@utility glass-chip {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow-sm);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+
   /*
-   * Frosted chrome surface. `backdrop-filter` degrades to a plain translucent
-   * fill where it is unsupported, which still reads correctly.
+   * A second background-color would replace var(--glass) and flatten the
+   * chip back to a flat tint. A gradient layer paints the accent tint OVER
+   * the glass fill instead, so the active chip stays frosted.
    */
-  .glass-surface {
-    background-color: var(--glass);
-    border: 1px solid var(--glass-line);
-    box-shadow: var(--glass-shadow);
-    /* Prefixed first, standard last: Lightning CSS keeps the last of the two,
-       and dropping the standard property costs Firefox the blur entirely. */
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  &[data-active="true"] {
+    background-image: linear-gradient(var(--accent-soft), var(--accent-soft));
+    border-color: color-mix(in srgb, var(--accent) 26%, var(--glass-line));
   }
 }
 

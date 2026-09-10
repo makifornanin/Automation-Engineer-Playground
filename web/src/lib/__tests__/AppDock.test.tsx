@@ -62,4 +62,69 @@ describe("<AppDock />", () => {
       "aria-current",
     );
   });
+
+  it("scopes the shared glass surface to the mobile capsule only", () => {
+    const { container } = render(<AppDock role="student" />);
+    const list = container.querySelector("ul");
+    expect(list).not.toBeNull();
+    const classNames = (list?.getAttribute("class") ?? "").split(/\s+/);
+    expect(classNames).toContain("max-md:glass-surface");
+    expect(classNames).not.toContain("glass-surface");
+  });
+
+  it("gives every dock link its own glass chip", () => {
+    render(<AppDock role="admin" />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.getAttribute("class")?.split(/\s+/)).toContain("glass-chip");
+    }
+  });
+
+  it("marks exactly one link data-active, and it is the aria-current element", () => {
+    mockPathname = "/labs/03/lesson-2";
+    render(<AppDock role="student" />);
+    const links = screen.getAllByRole("link");
+    const active = links.filter((link) => link.getAttribute("data-active") === "true");
+    const current = links.filter((link) => link.getAttribute("aria-current") === "page");
+    expect(active).toHaveLength(1);
+    expect(active[0]).toBe(current[0]);
+  });
+
+  it.each([
+    ["/", "Home"],
+    ["/labs/03/lesson-2", "Labs"],
+  ])("marks %s active via data-active on %s", (path, label) => {
+    mockPathname = path;
+    render(<AppDock role="student" />);
+    expect(
+      screen.getByRole("link", { name: new RegExp(`^${label}`, "i") }),
+    ).toHaveAttribute("data-active", "true");
+  });
+
+  it("keeps every dock label present as real text, not display:none", () => {
+    render(<AppDock role="admin" />);
+    for (const label of ["Home", "Labs", "Notes", "Kaz", "Settings", "Admin"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  it("exposes exactly one tab stop per nav item, not a phantom li stop", () => {
+    // Motion auto-adds tabIndex="0" to the <li> because it carries whileTap.
+    // The <a> is the real, natively-focusable target, so the <li> stop is a
+    // duplicate: tabIndex={-1} keeps it out of the tab sequence without
+    // touching whileTap.
+    const { container } = render(<AppDock role="admin" />);
+    const tabStops = container.querySelectorAll(
+      '[tabindex]:not([tabindex="-1"]), a[href]',
+    );
+    expect(tabStops).toHaveLength(6);
+  });
+
+  it("keeps every dock <li> out of the tab sequence with tabindex=-1", () => {
+    const { container } = render(<AppDock role="admin" />);
+    const items = container.querySelectorAll("li");
+    expect(items).toHaveLength(6);
+    for (const item of items) {
+      expect(item).toHaveAttribute("tabindex", "-1");
+    }
+  });
 });

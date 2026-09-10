@@ -32,7 +32,12 @@ export function DockItem({
 }: DockItemProps) {
   return (
     <motion.li
-      className="list-none"
+      className="list-none origin-center md:origin-left md:pointer-events-auto"
+      // Motion auto-adds tabindex="0" here because whileTap is set below; the
+      // inner <Link> is the real target and already handles Enter natively,
+      // so -1 drops this phantom stop from the tab sequence without touching
+      // whileTap or the pointer-driven press animation it still needs to run.
+      tabIndex={-1}
       animate={{ scale: reducedMotion ? 1 : scale }}
       transition={reducedMotion ? INSTANT : SPRING_HOVER}
       whileTap={
@@ -54,13 +59,16 @@ export function DockItem({
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
+        data-active={active ? "true" : undefined}
         className={clsx(
-          "group flex flex-col items-center gap-1 rounded-pill px-2 py-2 text-ink-soft",
-          "transition-colors md:flex-row md:gap-0 md:px-2.5",
+          "group glass-chip flex flex-col items-center gap-1 rounded-pill px-2 py-2 text-ink-soft",
+          "transition-colors md:flex-row md:gap-0 md:p-3",
           "hover:text-ink focus-visible:text-ink",
           // --accent on an --accent-soft tint composites to 4.21:1 and fails
-          // AA. --accent-ink is the darker value that clears it (5.46:1).
-          active && "bg-accent-soft text-accent-ink hover:text-accent-ink",
+          // AA. --accent-ink is the darker value that clears it (5.46:1). The
+          // tint itself now comes from glass-chip's data-active rule, which
+          // layers over the glass fill instead of replacing it.
+          active && "text-accent-ink hover:text-accent-ink",
         )}
       >
         <DockIcon name={item.icon} className="size-6 shrink-0 md:size-5" />

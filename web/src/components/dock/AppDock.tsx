@@ -48,8 +48,8 @@ export function AppDock({ role }: { role: UserRole }) {
     >
       <ul
         className={[
-          "glass-surface pointer-events-auto flex items-center gap-1 rounded-dock p-1.5",
-          "md:flex-col md:gap-1.5 md:p-2",
+          "pointer-events-auto flex items-center gap-1 max-md:glass-surface max-md:rounded-dock max-md:p-1.5",
+          "md:pointer-events-none md:flex-col md:items-start md:gap-2",
         ].join(" ")}
       >
         {items.map((item, index) => (
