@@ -858,20 +858,34 @@ Do not build the full Learning Engine or Kaz AI workflow in this phase. Do not a
 
 ## Current Status
 
-**Aim Point 1 — Web App Scaffold + App Shell Foundation.** Committed `44cd6bd`.
+**Aim Point 1 — Web App Scaffold + App Shell Foundation.** Base committed
+`44cd6bd`. Dock visual revision (separated desktop glass chips) implemented.
 Plan: `docs/superpowers/plans/2026-09-10-aep-website-foundation-aim-point-1.md`.
+Browser checklist: `docs/qa/AEP-PHASE-10-AIM-POINT-1-BROWSER-QA.md`.
 
 Verification classification per `CLAUDE.md`:
 
-* unit tested — 41 tests across 6 suites
-* structurally verified — from a clean `node_modules` (`npm ci`, lockfile
-  unmodified), `npm run verify` exits 0: lint, typecheck, 41 tests, and a
-  production build of 7 static routes
-* live verified — **nothing yet.** Acceptance criteria 2, 7 and 13-32 require a
-  human browser pass and have not been attempted. A served 200 is not a
-  rendered page. Criterion 27 additionally requires written confirmation that
-  `/admin` stayed reachable by direct URL while the role was `student`
+* unit tested — 49 tests across 6 suites, including two strict regressions
+  proving exactly one keyboard tab stop per dock item
+* structurally verified — `npm run verify` exits 0 against the existing
+  `node_modules`: lint, typecheck, 49 tests, and a production build of 7 static
+  routes
+* **NOT clean-install verified** — the earlier `npm ci` evidence predates the
+  lockfile package-name normalisation and no longer covers the current tree.
+  Re-running it was blocked by a Windows EPERM file lock on the `next-swc`
+  native binary. That is an environment issue, not a lockfile defect, but the
+  plan's Definition of Done requires clean-install verification, so it is
+  outstanding
+* live verified — **nothing.** No browser pass has been executed. Criteria 2, 7
+  and 13-32 remain unverified, including every criterion that defines the
+  separated-chip revision. A served 200 is not a rendered page. Criterion 27
+  additionally requires written confirmation that `/admin` stayed reachable by
+  direct URL while the role was `student`
 * not built — authentication, authorization, learner data (Phase 11)
+
+Open questions for the browser pass: dock magnify 1.08 vs neighbour 1.06
+distinctness; nested glass on mobile chips inside the shared capsule; the active
+chip's icon/label colour on hover and keyboard focus.
 
 ---
 
