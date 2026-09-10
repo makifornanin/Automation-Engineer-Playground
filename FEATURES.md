@@ -580,20 +580,56 @@ Help learners become comfortable with automation engineering beyond drag-and-dro
 
 ---
 
-# FEATURE 19 — API Testing with Postman
+# FEATURE 19 — AEP Test Console & Optional Postman
 
-Use Postman when API behavior needs to be inspected directly.
+The AEP website should be the **primary learner-facing API/webhook testing tool**.
 
-### Learners should practice
+Learners should not need to keep switching between AEP, n8n, Postman, and Supabase for normal lab work.
 
-* [ ] Sending GET requests
-* [ ] Sending POST requests
-* [ ] Adding headers
-* [ ] Adding JSON request bodies
-* [ ] Reading responses
-* [ ] Reading HTTP status codes
-* [ ] Triggering n8n webhooks manually
-* [ ] Testing invalid payloads
+### Primary learner flow
+
+```text
+AEP Lesson
+   ↓
+Send Test
+   ↓
+AEP Backend
+   ↓
+Learner n8n Webhook
+   ↓
+AEP Evaluator
+   ↓
+Expected vs Actual + Diagnostics
+```
+
+### Requirements
+
+* [ ] Put the test experience inside the relevant lab/lesson chunk
+* [ ] Save the learner's webhook URL once per lab
+* [ ] Provide clear predefined business test cases
+* [ ] Let learners preview the JSON payload when useful
+* [ ] Send tests through the AEP backend instead of relying on direct browser-to-webhook calls
+* [ ] Handle timeouts and connection failures clearly
+* [ ] Show expected vs actual behavior
+* [ ] Show checkpoint-level diagnostics when possible
+* [ ] Keep raw request/response details behind progressive disclosure
+* [ ] Include execution IDs when available
+* [ ] Let Kaz use test evidence as context
+* [ ] Never claim a test passed without evidence
+
+### Postman
+
+Postman remains useful as an **optional developer/advanced inspection tool**, not a required learner tab for every lab.
+
+Learners may still practice direct API testing when the lesson specifically teaches it.
+
+### Goal
+
+The normal learner workspace should stay close to:
+
+```text
+AEP | n8n | Supabase (only when the lab needs persistence)
+```
 
 ---
 
@@ -682,14 +718,13 @@ Done     Retry
 
 ---
 
-# FEATURE 24 — Lab Documentation
+# FEATURE 24 — Lab Documentation & Website Lesson Source
 
-Each lab must contain its own documentation.
+Each lab must contain complete source documentation that can also be transformed into the AEP website learning experience.
 
-### Each lab README should contain
+### Each lab README/source should contain
 
 * [ ] Lab title
-* [ ] Difficulty
 * [ ] Concept
 * [ ] What the learner will build
 * [ ] Simple explanation
@@ -703,35 +738,53 @@ Each lab must contain its own documentation.
 * [ ] Debugging section
 * [ ] Challenge
 * [ ] Expected result
-* [ ] What You Learned
+* [ ] What You Learned / What Did We Just Use?
+* [ ] Important node explanations
+* [ ] Important code explanations
+* [ ] Bridge to the next lab
+
+### Website rule
+
+The website should turn this material into interactive lesson chunks instead of dumping raw README content onto one page.
+
+Do not show learner-facing difficulty badges. Progression and prerequisites should communicate sequencing without making the learner anxious before starting.
 
 ---
 
-# FEATURE 25 — Progressive Difficulty
+# FEATURE 25 — Progressive Learning Journey
 
-The labs should gradually become harder.
+The labs should gradually become more capable and more complex without labeling learners with intimidating difficulty badges.
 
-### Beginner
+### Website learning groups
+
+#### Foundations
 
 * [ ] Lab 01 — Data Mapping & Transformation
 * [ ] Lab 02 — Conditions & Routing
-
-### Intermediate
-
 * [ ] Lab 03 — APIs & Webhooks
 * [ ] Lab 04 — Validation & Normalization
-* [ ] Lab 05 — Pagination & Large Data
 
-### Reliability Engineering
+#### Reliability
 
+* [ ] Lab 05 — Pagination & Large Data Processing
 * [ ] Lab 06 — Retry Logic & Exponential Backoff
-* [ ] Lab 07 — Idempotency
-* [ ] Lab 08 — Dead Letter Queue
+* [ ] Lab 07 — Idempotency & Duplicate Protection
+* [ ] Lab 08 — Dead Letter Queue & Failure Recovery
 
-### AI Automation Engineering
+#### AI Engineering
 
 * [ ] Lab 09 — Structured AI Output
 * [ ] Lab 10 — AI Guardrails & Human-in-the-Loop
+
+#### Capstone
+
+* [ ] AI Service Request Agent
+
+### Learner-facing rule
+
+Do not display `Beginner`, `Intermediate`, or `Advanced` badges in the website UI.
+
+Future labs may be previewed, but their hands-on sections remain locked until the required previous lab is completed.
 
 ---
 
@@ -795,73 +848,171 @@ Log       Retry
 
 ---
 
-# FEATURE 27 — AEP Learning Agent
+# FEATURE 27 — Kaz: AEP AI Teacher
 
-Build an AI tutor using n8n after the main learning system and capstone are complete.
+Build **Kaz**, the n8n-powered AI teacher inside AEP.
 
-The agent should help learners understand and debug labs without immediately solving everything for them.
+Kaz is a teacher first and chatbot second. She should help learners understand concepts, interpret evidence, and debug their work without replacing the learning process.
+
+### Identity
+
+* [ ] Kaz is female in personality/identity
+* [ ] Kaz is calm by default
+* [ ] Kaz is jolly and playful when appropriate
+* [ ] Kaz may occasionally tease or use controlled fake scares
+* [ ] Kaz becomes quieter, more precise, and more supportive when the learner struggles
+* [ ] Kaz motivates using specific learner progress rather than generic praise
 
 ### Core abilities
 
 * [ ] Answer questions about AEP concepts
-* [ ] Understand which lab the student is working on
+* [ ] Understand the current lab and lesson section
 * [ ] Explain concepts in simple language
 * [ ] Explain business use cases
-* [ ] Help interpret errors
+* [ ] Interpret AEP test/checkpoint evidence
 * [ ] Suggest debugging steps
-* [ ] Provide hints for challenges
+* [ ] Provide progressive challenge hints
 * [ ] Avoid immediately providing challenge solutions
-* [ ] Provide full explanations when appropriate
+* [ ] Provide deeper explanations when requested
 * [ ] Reference relevant AEP documentation
-* [ ] Admit when information is not available
+* [ ] Admit when information is unavailable
+* [ ] Respect English, Tagalog, or Taglish preference
 
-### Tutor behavior
+### Teaching modes
 
-Preferred behavior:
+* [ ] Intro Mode
+* [ ] Teach Mode
+* [ ] Build Mode
+* [ ] Test Mode
+* [ ] Debug Mode
+* [ ] Challenge Mode
+* [ ] Celebration Mode
+* [ ] Chat Mode
+
+### Proactive behavior
+
+Kaz may proactively appear at meaningful events:
+
+* [ ] New lab start
+* [ ] Important concept introduction
+* [ ] Test success
+* [ ] Test failure
+* [ ] Repeated failure
+* [ ] Break It
+* [ ] Debug It
+* [ ] Challenge completion
+* [ ] Lab completion
+* [ ] Next-lab unlock
+* [ ] Return after being away
+
+Kaz may make rare one-line side comments with a cooldown. She should not interrupt important explanations or learners who are already struggling.
+
+### Visual identity
+
+* [ ] Small mysterious alien orb
+* [ ] Chrome/glass surface
+* [ ] Subtle blue glow in Light mode
+* [ ] Subtle coral/red glow in Dark mode
+* [ ] Neutral, Thinking, Amused, Uh-oh, Celebrating, and Focused visual states
+* [ ] Small speech bubble for proactive comments
+* [ ] Clicking the orb opens Ask Kaz
+* [ ] No large mascot animation or intrusive modal
+
+### Architecture
 
 ```text
-Student Question
-       ↓
-Understand Lab Context
-       ↓
-Explain Concept
-       ↓
-Ask/identify what failed
-       ↓
-Give Hint
-       ↓
-Help Debug
-       ↓
-Explain Why the Fix Works
+AEP Website
+   ↓
+AEP Backend
+   ↓
+n8n Kaz Workflow
+   ↓
+Learner Context + Teaching Rules + Knowledge Retrieval
+   ↓
+LLM
+   ↓
+Validated Kaz Response
+   ↓
+AEP
+```
+
+### Knowledge source
+
+Preferred approach:
+
+```text
+AEP Git Repository / Course Content
+   ↓
+Chunk + Index
+   ↓
+Embeddings
+   ↓
+Supabase Vector Knowledge Base
+   ↓
+Kaz Retrieval
 ```
 
 ### Guardrails
 
 * [ ] Do not invent project requirements
 * [ ] Do not claim a workflow works without evidence
-* [ ] Do not immediately give complete challenge answers
-* [ ] Encourage learners to investigate first
-* [ ] Keep explanations beginner-friendly
-* [ ] Provide deeper technical explanation when requested
+* [ ] Do not contradict AEP test results
+* [ ] Do not invent node execution results
+* [ ] Do not immediately reveal challenge answers
+* [ ] Increase hint strength based on `hints_used`
+* [ ] Keep answers relevant to the learner's current lab
+* [ ] Treat learner test evidence as authoritative
+
+### Memory
+
+Persistent learner context:
+
+* [ ] selected language
+* [ ] completed labs
+* [ ] current lab
+* [ ] current section
+* [ ] concepts already encountered
+* [ ] important progress state
+
+Short-term Kaz context:
+
+* [ ] recent questions
+* [ ] recent test results
+* [ ] current debugging issue
+* [ ] recent mistakes
+* [ ] hints already shown
+
+### Goal
+
+Kaz should feel human because of **timing and context**, not because she talks constantly.
 
 ---
 
-# FEATURE 28 — Student-Friendly Usage
+# FEATURE 28 — Student-Friendly Website Experience
 
-The project should be usable by people other than the original developer.
+The project should be usable by people other than the original developer through a focused AEP web application.
 
 ### Requirements
 
-* [ ] Clear project setup instructions
 * [ ] Clear prerequisites
-* [ ] Easy navigation between labs
+* [ ] Clear required accounts/tools
+* [ ] Invite-only passwordless access
+* [ ] Easy navigation between Home, Labs, Notes, Kaz, and Settings
 * [ ] Consistent lab structure
-* [ ] Clear difficulty labels
+* [ ] Clear progression and prerequisites without difficulty badges
+* [ ] Sequential hands-on unlocking with future-lab preview
 * [ ] Clear testing instructions
-* [ ] No dependency on private credentials
-* [ ] Use mock data where possible
-* [ ] Explain required external accounts/tools
+* [ ] No dependency on the creator's private credentials
+* [ ] Use mock/simulated data where possible
 * [ ] Keep setup complexity reasonable
+* [ ] Keep the normal learner workspace centered on AEP + n8n + Supabase when needed
+* [ ] Support English, Tagalog, and Taglish
+* [ ] Preserve progress across sessions
+* [ ] Avoid unnecessary analytics, goals, leaderboards, and LMS clutter
+
+### Core UX rule
+
+> **AEP should feel easier than n8n.**
 
 ---
 
@@ -943,23 +1094,479 @@ A lab should only be considered completed when:
 
 ---
 
+# FEATURE 32 — AEP Website Foundation & Visual System
+
+Build the learner-facing AEP web application.
+
+### Stack
+
+* [ ] Next.js App Router
+* [ ] TypeScript
+* [ ] Tailwind CSS
+* [ ] Motion for polished interaction
+* [ ] Supabase for authentication and persistence — *first used in Phase 11; Phase 10 installs no Supabase package, client or environment variable*
+* [ ] Vercel-compatible deployment
+
+### Visual direction
+
+* [ ] Apple-inspired simplicity
+* [ ] Chrome/glass finish
+* [ ] Calm premium UI
+* [ ] Generous whitespace
+* [ ] Controlled accent color
+* [ ] Progressive disclosure instead of dense screens
+* [ ] No giant dashboard or full-height rectangular sidebar
+
+### Themes
+
+#### Light
+
+* [ ] Soft white/light gray background
+* [ ] White/frosted surfaces
+* [ ] Restrained blue accent
+* [ ] Near-black text
+
+#### Dark
+
+* [ ] Near-black/charcoal background
+* [ ] Frosted dark surfaces
+* [ ] Restrained n8n-inspired coral/red-orange accent
+* [ ] Soft white text
+
+### Floating navigation dock
+
+* [ ] Icon-first floating glass dock
+* [ ] Hover/focus expands the active item and reveals its label
+* [ ] Nearby icons may subtly magnify
+* [ ] Click uses a small compression/spring release
+* [ ] Smooth page transitions
+* [ ] Home, Labs, Notes, Kaz, Settings
+* [ ] Admin item only for the owner/admin role — *presentation only until Phase 11 adds server-side enforcement; the /admin route itself is unprotected in Phase 10*
+* [ ] Keyboard/focus behavior must match hover behavior
+
+---
+
+# FEATURE 33 — Invite-Only Passwordless Access
+
+AEP is private and invite-only for the first version.
+
+### Student access flow
+
+```text
+Owner enters email
+   ↓
+AEP sends invite
+   ↓
+Learner opens invite
+   ↓
+Email verified
+   ↓
+Secure account/session created
+   ↓
+Onboarding
+   ↓
+AEP
+```
+
+### Requirements
+
+* [ ] No password creation required
+* [ ] Use secure magic-link/passwordless sessions
+* [ ] Restore active sessions on future visits
+* [ ] Provide a recoverable magic-link flow when the session expires
+* [ ] Student role is the safe default
+* [ ] Never expose service-role/admin credentials to browser code
+* [ ] Invite actions must be enforced server-side
+
+---
+
+# FEATURE 34 — Owner Role & Minimal Admin Section
+
+The creator uses the same AEP application and learning experience as every student.
+
+The only extra capability is an **Admin** navigation item.
+
+### Admin capabilities
+
+* [ ] Invite a student by email
+* [ ] See invited/active/revoked users
+* [ ] Resend an invite
+* [ ] Revoke access
+
+### Explicitly not required
+
+* Student progress surveillance
+* Grades
+* Leaderboards
+* Large admin analytics
+* Separate admin application
+
+Admin authorization must be enforced server-side, not only by hiding the navigation item.
+
+---
+
+# FEATURE 35 — Home & Labs Journey
+
+## Home
+
+Keep Home intentionally minimal.
+
+### Content
+
+* [ ] Greeting
+* [ ] Continue Learning
+* [ ] Current lab progress
+* [ ] Lightweight Your Journey indicator
+* [ ] Short contextual note from Kaz
+* [ ] Ask Kaz entry
+* [ ] Notes shortcut
+
+Do not add goals, giant stat cards, analytics clutter, or unnecessary activity feeds.
+
+## Labs
+
+Use a hybrid journey layout:
+
+1. one featured current-lab card
+2. grouped curriculum below
+
+### Groups
+
+* [ ] Foundations — Labs 01–04
+* [ ] Reliability — Labs 05–08
+* [ ] AI Engineering — Labs 09–10
+* [ ] Capstone
+
+### Lab row
+
+Show only:
+
+* [ ] lab number
+* [ ] title
+* [ ] short human/Kaz-style description
+* [ ] completed/current/preview-locked status
+* [ ] progress when currently in progress
+* [ ] Preview action for future labs
+
+---
+
+# FEATURE 36 — Focus Mode Lesson Engine
+
+The Lesson screen should reduce cognitive load while still teaching deeply.
+
+### Core behavior
+
+* [ ] One meaningful learning chunk at a time
+* [ ] Thin lab progress/header
+* [ ] One central learning column
+* [ ] Generous whitespace
+* [ ] Kaz and Notes remain collapsible
+* [ ] Avoid one giant scrolling lesson
+* [ ] Avoid a permanent table of contents
+* [ ] Avoid one click per sentence
+
+### Chunk rule
+
+A normal chunk may contain:
+
+* [ ] one concept
+* [ ] one short explanation
+* [ ] 2–4 related learner actions
+* [ ] one meaningful transition
+
+Target roughly **6–10 meaningful interactions per normal lab**.
+
+> One click should move the learner to a new thought, not merely reveal the next sentence.
+
+### Build chunk structure
+
+* [ ] Why this matters
+* [ ] Small visual when useful
+* [ ] Your turn — 2–4 concrete actions
+* [ ] Why we're doing this
+* [ ] Done — Next
+
+### In-lab progress
+
+* [ ] Default thin progress indicator
+* [ ] Expandable section roadmap
+* [ ] Completed/current/not-yet-completed states
+* [ ] Allow revisiting completed sections
+
+---
+
+# FEATURE 37 — Learner Progress & Sequential Unlocking
+
+AEP tracks progress for the learner's own experience and for Kaz context.
+
+### Requirements
+
+* [ ] Persist current lab
+* [ ] Persist current section/chunk
+* [ ] Persist milestone completion
+* [ ] Persist lab completion
+* [ ] Unlock the next lab after required proof is complete
+* [ ] Allow future-lab preview without hands-on access
+* [ ] Restore the learner to the right place on return
+* [ ] Use progress for contextual Kaz messages
+* [ ] Do not expose learner progress to the owner as a monitoring dashboard
+
+### Meaningful milestones
+
+Examples:
+
+* Understand the Problem
+* Guided Build
+* Success Test
+* Break It
+* Debug It
+* Challenge
+* Make It Your Own
+* Recap
+
+---
+
+# FEATURE 38 — Learning Notes
+
+Notes are a learning notebook, not a productivity system.
+
+### Requirements
+
+* [ ] General notes
+* [ ] Lab-linked notes
+* [ ] Code snippets
+* [ ] Debugging observations
+* [ ] "Aha" moments
+* [ ] Autosave
+* [ ] Open Notes from navigation
+* [ ] Open Notes as a lesson-side utility
+* [ ] Save to Notes from useful Kaz/lesson content
+* [ ] Notes and Kaz do not occupy the side utility area at the same time
+
+Do not add task management or goals.
+
+---
+
+# FEATURE 39 — Inline Test Runner & Smart Diagnostics
+
+Testing belongs inside the relevant lab.
+
+### Default experience
+
+* [ ] Show business test case first
+* [ ] One clear Send Test action
+* [ ] Save webhook URL per learner + lab
+* [ ] Show simple checkpoint result
+* [ ] Show expected vs actual
+* [ ] Let learner Try Again
+* [ ] Let learner Ask Kaz
+* [ ] Hide raw technical data by default
+
+### Technical details on demand
+
+* [ ] Raw request
+* [ ] Raw response
+* [ ] Checkpoint data
+* [ ] Execution ID
+* [ ] Deeper n8n details when connected
+
+### Diagnostic goal
+
+AEP should be able to say things like:
+
+> “Your webhook and validation are healthy. The issue starts around routing.”
+
+---
+
+# FEATURE 40 — Optional Learner n8n API Connection
+
+AEP diagnostics must work without requiring n8n API access.
+
+Learners may optionally connect their n8n instance for deeper diagnostics.
+
+### Optional capabilities
+
+* [ ] Inspect relevant execution details
+* [ ] See node-level status
+* [ ] Identify a more exact failure location
+* [ ] Provide richer Kaz debugging context
+
+### Security
+
+* [ ] Store connection secrets securely
+* [ ] Never expose connection secrets in client output or logs
+* [ ] Provide disconnect/revoke behavior
+* [ ] Treat this as optional advanced setup
+
+---
+
+# FEATURE 41 — Supabase Guidance Inside Labs
+
+When a lab needs persistence, AEP itself guides the learner through setup.
+
+### Teaching order
+
+* [ ] Explain the problem that requires persistence first
+* [ ] Explain why Supabase solves that problem
+* [ ] Give SQL/setup instructions
+* [ ] Provide Copy SQL
+* [ ] Use a cropped screenshot only when the UI location is genuinely hard to find
+* [ ] Explain important tables/columns in simple language
+* [ ] Put deeper SQL explanation behind progressive disclosure
+* [ ] Verify persistence later through actual workflow behavior
+
+Do not require learners to hand AEP full Supabase admin/service credentials solely for setup verification.
+
+---
+
+# FEATURE 42 — Interactive Diagrams & Learning Visuals
+
+Use visuals only when they improve understanding.
+
+### Diagram rule
+
+> Diagram = how it works.
+
+### Screenshot rule
+
+> Screenshot = where to find/configure it.
+
+### Interactive diagrams
+
+* [ ] Hover reveals quick explanation
+* [ ] Click reveals slightly deeper explanation
+* [ ] Explain component purpose
+* [ ] Explain input/output when useful
+* [ ] Show common mistake when useful
+* [ ] Keep motion subtle
+* [ ] Diagram remains understandable without interaction
+
+Avoid decorative diagrams that add no teaching value.
+
+---
+
+# FEATURE 43 — Language, Theme & Learner Settings
+
+### Language
+
+AEP supports:
+
+* [ ] English
+* [ ] Tagalog
+* [ ] Taglish
+
+Tagalog and Taglish must remain conversational and avoid unnecessarily deep Filipino words.
+
+Keep technical terms in English when clearer.
+
+### Settings
+
+* [ ] Language
+* [ ] Light/Dark theme
+* [ ] Optional n8n connection
+* [ ] Profile/session basics
+
+Lesson content and Kaz should both respect the selected language.
+
+---
+
+# FEATURE 44 — Kaz On-Screen Companion
+
+Kaz's AI capability is defined in Feature 27. This feature defines how she appears inside the website.
+
+### Requirements
+
+* [ ] Small mysterious alien orb near the lesson utility area
+* [ ] Visible but unobtrusive
+* [ ] Small speech bubble for proactive comments
+* [ ] Bubble fades quietly if ignored
+* [ ] Click orb to open Ask Kaz
+* [ ] Reuse the side utility panel used by Notes
+* [ ] Rare side comments with cooldown
+* [ ] No repeated interruption
+* [ ] No teasing while learner is clearly struggling
+* [ ] Subtle visual states for neutral/thinking/amused/uh-oh/celebrating/focused
+
+---
+
+# FEATURE 45 — Completion Experience
+
+Finishing AEP should feel earned.
+
+### Completion condition
+
+* [ ] Labs 01–10 complete
+* [ ] Capstone complete
+
+### Experience
+
+Kaz hands the moment to the creator:
+
+> “I think someone else should take this one.”
+
+Then the learner sees a personal completion message from the AEP creator.
+
+Do not reduce completion to a generic congratulations card.
+
+---
+
+# FEATURE 46 — Website Security, Accessibility & Quality
+
+### Security
+
+* [ ] Keep server-only credentials server-side
+* [ ] Enforce Admin authorization server-side
+* [ ] Validate server actions/API inputs
+* [ ] Do not expose secrets in client bundles
+* [ ] Do not log sensitive credentials
+* [ ] Protect optional n8n connection secrets
+* [ ] Maintain safe session handling
+
+### Accessibility
+
+* [ ] Keyboard navigation
+* [ ] Visible focus states
+* [ ] Hover interactions also work through keyboard/focus
+* [ ] Semantic controls and labels
+* [ ] Reduced-motion support
+* [ ] Theme contrast checks
+
+### Quality
+
+* [ ] Typecheck
+* [ ] Lint
+* [ ] Automated tests
+* [ ] Production build
+* [ ] Error/loading/empty states
+* [ ] Reasonable desktop and responsive web behavior
+* [ ] No native mobile app required for V1
+
+
+---
+
 # Out of Scope for V1
 
-To keep AEP focused, the following are not required for the first version:
+AEP V1 is a focused learning web application, **not a general-purpose LMS**.
 
-* Student login system
-* Full Learning Management System
-* Certificates
-* Student grades
+The following remain out of scope unless a real learner need appears:
+
 * Paid subscriptions
 * Course payments
-* Notifications
-* Complex frontend dashboard
-* Mobile application
-* Multi-agent AI system
-* Production-scale hosting infrastructure
+* Student grades
+* Leaderboards
+* Owner/instructor progress surveillance
+* Social feed/community
+* Complex analytics dashboards
+* Complex role/permission systems beyond `student` and `admin`
+* Native mobile application
+* Voice/video tutoring
+* Production-scale enterprise/multi-tenant infrastructure
+* Unnecessary gamification
+* Large standalone admin product
 
-These may be considered later only if they solve a real need.
+Certificates may be considered later, but only after the core learning experience is proven.
+
+The website, invite-only access, learner progress, Notes, Kaz, and smart diagnostics are now **in scope** for AEP V1.
 
 ---
 
@@ -967,16 +1574,52 @@ These may be considered later only if they solve a real need.
 
 AEP V1 is complete when:
 
-* [ ] All 10 labs are built
-* [ ] All labs contain the standard learning structure
-* [ ] All labs have successful test scenarios
-* [ ] All labs have failure scenarios
+## Learning Content
+
+* [ ] All 10 labs are built and verified
+* [ ] All labs follow the approved learning structure
+* [ ] All labs have success tests
+* [ ] All labs have intentional failure/debugging experiences
 * [ ] All labs include challenges
-* [ ] All lab documentation is complete
-* [ ] Capstone project is working
-* [ ] Capstone failure paths are tested
-* [ ] AEP Learning Agent is working
+* [ ] All lab documentation/source content is complete
+* [ ] Capstone is working and packaged
+* [ ] Capstone success and failure paths are verified
+
+## Website
+
+* [ ] Invite-only passwordless access works
+* [ ] Owner/Admin invite and access controls work
+* [ ] Light and Dark themes work
+* [ ] Floating glass dock works accessibly
+* [ ] Home is complete
+* [ ] Labs grouped journey is complete
+* [ ] Focus Mode lesson engine is complete
+* [ ] Sequential unlocking and progress persistence work
+* [ ] Notes work
+* [ ] Inline Send Test works for applicable labs
+* [ ] Expected-vs-actual and checkpoint diagnostics work
+* [ ] Optional n8n connection is secure and usable
+* [ ] Supabase setup guidance appears inside applicable labs
+* [ ] Interactive diagrams work where useful
+* [ ] English, Tagalog, and Taglish settings work
+
+## Kaz
+
+* [ ] Kaz n8n teacher workflow is working
+* [ ] Knowledge retrieval is working
+* [ ] Kaz receives learner/lab/test context
+* [ ] Teaching modes behave correctly
+* [ ] Challenge hint guardrails work
+* [ ] Kaz does not invent test evidence
+* [ ] Kaz's orb/on-screen behavior is complete
+* [ ] Kaz tone adapts when learners struggle
+
+## Completion & Release
+
+* [ ] Completion handoff from Kaz to creator message works
 * [ ] Main project README is complete
+* [ ] Student setup/onboarding is understandable
 * [ ] Repository contains no exposed secrets
-* [ ] Project is understandable by someone who did not build it
+* [ ] Website passes lint/typecheck/tests/build
+* [ ] Core flows have been tested by someone other than the creator when possible
 * [ ] Project is ready to demonstrate or share with students

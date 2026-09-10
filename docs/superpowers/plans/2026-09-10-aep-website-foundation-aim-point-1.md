@@ -36,6 +36,13 @@ Governing sections: Vision §7–§12, §14–§16; Kaz §9–§10; ROADMAP Phas
 Correcting these stale paths is **not** part of this Aim Point. It is recorded
 in §12 Open Items.
 
+> **Resolved 2026-09-10 (Phase 10 Aim Point 1 Closeout).** The paths above were
+> not stale — they were the canonical targets and the files had never been moved
+> there. The four documents now live at `FEATURES.md`, `ROADMAP.md`,
+> `docs/AEP-WEBSITE-VISION.md` and `docs/AEP-KAZ-DESIGN.md`, and the five agent
+> definitions at `.claude/agents/`. §15 items 1–3 are closed; no reference in
+> `CLAUDE.md`, `AGENTS.md` or `README.md` required a change.
+
 ---
 
 ## 3. Scope Decision — Authentication Is Deferred
@@ -175,7 +182,7 @@ web/
 "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
 ```
 
-If `next lint` is removed in Next 16, use `eslint .` and record the change.
+If `next lint` is removed in Next 16, use `eslint .` and record the change. **Recorded: `next lint` was removed in Next 16, so `web/package.json` ships `"lint": "eslint ."`. `eslint.config.mjs` is the generated flat config extending `next/core-web-vitals`; coverage is unchanged.**
 
 ---
 

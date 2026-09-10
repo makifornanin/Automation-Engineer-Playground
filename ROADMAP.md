@@ -7,25 +7,37 @@ Automation Engineer Playground (AEP) will be built in phases so the project stay
 The build order follows this progression:
 
 ```text
-Foundation
-↓
-Learning System
+Project + Learning Foundation
 ↓
 Automation Fundamentals
 ↓
-API Engineering
+API & Data Engineering
 ↓
 Reliability Engineering
 ↓
 AI Automation
 ↓
+Lab Quality Review
+↓
 Capstone
 ↓
-AEP Learning Agent
+AEP Website Foundation
 ↓
-Student / Academy Polish
+Access + Learner State
+↓
+Learning Experience Engine
+↓
+Test + Diagnostics Engine
+↓
+Kaz AI Teacher
+↓
+Completion + Student Polish
+↓
+Student / Academy Pilot
 ↓
 Portfolio & Release
+↓
+External Adoption
 ```
 
 The goal is to finish each phase properly before moving to the next.
@@ -626,6 +638,33 @@ Someone other than the creator could reasonably complete the labs using the docu
 
 Combine the important concepts from the labs into one realistic Automation Engineering system.
 
+## Current Status
+
+The four-workflow Capstone runtime has been built and live-verified end to end.
+
+Verified paths include:
+
+* [/] valid safe request
+* [/] invalid request
+* [/] duplicate protection
+* [/] restricted action → pending approval
+* [/] human approval
+* [/] human rejection
+* [/] double-decision protection
+* [/] transient failure → retry/backoff → success
+* [/] permanent failure → DLQ
+* [/] DLQ recovery
+* [/] `processed_events` reserved → processed lifecycle
+* [/] reliable sub-workflow return behavior
+
+Coverage notes that remain non-blocking:
+
+* [ ] deterministic low-confidence branch live test
+* [ ] malformed-AI-output fallback live test
+* [ ] cleanup old Capstone test rows before a public demo
+
+Capstone export/package/README closeout remains before Phase 9 is marked fully complete. Website work may proceed because the automation runtime itself is already live-verified.
+
 ## Step 1 — Capstone Design
 
 * [ ] Define business problem
@@ -744,191 +783,735 @@ The capstone demonstrates multiple Automation Engineering concepts working toget
 
 ---
 
-# PHASE 10 — AEP Learning Agent
+---
+
+# PHASE 10 — AEP Website Foundation
 
 ## Goal
 
-Build an n8n-powered AI tutor that helps learners understand AEP and debug their labs.
+Create the web application foundation without pulling authentication, the full learning engine, diagnostics, or Kaz AI into the first Aim Point. Phase 10 ships no authentication and no authorization; those are Phase 11.
 
-This feature is intentionally built near the end so the agent has complete AEP documentation to learn from.
+## Approved Stack
 
----
+* Next.js App Router
+* TypeScript
+* Tailwind CSS
+* Motion
+* Supabase — *project stack; first used in Phase 11. Phase 10 installs no Supabase package, client, or environment variable.*
+* Vercel-compatible deployment
 
-## Step 1 — Knowledge Source
+## Step 1 — Web App Scaffold
 
-* [ ] Prepare AEP documentation for retrieval
-* [ ] Include lab explanations
-* [ ] Include business examples
-* [ ] Include debugging information
-* [ ] Include challenge hints
-* [ ] Keep answer sources organized
+* [/] Create `web/` application
+* [/] Configure TypeScript
+* [/] Configure Tailwind
+* [/] Add Motion dependency
+* [/] Add test/lint/typecheck/build scripts
+* [/] Add safe environment-variable structure
+* [ ] Confirm app runs locally
+* [/] Confirm production build works
 
----
+## Step 2 — Design System
 
-## Step 2 — Agent Foundation
+* [/] Define neutral surface/text/border tokens
+* [/] Define Light blue accent tokens
+* [/] Define Dark coral/red-orange accent tokens
+* [ ] Add theme switching
+* [ ] Persist theme preference
+* [ ] Add reduced-motion support
+* [/] Create reusable glass/chrome surface primitives
 
-* [ ] Create n8n AI workflow
-* [ ] Receive student question
-* [ ] Detect relevant lab
-* [ ] Retrieve relevant AEP information
-* [ ] Send context to AI
-* [ ] Return student-friendly response
+## Step 3 — App Shell (no authentication — see Phase 11)
 
----
+* [/] Create the app shell with one typed, server-only session seam ready for real authentication (the seam returns a placeholder; authentication itself is Phase 11)
+* [ ] Build floating glass macOS-style navigation dock
+* [ ] Icon-only default state
+* [ ] Hover/focus label expansion
+* [ ] Subtle magnification
+* [ ] Spring click interaction
+* [ ] Smooth page transition
+* [ ] Keyboard-accessible dock behavior
 
-## Step 3 — Tutor Behavior
+## Step 4 — Foundation Pages
 
-* [ ] Explain concepts simply
-* [ ] Explain business purpose
-* [ ] Help understand errors
-* [ ] Suggest debugging steps
-* [ ] Give challenge hints
-* [ ] Avoid immediately revealing solution
-* [ ] Give deeper explanation when requested
-* [ ] Admit when answer is unknown
+Create foundation shells for:
 
----
+* [/] Home
+* [/] Labs
+* [/] Notes
+* [/] Kaz
+* [/] Settings
+* [/] Admin — placeholder shell only. **NOT access-controlled.** The route is reachable by URL by anyone; hiding the dock item is presentation, not authorization. Role gating and server-side enforcement are Phase 11.
 
-## Step 4 — Agent Guardrails
-
-* [ ] Prevent invented project requirements
-* [ ] Prevent unsupported claims
-* [ ] Prevent immediate challenge answer dumping
-* [ ] Keep answers relevant to AEP
-* [ ] Validate important responses where possible
-
----
-
-## Step 5 — Agent Testing
-
-Test questions such as:
-
-* [ ] Concept question
-* [ ] Business-use question
-* [ ] Debugging question
-* [ ] Challenge hint request
-* [ ] Full solution request
-* [ ] Question from wrong lab
-* [ ] Unknown question
-* [ ] Ambiguous question
-
----
+Do not build the full Learning Engine or Kaz AI workflow in this phase. Do not add authentication, session enforcement, route protection, or any admin guard — including a client-side redirect or a "not authorized" screen. A guard that only looks like authorization is worse than an honest gap, because later work will assume protection that does not exist.
 
 ## Phase Complete When
 
-A learner can use the agent to understand and debug AEP without the agent replacing the learning process.
+* [/] Phase 10's deliberate gap is recorded: /admin is reachable without authentication, and the page says so on screen. This is the documented Phase 10 state, not a defect. Phase 11 closes it.
+* [ ] App runs locally
+* [/] Production build passes
+* [ ] Theme system works
+* [ ] Dock works with mouse and keyboard
+* [ ] Foundation routes render
+* [ ] UI is calm and uncluttered
+* [/] No secret values are exposed
+
+## Current Status
+
+**Aim Point 1 — Web App Scaffold + App Shell Foundation.** Committed `44cd6bd`.
+Plan: `docs/superpowers/plans/2026-09-10-aep-website-foundation-aim-point-1.md`.
+
+Verification classification per `CLAUDE.md`:
+
+* unit tested — 41 tests across 6 suites
+* structurally verified — from a clean `node_modules` (`npm ci`, lockfile
+  unmodified), `npm run verify` exits 0: lint, typecheck, 41 tests, and a
+  production build of 7 static routes
+* live verified — **nothing yet.** Acceptance criteria 2, 7 and 13-32 require a
+  human browser pass and have not been attempted. A served 200 is not a
+  rendered page. Criterion 27 additionally requires written confirmation that
+  `/admin` stayed reachable by direct URL while the role was `student`
+* not built — authentication, authorization, learner data (Phase 11)
 
 ---
 
-# PHASE 11 — Student & Academy Experience
+# PHASE 11 — Invite-Only Access & Learner State
 
 ## Goal
 
-Prepare AEP so it can be shared with learners or offered to an academy.
+Give invited learners secure passwordless access and create the minimum persistent state required by the AEP experience. Phase 11 owns every authentication and authorization concern the Phase 10 shell deliberately left open: real sessions, session enforcement, role gating, and server-side Admin authorization.
+
+## Step 1 — Supabase Web Foundation
+
+* [ ] Configure browser/server Supabase clients correctly
+* [ ] Configure secure environment variables
+* [ ] Confirm service-role/admin credentials never reach browser code
+* [ ] Add auth/session middleware or equivalent server-safe session handling
+* [ ] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
+* [ ] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise
+* [ ] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
+
+## Step 2 — Invite-Only Authentication
+
+* [ ] Owner/Admin can invite learner by email
+* [ ] Invite creates student access safely
+* [ ] Learner verifies email
+* [ ] Passwordless session is created
+* [ ] Active session restores on return
+* [ ] Expired session can recover through magic link
+* [ ] Unauthorized users cannot enter protected AEP routes
+
+## Step 3 — Roles
+
+Two roles only:
+
+* [ ] `student`
+* [ ] `admin`
+
+Rules:
+
+* [ ] invited users default to student
+* [ ] admin role cannot be granted from client input
+* [ ] server enforces admin actions
+* [ ] `/admin` is protected server-side; direct URL navigation as a student is rejected before any admin content renders (the Phase 10 route is unprotected by design)
+* [ ] owner sees the same learner experience plus Admin navigation
+
+## Step 4 — Minimal Admin Section
+
+* [ ] Invite student
+* [ ] View invited/active/revoked users
+* [ ] Resend invite
+* [ ] Revoke access
+* [ ] No student progress monitoring
+
+## Step 5 — Learner Preferences & State
+
+Persist:
+
+* [ ] display/profile basics
+* [ ] selected language
+* [ ] selected theme
+* [ ] current lab
+* [ ] current lesson section
+* [ ] lab progress
+* [ ] notes
+* [ ] lab-specific webhook configuration
+* [ ] optional n8n connection metadata/secrets using a secure design
+
+## Phase Complete When
+
+* [ ] Invite flow works
+* [ ] Passwordless login/session flow works
+* [ ] Admin authorization is server-enforced
+* [ ] Direct navigation to `/admin` as a student is rejected server-side, verified by an actual unauthenticated and an actual student request
+* [ ] Learner preferences persist
+* [ ] No admin/service secret is present in client bundles or logs
+
+---
+
+# PHASE 12 — Learning Experience Engine
+
+## Goal
+
+Turn the existing 10 labs into a calm, interactive, hands-on learning experience instead of a raw documentation site.
+
+## Step 1 — Home
+
+Build the intentionally minimal Home screen:
+
+* [ ] Greeting
+* [ ] Continue Learning
+* [ ] Current-lab progress
+* [ ] Lightweight Your Journey indicator
+* [ ] Short Kaz note placeholder/event surface
+* [ ] Ask Kaz entry
+* [ ] Notes shortcut
+
+Do not add goals, large analytics, or activity clutter.
+
+## Step 2 — Labs Journey
+
+* [ ] Featured current-lab card
+* [ ] Foundations group — Labs 01–04
+* [ ] Reliability group — Labs 05–08
+* [ ] AI Engineering group — Labs 09–10
+* [ ] Capstone
+* [ ] Completed/current/preview-locked states
+* [ ] Future-lab preview
+* [ ] No difficulty badges
+
+## Step 3 — Sequential Unlocking
+
+* [ ] Hands-on Lab 01 available initially
+* [ ] Future labs previewable
+* [ ] Build/Test/Challenge content locked until prerequisite completion
+* [ ] Next lab unlocks only after required evidence/milestones
+* [ ] Returning learner resumes at the correct place
+
+## Step 4 — Focus Mode Lesson Renderer
+
+Support learning chunks for:
+
+* [ ] Problem
+* [ ] Concept
+* [ ] Guided Build
+* [ ] Predict
+* [ ] Test
+* [ ] Understand Result
+* [ ] Break It
+* [ ] Debug It
+* [ ] Challenge
+* [ ] Make It Your Own
+* [ ] Recap
+
+Rules:
+
+* [ ] one meaningful chunk at a time
+* [ ] roughly 2–4 related actions per Build chunk
+* [ ] avoid one click per sentence
+* [ ] autosave progress
+* [ ] expandable compact section roadmap
+* [ ] revisit completed sections
+
+## Step 5 — Node & Code Teaching
+
+* [ ] Explain important nodes using What / Why here / analogy when useful
+* [ ] Explain important code by logic/input/output/purpose
+* [ ] Do not teach code as blind copy/paste
+* [ ] End every lab with What Did We Just Use?
+* [ ] Connect each lab to the next one
+
+## Step 6 — Notes
+
+* [ ] Open Notes from main dock
+* [ ] Open/collapse Notes inside a lesson
+* [ ] Autosave notes
+* [ ] Lab-linked notes
+* [ ] General notes
+* [ ] Save to Notes from lesson content
+* [ ] Prepare Save to Notes integration for Kaz responses
+
+## Step 7 — Visual Learning
+
+* [ ] Mini workflow diagrams for “how it works”
+* [ ] Cropped screenshots only for “where to find/configure it”
+* [ ] Interactive diagram component
+* [ ] Hover quick explanation
+* [ ] Click deeper explanation
+* [ ] Accessible keyboard/focus equivalents
+
+## Phase Complete When
+
+A learner can move through the content with low cognitive load, understand why each step exists, preserve progress, take notes, and preview the full journey without being overwhelmed.
+
+---
+
+# PHASE 13 — Inline Test & Smart Diagnostics Engine
+
+## Goal
+
+Make AEP the normal learner-facing test console so the learner can focus on AEP + n8n + Supabase when needed.
+
+## Step 1 — Per-Lab Test Configuration
+
+* [ ] Identify labs that require webhook/API testing
+* [ ] Save webhook URL per learner + lab
+* [ ] Allow edit/reconnect
+* [ ] Show test setup only in labs that need it
+
+## Step 2 — AEP Backend Test Mediation
+
+Preferred flow:
+
+```text
+Learner
+↓
+AEP Website
+↓
+AEP Backend
+↓
+Learner n8n Webhook
+↓
+AEP Evaluator
+↓
+Website
+```
+
+Build:
+
+* [ ] server-side test endpoint/action
+* [ ] safe URL/input validation
+* [ ] timeout handling
+* [ ] connection-error handling
+* [ ] response-size/sanitization rules
+* [ ] no learner secret leakage
+
+## Step 3 — Test Cases
+
+For applicable labs:
+
+* [ ] predefined business test case
+* [ ] payload preview
+* [ ] Send Test
+* [ ] Try Again
+* [ ] expected result
+* [ ] actual result
+* [ ] meaningful checkpoint evaluation
+
+## Step 4 — Diagnostics UI
+
+Default learner view:
+
+* [ ] simple checkpoint statuses
+* [ ] first likely failure area
+* [ ] expected vs actual
+* [ ] Ask Kaz action
+
+Technical details on demand:
+
+* [ ] raw request
+* [ ] raw response
+* [ ] checkpoint data
+* [ ] execution ID
+
+## Step 5 — Optional n8n API Connection
+
+AEP diagnostics must still work without it.
+
+Optional advanced capability:
+
+* [ ] connect learner n8n safely
+* [ ] store secret securely
+* [ ] inspect relevant execution details
+* [ ] node-level status
+* [ ] exact/near-exact failure location
+* [ ] disconnect/revoke
+* [ ] never expose API secret in browser/logs
+
+## Step 6 — Supabase Lab Guidance
+
+For persistence labs:
+
+* [ ] explain why persistence is needed before setup
+* [ ] in-lesson SQL/setup chunk
+* [ ] Copy SQL
+* [ ] explain important tables/columns simply
+* [ ] screenshot only when UI location is confusing
+* [ ] verify behavior through later AEP tests
+* [ ] avoid requesting full learner Supabase admin credentials merely to verify setup
+
+## Step 7 — Diagnostics Testing
+
+Test:
+
+* [ ] correct success result
+* [ ] incorrect expected result
+* [ ] webhook offline
+* [ ] timeout
+* [ ] malformed response
+* [ ] lab URL changed
+* [ ] optional n8n disconnected
+* [ ] technical details disclosure
+* [ ] Kaz receives sanitized test context
+
+## Phase Complete When
+
+A learner can test applicable lab workflows directly from the lesson, understand where a problem likely begins, and inspect deeper details only when needed.
+
+---
+
+# PHASE 14 — Kaz AI Teacher
+
+## Goal
+
+Build Kaz as a contextual n8n-powered teacher that helps learners understand and debug AEP without replacing independent thinking.
+
+## Step 1 — Knowledge Pipeline
+
+Prepare sources:
+
+* [ ] Labs 01–10
+* [ ] Capstone
+* [ ] node explanations
+* [ ] business explanations
+* [ ] debugging guides
+* [ ] challenge hints
+* [ ] expected outcomes
+* [ ] AEP teaching rules
+
+Build:
+
+* [ ] source chunking
+* [ ] embeddings
+* [ ] Supabase vector storage
+* [ ] source metadata
+* [ ] retrieval test set
+* [ ] re-index/update process when repo content changes
+
+## Step 2 — n8n Kaz Workflow
+
+Conceptual flow:
+
+```text
+Receive Kaz Request
+↓
+Validate Context
+↓
+Determine Teaching Mode
+↓
+Retrieve Relevant Knowledge
+↓
+Build Teacher Context
+↓
+LLM
+↓
+Validate / Guard Response
+↓
+Return to AEP
+```
+
+Build:
+
+* [ ] request contract
+* [ ] learner-context validation
+* [ ] retrieval
+* [ ] LLM call
+* [ ] structured response contract
+* [ ] failure fallback
+* [ ] safe observability
+
+## Step 3 — Teaching Modes
+
+* [ ] Intro
+* [ ] Teach
+* [ ] Build
+* [ ] Test
+* [ ] Debug
+* [ ] Challenge
+* [ ] Celebration
+* [ ] Chat
+
+## Step 4 — Hard Teaching Rules
+
+Enforce outside free-form model behavior where possible:
+
+* [ ] selected language
+* [ ] challenge hint strength based on `hints_used`
+* [ ] no immediate challenge solution dump
+* [ ] no invented test/node evidence
+* [ ] test evidence is authoritative
+* [ ] current-lab context priority
+* [ ] unknown/unsupported answers admitted honestly
+
+## Step 5 — Learner Context & Memory
+
+Persistent:
+
+* [ ] language
+* [ ] completed labs
+* [ ] current lab/section
+* [ ] concepts encountered
+* [ ] important progress
+
+Short-term:
+
+* [ ] recent questions
+* [ ] recent tests
+* [ ] current debugging issue
+* [ ] recent mistakes
+* [ ] hints used
+
+* [ ] summarize/trim old chat context instead of sending unlimited history
+
+## Step 6 — Kaz Website Experience
+
+* [ ] mysterious alien orb
+* [ ] Light blue glow
+* [ ] Dark coral/red glow
+* [ ] Neutral state
+* [ ] Thinking state
+* [ ] Amused state
+* [ ] Uh-oh state
+* [ ] Celebrating state
+* [ ] Focused state
+* [ ] click opens Ask Kaz
+* [ ] proactive small speech bubble
+* [ ] rare side comments with cooldown
+* [ ] no intrusive modal
+
+## Step 7 — Personality Adaptation
+
+* [ ] calm by default
+* [ ] jolly/playful when learner is doing well
+* [ ] occasional controlled fake scare
+* [ ] lighter humor after first mistake
+* [ ] reduce humor after repeated failures
+* [ ] focused/supportive mode when learner is frustrated
+* [ ] specific motivation tied to actual progress
+
+## Step 8 — Language
+
+Test Kaz in:
+
+* [ ] English
+* [ ] Tagalog
+* [ ] Taglish
+
+Tagalog/Taglish must remain conversational and keep technical English terms when clearer.
+
+## Step 9 — Kaz Testing
+
+Test:
+
+* [ ] concept question
+* [ ] business-use question
+* [ ] build question
+* [ ] test-result interpretation
+* [ ] debugging question
+* [ ] challenge hint #1
+* [ ] challenge hint #2
+* [ ] challenge hint #3
+* [ ] direct full-solution request
+* [ ] wrong-lab question
+* [ ] unknown question
+* [ ] contradictory user claim vs AEP evidence
+* [ ] repeated-failure tone shift
+* [ ] side-comment cooldown
+
+## Phase Complete When
+
+Kaz feels present because she responds at the right moment with the right context, while learners still do the thinking and building themselves.
+
+---
+
+# PHASE 15 — Completion, Onboarding & Student Polish
+
+## Goal
+
+Finish the end-to-end learner experience around the already-built learning engine.
+
+## Step 1 — First-Time Onboarding
+
+Keep onboarding short:
+
+* [ ] Welcome to AEP
+* [ ] Explain that AEP is hands-on, not video-first
+* [ ] Explain AEP + n8n + Supabase tool model
+* [ ] Explain Build → Test → Break → Debug → Challenge
+* [ ] Choose language
+* [ ] Choose theme or use system default
+* [ ] Start Lab 01
+
+Do not make optional n8n API setup a blocker to first learning.
+
+## Step 2 — Completion Experience
+
+Completion requires:
+
+* [ ] Labs 01–10 complete
+* [ ] Capstone complete
+
+Experience:
+
+* [ ] Kaz completion transition
+* [ ] Kaz says: “I think someone else should take this one.”
+* [ ] Show creator's personal completion message
+* [ ] Preserve learner completion state
+
+## Step 3 — Settings & Recovery
+
+* [ ] language change
+* [ ] theme change
+* [ ] session/account basics
+* [ ] n8n connection management
+* [ ] reconnect lab webhook where relevant
+* [ ] safe sign-out
+
+## Step 4 — Accessibility & Responsive Web
+
+* [ ] keyboard navigation
+* [ ] visible focus states
+* [ ] screen-reader labels
+* [ ] hover interactions have focus/touch alternatives
+* [ ] reduced-motion behavior
+* [ ] Light/Dark contrast checks
+* [ ] responsive web layout
+* [ ] no native mobile app required
+
+## Step 5 — Performance & Failure States
+
+* [ ] loading states
+* [ ] empty states
+* [ ] offline/error states
+* [ ] auth errors
+* [ ] Kaz unavailable fallback
+* [ ] n8n test timeout state
+* [ ] safe retry patterns
+* [ ] avoid unnecessary client JavaScript
+
+## Phase Complete When
+
+A new invited learner can enter AEP, understand how it works, learn through the labs, recover from common errors, complete the Capstone, and reach the final creator message without the creator personally guiding them.
+
+---
+
+# PHASE 16 — Student / Academy Pilot Experience
+
+## Goal
+
+Validate AEP with real learners before claiming the experience is finished.
 
 ## Student Setup
 
 * [ ] Create clear prerequisites
-* [ ] Create installation/setup guide
-* [ ] Explain required tools
-* [ ] Explain required accounts
+* [ ] Explain required tools/accounts
+* [ ] Explain invite flow
+* [ ] Explain optional n8n connection
 * [ ] Explain how to start Lab 01
-* [ ] Explain lab progression
+* [ ] Explain sequential progression
 * [ ] Explain challenge system
-* [ ] Explain Learning Agent usage
-
-## Instructor / Academy Use
-
-* [ ] Create instructor overview
-* [ ] Explain learning objectives
-* [ ] Explain difficulty progression
-* [ ] Explain how labs can be assigned
-* [ ] Explain challenge expectations
-* [ ] Explain expected outputs
-* [ ] Make labs independently assignable
-* [ ] Keep student requirements reasonable
+* [ ] Explain Ask Kaz
+* [ ] Explain Notes
 
 ## Pilot Testing
 
 If possible:
 
-* [ ] Have another learner try setup
-* [ ] Have learner attempt one basic lab
-* [ ] Have learner attempt one advanced lab
+* [ ] Invite another learner
+* [ ] Observe first-time onboarding confusion
+* [ ] Have learner attempt one Foundations lab
+* [ ] Have learner attempt one Reliability lab
+* [ ] Have learner attempt one AI lab
+* [ ] Have learner use Ask Kaz
+* [ ] Have learner intentionally fail a test
 * [ ] Collect confusion points
 * [ ] Improve unclear instructions
-* [ ] Collect feedback
+* [ ] Collect qualitative feedback
+
+## Instructor / Academy Use
+
+Keep this supplementary and simple:
+
+* [ ] Create instructor overview
+* [ ] Explain learning objectives
+* [ ] Explain learning progression
+* [ ] Explain expected outputs
+* [ ] Explain how AEP complements hands-on n8n learning
+* [ ] Do not add instructor surveillance features just for this phase
 
 ## Phase Complete When
 
-AEP can be given to another person without requiring the creator to personally explain every step.
+A learner can use AEP independently and the pilot does not reveal a blocking setup, learning, or usability problem.
 
 ---
 
-# PHASE 12 — Portfolio & Project Presentation
+# PHASE 17 — Portfolio, Release & Repository Polish
 
 ## Goal
 
-Turn the completed system into a strong Automation Engineering portfolio project.
+Turn the complete AEP system into a strong Automation Engineering + product engineering portfolio project.
 
 ## Main README
 
-* [ ] Create strong project introduction
-* [ ] Explain problem
-* [ ] Explain why AEP exists
-* [ ] Show technology stack
-* [ ] Show architecture
-* [ ] Show all 10 labs
-* [ ] Show engineering concepts
-* [ ] Show capstone
-* [ ] Show Learning Agent
-* [ ] Explain testing approach
-* [ ] Explain reliability engineering
-* [ ] Include screenshots
-* [ ] Include workflow diagrams
-* [ ] Include limitations
-* [ ] Include future improvements
+* [ ] Strong project introduction
+* [ ] Product problem
+* [ ] Why AEP exists
+* [ ] Technology stack
+* [ ] Website architecture
+* [ ] n8n architecture
+* [ ] Supabase architecture
+* [ ] Labs 01–10 overview
+* [ ] Capstone overview
+* [ ] Kaz overview
+* [ ] Testing/diagnostics approach
+* [ ] Reliability concepts
+* [ ] Security model
+* [ ] Screenshots
+* [ ] Workflow diagrams
+* [ ] Project limitations
+* [ ] Future improvements
 
 ## Portfolio Assets
 
-* [ ] Capture clean n8n workflow screenshots
-* [ ] Capture Supabase examples
-* [ ] Capture test scenarios
-* [ ] Create architecture diagram
-* [ ] Create capstone flow diagram
-* [ ] Record short demo if useful
-* [ ] Prepare short portfolio description
-* [ ] Prepare interview explanation
+* [ ] Website screenshots — Light
+* [ ] Website screenshots — Dark
+* [ ] Floating dock interaction capture
+* [ ] Lesson Focus Mode capture
+* [ ] Inline test/diagnostics capture
+* [ ] Kaz capture
+* [ ] n8n workflow screenshots
+* [ ] Supabase examples
+* [ ] Architecture diagram
+* [ ] Capstone flow diagram
+* [ ] Short demo if useful
+* [ ] Portfolio description
+* [ ] Interview explanation
 
-## GitHub Cleanup
+## Repository Cleanup
 
+* [ ] Export/package final Capstone workflows
+* [ ] Complete Capstone README
 * [ ] Remove temporary files
 * [ ] Remove unused experiments
 * [ ] Verify `.gitignore`
-* [ ] Check repository for secrets
+* [ ] Scan secrets
 * [ ] Verify documentation links
 * [ ] Verify setup instructions
+* [ ] Run website lint/typecheck/tests/build
 * [ ] Check commit history
 * [ ] Create release/tag if appropriate
 
 ## Phase Complete When
 
-A recruiter, client, automation engineer, instructor, or academy can understand:
-
-* what AEP is
-* what problem it solves
-* what was built
-* what engineering concepts it demonstrates
-* how it works
-* why the project is valuable
+A recruiter, client, automation engineer, instructor, or learner can understand what AEP is, how it works, why it is different, and what engineering skills it demonstrates.
 
 ---
 
-# PHASE 13 — External Pilot / Academy Adoption
+# PHASE 18 — External Pilot / Academy Adoption
 
 ## Goal
 
-Offer the completed AEP to the academy or other learners and determine whether it provides real educational value.
+Offer the stable AEP experience to an academy or other learners and measure whether it provides real educational value.
 
 This phase happens only after the system is stable.
 
@@ -937,10 +1520,10 @@ This phase happens only after the system is stable.
 * [ ] Prepare short AEP introduction
 * [ ] Prepare demo
 * [ ] Explain how it complements existing n8n training
-* [ ] Demonstrate one beginner lab
-* [ ] Demonstrate one reliability lab
-* [ ] Demonstrate Learning Agent
-* [ ] Explain student challenges
+* [ ] Demonstrate one Foundations lab
+* [ ] Demonstrate one Reliability lab
+* [ ] Demonstrate Kaz
+* [ ] Demonstrate inline diagnostics
 * [ ] Share pilot instructions
 * [ ] Collect instructor feedback
 * [ ] Collect student feedback
@@ -949,10 +1532,10 @@ This phase happens only after the system is stable.
 
 ## Adoption Evidence
 
-If the academy chooses to use AEP:
+If an academy chooses to use AEP:
 
 * [ ] Confirm how it is being used
-* [ ] Record number/type of labs used
+* [ ] Record actual scope of usage
 * [ ] Collect approved testimonial if available
 * [ ] Document real usage accurately
 * [ ] Update portfolio wording based on actual adoption
@@ -967,53 +1550,76 @@ Do not claim that AEP is used by an academy until it is actually adopted or acti
 
 AEP V1 is considered complete when:
 
-## Foundation
+## Existing Learning System
 
-* [ ] Repository complete
-* [ ] Project rules complete
-* [ ] Documentation structure complete
-
-## Learning System
-
-* [ ] Standard lab system complete
-* [ ] All 10 labs complete
-* [ ] All guided builds verified
-* [ ] All successful tests verified
-* [ ] All failure scenarios verified
-* [ ] All challenges verified
-
-## Engineering
-
-* [ ] API integration demonstrated
-* [ ] Validation demonstrated
-* [ ] Pagination demonstrated
-* [ ] Retry/backoff demonstrated
-* [ ] Idempotency demonstrated
-* [ ] DLQ demonstrated
-* [ ] Logging demonstrated
-
-## AI
-
-* [ ] Structured AI demonstrated
-* [ ] AI guardrails demonstrated
-* [ ] Human-in-the-loop demonstrated
+* [/] Standard lab system complete
+* [/] All 10 labs built
+* [/] Lab quality review complete
+* [/] API integration demonstrated
+* [/] Validation demonstrated
+* [/] Pagination demonstrated
+* [/] Retry/backoff demonstrated
+* [/] Idempotency demonstrated
+* [/] DLQ demonstrated
+* [/] Logging demonstrated
+* [/] Structured AI demonstrated
+* [/] AI guardrails demonstrated
+* [/] Human-in-the-loop demonstrated
 
 ## Capstone
 
-* [ ] Capstone working
-* [ ] Capstone success paths tested
-* [ ] Capstone failure paths tested
+* [/] Core Capstone runtime working
+* [/] Safe success path live-tested
+* [/] Invalid/duplicate paths live-tested
+* [/] Approval/rejection live-tested
+* [/] Retry/DLQ/recovery live-tested
+* [ ] Final Capstone workflow exports packaged
+* [ ] Capstone README complete
+* [ ] Old demo/test rows cleaned before public demo
 
-## Learning Agent
+## Website Foundation
 
-* [ ] AEP Learning Agent working
-* [ ] Tutor behavior tested
-* [ ] Challenge guardrails tested
+* [ ] Website foundation complete
+* [ ] Light/Dark themes complete
+* [ ] Floating dock complete
+* [ ] Invite-only passwordless access complete
+* [ ] Admin invite/access section complete
 
-## Sharing
+## Learning Experience
 
-* [ ] Student setup guide complete
-* [ ] Academy/instructor overview complete
+* [ ] Home complete
+* [ ] Labs journey complete
+* [ ] Focus Mode lesson engine complete
+* [ ] Learner progress persistence complete
+* [ ] Sequential unlocking complete
+* [ ] Notes complete
+* [ ] Interactive lesson visuals complete
+
+## Test & Diagnostics
+
+* [ ] Inline Send Test complete
+* [ ] Expected-vs-actual complete
+* [ ] Checkpoint diagnostics complete
+* [ ] Per-lab webhook storage complete
+* [ ] Optional n8n connection complete and secure
+* [ ] Supabase in-lab guidance complete
+
+## Kaz
+
+* [ ] Kaz n8n teacher workflow complete
+* [ ] Knowledge retrieval complete
+* [ ] Learner/test context integration complete
+* [ ] Teaching modes complete
+* [ ] Challenge guardrails complete
+* [ ] English/Tagalog/Taglish complete
+* [ ] Alien-orb website experience complete
+
+## Completion & Sharing
+
+* [ ] Onboarding complete
+* [ ] Final Kaz → creator completion message complete
+* [ ] Accessibility checks pass
+* [ ] Student pilot complete when possible
 * [ ] Portfolio README complete
 * [ ] Repository ready to share
 * [ ] No secrets exposed
@@ -1022,67 +1628,49 @@ AEP V1 is considered complete when:
 
 # Build Rule
 
-We will work on **one phase at a time**.
+We will work on **one Aim Point at a time** inside each phase.
 
-Before starting a phase:
+Before starting an Aim Point:
 
 1. Understand what we are building.
 2. Understand what problem it solves.
-3. Understand how it helps the project or business.
-4. Create a detailed implementation plan for that phase.
-5. Build the smallest working version.
-6. Test it.
-7. Fix issues.
-8. Document it.
-9. Commit it.
-10. Move to the next phase.
+3. Check the approved product/design docs.
+4. Run the AEP Architect review.
+5. Create or follow the detailed implementation plan.
+6. Build the smallest working version.
+7. Use the Automation Specialist when APIs/webhooks/n8n/Supabase/external integrations are involved.
+8. Run QA / regression checks.
+9. Run Project Manager reconciliation.
+10. Document verified results.
+11. Commit cleanly.
+12. Move to the next Aim Point.
 
-Do not build future phases early unless they are required by the current phase.
+Do not build future phases early unless required by the current Aim Point.
+
+Do not push unless explicitly requested.
 
 ---
 
 # Roadmap Summary
 
 ```text
-Phase 0
-Project Foundation
-        ↓
-Phase 1
-Learning System Foundation
-        ↓
-Phase 2
-Development Environment
-        ↓
-Phase 3
-Labs 01–02 — Fundamentals
-        ↓
-Phase 4
-Labs 03–05 — APIs & Data
-        ↓
-Phase 5
-Labs 06–08 — Reliability
-        ↓
-Phase 6
-Logging & Observability
-        ↓
-Phase 7
-Labs 09–10 — AI Engineering
-        ↓
-Phase 8
-Lab Quality Review
-        ↓
-Phase 9
-Capstone
-        ↓
-Phase 10
-AEP Learning Agent
-        ↓
-Phase 11
-Student / Academy Experience
-        ↓
-Phase 12
-Portfolio & Presentation
-        ↓
-Phase 13
-External Pilot / Academy Adoption
+Phase 0  — Project Foundation
+Phase 1  — Learning System Foundation
+Phase 2  — Development Environment
+Phase 3  — Labs 01–02: Fundamentals
+Phase 4  — Labs 03–05: APIs & Data
+Phase 5  — Labs 06–08: Reliability
+Phase 6  — Logging & Observability
+Phase 7  — Labs 09–10: AI Engineering
+Phase 8  — Lab Quality Review
+Phase 9  — Capstone
+Phase 10 — AEP Website Foundation
+Phase 11 — Invite-Only Access & Learner State
+Phase 12 — Learning Experience Engine
+Phase 13 — Inline Test & Smart Diagnostics
+Phase 14 — Kaz AI Teacher
+Phase 15 — Completion, Onboarding & Student Polish
+Phase 16 — Student / Academy Pilot Experience
+Phase 17 — Portfolio, Release & Repository Polish
+Phase 18 — External Pilot / Academy Adoption
 ```
