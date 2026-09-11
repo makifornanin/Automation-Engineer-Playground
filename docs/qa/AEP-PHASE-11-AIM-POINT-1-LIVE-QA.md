@@ -35,7 +35,63 @@ in the root `.env` and configured inside n8n. If the website shares that project
 of the labs' service-role key also compromises learner authentication. A separate
 project makes that coupling impossible, and the free tier allows two.
 
-Also confirm before filling in values:
+## BLOCKING PRECONDITION — enable RLS on the lab tables first
+
+> **Do not create `web/.env.local` with real values, and do not generate the website's
+> anon key, until this section is done.** This is a gate, not a follow-up.
+
+The reuse decision creates a real exposure. Five lab tables were created by raw
+`create table` SQL, and there is **no `enable row level security` or `create policy`
+anywhere in the repo**. Supabase auto-enables RLS only for tables made in the Table
+Editor UI; SQL-created tables have it **off**, and `anon`/`authenticated` get default
+grants on `public`. The moment `NEXT_PUBLIC_SUPABASE_ANON_KEY` ships, it is inlined into
+the browser bundle — public and permanent — so anyone with devtools could query
+`processed_events`, `lab07_business_actions`, `dlq_events`, `execution_logs` and
+`approval_requests` directly through PostgREST, bypassing the website entirely.
+
+This is safe to fix because **n8n connects with the Service Role Secret**
+(`docs/environment-setup.md` §B.3), which bypasses RLS by design. Enabling RLS with no
+policies blocks anonymous access while leaving every Supabase node in Labs 07, 08 and 10
+working.
+
+- [ ] **1. Check current RLS state.**
+      ```sql
+      select schemaname, tablename, rowsecurity from pg_tables
+      where schemaname = 'public' and tablename in
+        ('processed_events','lab07_business_actions','dlq_events','execution_logs','approval_requests');
+      ```
+      Expect `rowsecurity = false` on all five. Record the actual result.
+- [ ] **2. Check what `anon` can actually do** — this decides whether the exposure is
+      read-only or also write.
+      ```sql
+      select grantee, table_name, privilege_type from information_schema.role_table_grants
+      where table_schema = 'public' and grantee in ('anon','authenticated') and table_name in
+        ('processed_events','lab07_business_actions','dlq_events','execution_logs','approval_requests');
+      ```
+- [ ] **3. Enable RLS with zero policies** (requires explicit owner approval — it is a
+      database change):
+      ```sql
+      alter table processed_events        enable row level security;
+      alter table lab07_business_actions  enable row level security;
+      alter table dlq_events              enable row level security;
+      alter table execution_logs          enable row level security;
+      alter table approval_requests       enable row level security;
+      ```
+- [ ] **4. Confirm in the running n8n instance** that every Supabase node in Labs 07/08/10
+      uses the Service Role credential. The repo documents this, but only a live check
+      proves the deployed wiring matches.
+- [ ] **5. Re-run Labs 07, 08 and 10** and confirm they still pass after RLS is on.
+- [ ] **6. Supabase Security Advisor** (Advisors → Security): no remaining
+      `rls_disabled_in_public` findings.
+- [ ] **7. Authentication → Providers → Email:** confirm public sign-up is **disabled**.
+      AEP is invite-only; if self-signup is on, anyone can enrol regardless of app code.
+- [ ] **8. Authentication → URL Configuration:** Site URL and Redirect Allow List set for
+      the website origin (needed before magic links work in a later Aim Point).
+
+Every future `aep_*` table ships with RLS enabled and explicit owner-scoped policies from
+its first migration. No table ships with RLS off "temporarily".
+
+## Then confirm before filling in values
 
 - [ ] Key style. The variable is currently named `NEXT_PUBLIC_SUPABASE_ANON_KEY`. If the
       dashboard issues `sb_publishable_…` / `sb_secret_…` instead of the legacy
