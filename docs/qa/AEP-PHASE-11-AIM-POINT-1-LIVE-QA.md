@@ -54,28 +54,33 @@ This is safe to fix because **n8n connects with the Service Role Secret**
 policies blocks anonymous access while leaving every Supabase node in Labs 07, 08 and 10
 working.
 
-- [ ] **1. Check current RLS state.**
+> **Do not work from a fixed table list.** The repo knows of five lab tables, but
+> `capstone/` and `database/` contain only `.gitkeep` — the Capstone was verified against
+> real Supabase tables whose SQL was never exported here. Any table this repo cannot see
+> is still exposed. **Audit what the project actually has, not what the repo remembers.**
+
+- [ ] **1. List every table and its RLS state — unfiltered.**
       ```sql
-      select schemaname, tablename, rowsecurity from pg_tables
-      where schemaname = 'public' and tablename in
-        ('processed_events','lab07_business_actions','dlq_events','execution_logs','approval_requests');
+      select tablename, rowsecurity from pg_tables
+      where schemaname = 'public' order by 1;
       ```
-      Expect `rowsecurity = false` on all five. Record the actual result.
+      Expect `rowsecurity = false` widely. Record the **actual** list — it is the working
+      inventory for steps 2 and 3, and it will likely include Capstone tables absent from
+      this repo. Known from the labs: `processed_events`, `lab07_business_actions`,
+      `dlq_events`, `execution_logs`, `approval_requests`. (Note `docs/environment-setup.md`
+      §B.4 lists only four and omits `execution_logs` — another reason not to trust a list.)
 - [ ] **2. Check what `anon` can actually do** — this decides whether the exposure is
       read-only or also write.
       ```sql
       select grantee, table_name, privilege_type from information_schema.role_table_grants
-      where table_schema = 'public' and grantee in ('anon','authenticated') and table_name in
-        ('processed_events','lab07_business_actions','dlq_events','execution_logs','approval_requests');
+      where table_schema = 'public' and grantee in ('anon','authenticated') order by 2, 1;
       ```
-- [ ] **3. Enable RLS with zero policies** (requires explicit owner approval — it is a
-      database change):
+- [ ] **3. Enable RLS with zero policies on every table from step 1** (requires explicit
+      owner approval — it is a database change). Run them **one at a time**, not as a
+      batch: a single `alter table` naming a table that does not exist aborts the whole
+      batch and leaves the rest untouched.
       ```sql
-      alter table processed_events        enable row level security;
-      alter table lab07_business_actions  enable row level security;
-      alter table dlq_events              enable row level security;
-      alter table execution_logs          enable row level security;
-      alter table approval_requests       enable row level security;
+      alter table <each_table_from_step_1> enable row level security;
       ```
 - [ ] **4. Confirm in the running n8n instance** that every Supabase node in Labs 07/08/10
       uses the Service Role credential. The repo documents this, but only a live check
