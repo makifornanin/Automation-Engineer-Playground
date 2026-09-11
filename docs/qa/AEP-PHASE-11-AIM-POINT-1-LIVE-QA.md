@@ -35,10 +35,50 @@ in the root `.env` and configured inside n8n. If the website shares that project
 of the labs' service-role key also compromises learner authentication. A separate
 project makes that coupling impossible, and the free tier allows two.
 
-## BLOCKING PRECONDITION — enable RLS on the lab tables first
+## PRECONDITION — lab-table hardening — DONE 2026-09-11
 
-> **Do not create `web/.env.local` with real values, and do not generate the website's
-> anon key, until this section is done.** This is a gate, not a follow-up.
+> **Status: applied.** Kept below for the record; the checkboxes are the procedure that
+> was followed, not outstanding work.
+
+**Audit result.** Seven tables exist in `public`, and RLS was **already enabled on all
+seven** with **no policies** — which is default-deny, so `anon` and `authenticated` could
+already read nothing from them:
+
+`aep_connection_test`, `approval_requests`, `dlq_events`, `execution_logs`,
+`lab07_business_actions`, `processed_events`, `service_actions`
+
+**Correction to the earlier analysis, recorded rather than quietly dropped.** This document
+previously asserted those tables were exposed, inferring RLS-off from the repo containing no
+`enable row level security` statement. The audit disproved that inference. The broad
+`anon`/`authenticated` grants the audit found were **latent, not live** — RLS was already
+holding the line. Evidence beat inference, and the inference was wrong.
+
+**Applied anyway, as defence in depth:** all table privileges revoked from `anon` and
+`authenticated` on those seven tables. `service_role` untouched. No rename, no drop, no
+restructure, no data change. Verified by re-running the grant audit — zero rows.
+
+**Default ACLs deliberately NOT modified.** The public-schema defaults for `postgres` and
+`supabase_admin` do grant broadly to `anon`/`authenticated` for future objects, and there
+are no `defaclnamespace = 0` rows. Changing them would alter behaviour for a project shared
+by the website, the Labs and the Capstone. Security for website tables is handled per-table
+instead — see "Website table security rule" in `docs/environment-setup.md`.
+
+### Remaining gates before `web/.env.local` gets real values
+
+- [ ] **Capstone Supabase nodes use the service-role credential.** Cannot be verified from
+      this repo — `capstone/` contains only `.gitkeep`, so the Capstone workflows are not in
+      version control. Must be checked in the running n8n instance. Do not print the value.
+- [ ] **Live regression after the revoke:** Lab 07 (duplicate suppressed), Lab 08 (DLQ write
+      + retry, `execution_logs` written), Lab 10 (approval created and approved), and the
+      Capstone Supabase paths. Expected: unchanged.
+- [ ] **Row counts intact** — the revokes touch privileges only, never data.
+- [ ] Record the above as **LIVE VERIFIED only if those paths were actually exercised.**
+
+> A free empirical proof is available: because RLS was already enabled with no policies
+> *before* the revoke, any lab that works today is proof its credential holds `BYPASSRLS` —
+> i.e. it is genuinely service-role. An anon key would already have been failing.
+
+### The procedure that was followed (retained for the record)
 
 The reuse decision creates a real exposure. Five lab tables were created by raw
 `create table` SQL, and there is **no `enable row level security` or `create policy`

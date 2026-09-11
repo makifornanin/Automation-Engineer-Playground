@@ -257,6 +257,39 @@ the website yet, so `web/.env.local` still does not exist and the website contin
 resolve every session as signed-out, safely, logging one sanitized warning rather than
 crashing. See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
 
+### Website table security rule
+
+The website shares one Supabase project with the Labs and the Capstone, so table security
+is handled **per table, explicitly**. Project default ACLs are not a security mechanism
+here and must not be treated as one.
+
+**Naming: `aep_web_*`** — `aep_web_profiles`, `aep_web_progress`, `aep_web_notes`,
+`aep_web_lab_connections`, `aep_web_kaz_*`. Not bare `aep_*`: `aep_connection_test` already
+occupies that namespace and is an existing internal table, not a website one. Use the
+existing `public` schema — a custom schema adds PostgREST exposure config and client
+plumbing for no security benefit, because RLS, not schema placement, is the boundary.
+
+**Every website-table migration must do all six, in this order:**
+
+1. create the table
+2. `enable row level security` **immediately** — never "temporarily" off
+3. revoke inherited privileges from `anon` and `authenticated`
+4. grant back only the minimum operations actually required
+5. create explicit RLS policies (owner-scoped on `auth.uid()`)
+6. verify anonymous and authenticated behaviour against the real table
+
+Step 3 is not redundant with step 2. The public-schema default ACLs for `postgres` and
+`supabase_admin` grant broadly to `anon`/`authenticated` for *future* tables, so a new
+table inherits privileges the moment it is created. Those defaults are deliberately left
+alone — changing them would alter behaviour for a project the Labs and Capstone also use —
+so each migration revokes for itself.
+
+**Existing internal tables** (`aep_connection_test`, `approval_requests`, `dlq_events`,
+`execution_logs`, `lab07_business_actions`, `processed_events`, `service_actions`) have RLS
+enabled, no policies, and no `anon`/`authenticated` table privileges. They are not
+browser-reachable and must not be given policies without a real learner-facing need.
+`service_role` is untouched, which is why n8n keeps working — see §B.3.
+
 ---
 
 ## Secrets
