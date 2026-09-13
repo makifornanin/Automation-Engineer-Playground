@@ -929,7 +929,20 @@ the other three wait on Phase 11 Step 2.
 * [ ] Passwordless session is created
 * [ ] Active session restores on return
 * [ ] Expired session can recover through magic link
-* [ ] Unauthorized users cannot enter protected AEP routes
+* [/] Unauthorized users cannot enter protected AEP routes
+
+**Status note, 2026-09-13.** Aim Point 3 built the sign-in flow, but **none of the first
+four bullets may be ticked**: code existing is not evidence, and the flow has never run
+against a real Auth server. They unblock only when L2–L8 are actually exercised.
+
+The fifth is `[/]` deliberately. The **unauthenticated** half is live verified — every
+protected route 307s to `/sign-in`, repeatedly and against the real project. The
+**authorization** half is not: `/admin` still admits any signed-in role, which is Step 3's
+work and is recorded honestly on the page itself. Do not promote this to `[x]` until Step 3
+lands.
+
+Note also that "recover through magic link" is now "request a fresh code" — see the §8
+amendment in `docs/AEP-WEBSITE-VISION.md`. The capability is unchanged; the mechanism is not.
 
 ## Step 3 — Roles
 
@@ -1051,6 +1064,52 @@ bullet above is closed. The verification classification moves as follows:
   trigger nodes the n8n MCP cannot select. Details and execution ids in the QA doc
 
 See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md` for the evidence behind every line above.
+
+**Aim Point 3 — Minimal Invite-Only Passwordless Sign-In. Implemented 2026-09-13; NOT
+complete.** Plan: `docs/superpowers/plans/2026-09-13-aep-phase-11-aim-point-3-passwordless-sign-in.md`.
+
+Owner decision: a **6-digit emailed code**, not a magic link. `docs/AEP-WEBSITE-VISION.md`
+§8 is amended in place with the original wording retained and the reasoning recorded.
+
+Verification classification per `CLAUDE.md`:
+
+* unit tested — 190 tests across 22 files, up from 119 across 15. Includes the
+  account-enumeration invariant (`otp_disabled` / `signup_disabled` / `user_not_found`
+  resolve to the *same frozen object reference* as success, asserted with `toBe`, not
+  `toEqual`); a regression test that `signInWithOtp` is always called with
+  `shouldCreateUser: false`; a repo-wide scan that `shouldCreateUser: true` appears nowhere
+  under `web/src`; proof that `verifyOtp`'s `data.session` never reaches the returned state;
+  `signOut({ scope: "local" })` asserted against auth-js's `global` default; and sign-out
+  fail-safe paths proving cookies are cleared and the redirect still fires when `signOut()`
+  throws or the client is null
+* structurally verified — `npm run verify` exits 0: lint, typecheck, 190 tests, production
+  build of 8 routes plus Proxy. **No new public route**; `protected-routes.ts` and
+  `proxy.ts` are byte-for-byte untouched, as are `map-user.ts`, `get-session.ts`,
+  `types.ts` and `guards.ts`. The `Session` projection is still the closed
+  `{id, role, displayName}` literal
+* integration tested — the Automation stage verified the OTP contract against the
+  **installed** `@supabase/auth-js` types rather than documentation, and traced the cookie
+  fix end to end through `@supabase/ssr` internals
+* live verified — **only two things, neither of them the sign-in flow.** (1) `disable_signup:
+  true`, confirmed twice, closing the invite-only blocker. (2) L1 route protection still
+  holds now that `/sign-in` renders a real form
+* not tested — **the entire sign-in flow.** No test user exists, so request-code → email →
+  verify → session has never executed once. L2–L8 remain unrun
+* blocked — L2–L8, on two owner dashboard actions: add `{{ .Token }}` to the Magic Link
+  email template, and create an auto-confirmed test user
+
+**A defect fixed here that predates this Aim Point:** `@supabase/ssr@0.12.7` defaults auth
+cookies to `httpOnly: false` with no `secure` key at all, and neither server factory passed
+`cookieOptions`. AEP's auth cookies were therefore **not HttpOnly, and live criterion L5 was
+silently failing.** Both factories now share one `SUPABASE_COOKIE_OPTIONS` constant, guarded
+by a test that fails if either stops forwarding it — applying it to only one would set an
+HttpOnly cookie at sign-in and silently downgrade it on the proxy's first token refresh.
+
+**Open — QA MEDIUM, not yet dispositioned.** `over_email_send_rate_limit` can only fire for
+an address that passed the existence check, so *repeated* submissions may distinguish
+invited from uninvited addresses even though a single submission does not. Reasoned from
+code and GoTrue semantics, **not observed.** Confirm or rule out during live verification,
+then accept or fix — do not close it silently either way.
 
 Known limitations, recorded not hidden: two `getUser()` calls per full page load
 (middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level

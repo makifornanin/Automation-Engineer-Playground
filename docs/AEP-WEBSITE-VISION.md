@@ -318,6 +318,33 @@ No password creation is required.
 
 If the session expires, the learner can use another email magic link.
 
+> **AMENDED 2026-09-13 — owner decision. The mechanism is a 6-digit emailed code, not a
+> link.** The original wording above is retained as the record of what was first approved.
+> Every principle it states is unchanged and still binding: passwordless, email-verified,
+> invite-only, no password creation, sessions normally restored on return. Only the
+> delivery mechanism changed, and only because the link flow costs materially more for no
+> learner benefit:
+>
+> - `@supabase/ssr` forces PKCE, so a link must be opened **in the same browser** that
+>   requested it. Email clients' in-app browsers and preview panes break that, producing a
+>   "code verifier missing" error the learner cannot act on.
+> - Corporate link-scanners and Safe-Links prefetchers consume a single-use link before the
+>   human clicks it, so the learner sees "invalid link" and reports a bug that is not one.
+> - A link needs Auth → URL Configuration (Site URL + Redirect Allow List) maintained for
+>   every origin, including each preview deployment. A code is origin-independent.
+> - A link needs a callback route; a code does not.
+>
+> A code is one extra copy-paste and removes all four failure modes. This is consistent
+> with "AEP should feel easier than n8n" — the easiest flow is the one that does not fail
+> in ways the learner cannot diagnose.
+>
+> The link is **not foreclosed**: `web/src/proxy.ts` already reserves `/sign-in/...` as
+> public, so a `/sign-in/callback` route can be added later with no change to the form,
+> the server actions, the cookie handling, or the protected-route map.
+>
+> Invite delivery (steps 1–3 above) is still Phase 11 Step 4 and remains unbuilt. Step 6,
+> onboarding, is also unbuilt — sign-in currently lands on `/`.
+
 ### Roles
 
 Two simple roles:
