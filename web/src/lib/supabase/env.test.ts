@@ -6,47 +6,47 @@ afterEach(() => {
 });
 
 describe("getSupabaseConfig", () => {
-  it("returns the url and anon key when both are set", () => {
+  it("returns the url and publishable key when both are set", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key-value");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "publishable-key-value");
 
     expect(getSupabaseConfig()).toEqual({
       url: "https://example.supabase.co",
-      anonKey: "anon-key-value",
+      publishableKey: "publishable-key-value",
     });
   });
 
   it("returns null when the url is unset", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", undefined);
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key-value");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "publishable-key-value");
 
     expect(getSupabaseConfig()).toBeNull();
   });
 
-  it("returns null when the anon key is unset", () => {
+  it("returns null when the publishable key is unset", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", undefined);
 
     expect(getSupabaseConfig()).toBeNull();
   });
 
   it("returns null when both are unset", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", undefined);
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", undefined);
 
     expect(getSupabaseConfig()).toBeNull();
   });
 
   it("treats an empty-string url as missing", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key-value");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "publishable-key-value");
 
     expect(getSupabaseConfig()).toBeNull();
   });
 
-  it("treats an empty-string anon key as missing", () => {
+  it("treats an empty-string publishable key as missing", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
 
     expect(getSupabaseConfig()).toBeNull();
   });
@@ -68,7 +68,7 @@ describe("missing-config warning", () => {
     vi.resetModules();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", undefined);
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", undefined);
 
     const { getSupabaseConfig } = await import("./env");
     getSupabaseConfig();
@@ -82,7 +82,7 @@ describe("missing-config warning", () => {
     vi.resetModules();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key-value");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "publishable-key-value");
 
     const { getSupabaseConfig } = await import("./env");
     getSupabaseConfig();
@@ -94,7 +94,7 @@ describe("missing-config warning", () => {
     vi.resetModules();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://should-not-appear.supabase.co");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
 
     const { getSupabaseConfig } = await import("./env");
     getSupabaseConfig();
@@ -109,7 +109,7 @@ describe("missing-config warning", () => {
     vi.resetModules();
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", undefined);
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", undefined);
 
     const { getSupabaseConfig } = await import("./env");
 

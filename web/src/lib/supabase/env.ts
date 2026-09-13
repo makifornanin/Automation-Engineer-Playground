@@ -1,7 +1,7 @@
 /**
  * Supabase environment configuration.
  *
- * Reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as
+ * Reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` as
  * literal `process.env.X` member expressions, never a computed
  * `process.env[name]` lookup. Next.js inlines `NEXT_PUBLIC_*` values into the
  * browser bundle by static text substitution at build time; a computed
@@ -13,7 +13,7 @@
  */
 export interface SupabaseConfig {
   url: string;
-  anonKey: string;
+  publishableKey: string;
 }
 
 // Module-scope, not per-call: every server/middleware/browser path that fails
@@ -34,7 +34,7 @@ function warnAboutMissingConfigOnce(): void {
   if (hasWarnedAboutMissingConfig) return;
   hasWarnedAboutMissingConfig = true;
   console.warn(
-    "Supabase is not configured (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY); all sessions resolve as anonymous.",
+    "Supabase is not configured (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); all sessions resolve as anonymous.",
   );
 }
 
@@ -46,12 +46,12 @@ function warnAboutMissingConfigOnce(): void {
  */
 export function getSupabaseConfig(): SupabaseConfig | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!url || !anonKey) {
+  if (!url || !publishableKey) {
     warnAboutMissingConfigOnce();
     return null;
   }
 
-  return { url, anonKey };
+  return { url, publishableKey };
 }

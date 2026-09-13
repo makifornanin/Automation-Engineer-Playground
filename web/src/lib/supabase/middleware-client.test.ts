@@ -25,7 +25,7 @@ vi.mock("@supabase/ssr", () => ({
 }));
 
 vi.mock("./env", () => ({
-  getSupabaseConfig: () => ({ url: "https://example.supabase.co", anonKey: "anon-key" }),
+  getSupabaseConfig: () => ({ url: "https://example.supabase.co", publishableKey: "publishable-key" }),
 }));
 
 function buildRequest(pathname = "/labs"): NextRequest {
