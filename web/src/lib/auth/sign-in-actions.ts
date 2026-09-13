@@ -77,10 +77,11 @@ export async function requestSignInCode(
 /**
  * Compensating control for `toRequestCodeState` always returning
  * `CODE_SENT_STATE`: since the learner can no longer see whether the
- * request step actually succeeded, a broken delivery path (n8n down, a bad
- * webhook signature, a stale timestamp) would otherwise be silent. This
- * logs the Supabase error `code` ONLY — never the email address, never
- * `error.message`, never a token — so it cannot itself become a new leak.
+ * request step actually succeeded, a broken mail path (Supabase's mail
+ * provider failing, the address being rate-limited, a misconfigured email
+ * template) would otherwise be silent. This logs the Supabase error `code`
+ * ONLY — never the email address, never `error.message`, never a token — so
+ * it cannot itself become a new leak.
  */
 function warnRequestCodeFailure(error: unknown): void {
   console.warn("requestSignInCode: signInWithOtp did not send a code", {

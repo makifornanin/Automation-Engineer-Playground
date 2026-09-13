@@ -113,26 +113,32 @@ export function toSignInError(error: unknown): SignInState {
  * resolves to {@link CODE_SENT_STATE} by reference. There is no branch here
  * that inspects the error; that absence is the point.
  *
- * WHY THIS EXISTS — DO NOT ADD AN ALLOW-LIST HERE: once the Supabase Send
- * Email Hook forwards `signInWithOtp` to the email-sending workflow, GoTrue
- * still rejects an uninvited address with `otp_disabled` / `signup_disabled`
- * / `user_not_found` *before* it ever calls the hook — no email is sent. An
- * *invited* address does reach the hook, and any delivery failure there
- * (bad signature, stale timestamp, the workflow being down, a secret
- * mismatch, a timeout) comes back to `signInWithOtp` as some other, likely
- * unpredictable, non-2xx error. If this function special-cased a fixed set
- * of "safe" codes instead of covering every outcome, an unlisted
- * hook-failure code would fall through to a distinguishable error state —
- * and because that class of failure can *only* happen to an address that
- * passed the existence check, "Something went wrong" would then mean "this
- * address is invited." That is the exact enumeration this file exists to
- * prevent, so this must stay a blanket policy: reached Supabase → code sent,
- * full stop, regardless of what came back.
+ * WHY THIS EXISTS — DO NOT ADD AN ALLOW-LIST HERE: GoTrue rejects an
+ * uninvited address with `otp_disabled` / `signup_disabled` /
+ * `user_not_found` and dispatches no mail at all — measured live at ~130ms
+ * across 14/14 requests. An *invited* address does dispatch mail, so it
+ * alone can hit `over_email_send_rate_limit`, a mail-provider failure, or
+ * any future delivery-side error code. That asymmetry is a property of
+ * Supabase's own flow, not of whichever mail carrier is in use. If this
+ * function special-cased a fixed set of "safe" codes instead of covering
+ * every outcome, an unlisted delivery-failure code would fall through to a
+ * distinguishable error state — and because that class of failure can
+ * *only* happen to an address that passed the existence check, "Something
+ * went wrong" would then mean "this address is invited." That is the exact
+ * enumeration this file exists to prevent, so this must stay a blanket
+ * policy: reached Supabase → code sent, full stop, regardless of what came
+ * back.
  *
  * Deliberate cost, accepted: the request step can no longer show "Too many
- * attempts" (`over_email_send_rate_limit` / `over_request_rate_limit`) —
- * that code can only fire for an address that already exists, so it was the
- * same class of oracle. `verifySignInCode` and `toSignInError` are
+ * attempts". `over_email_send_rate_limit` counts mail actually dispatched,
+ * so it can only fire for an address that already exists — that one was the
+ * same class of oracle. `over_request_rate_limit` is generally an IP or
+ * request-volume throttle and is *not* obviously gated on whether the
+ * address exists; it is covered here anyway, because the guarantee this
+ * function provides is deliberately broader than any per-code reasoning:
+ * every outcome that reached Supabase is uniform, so no future
+ * reclassification of any code can reopen the oracle.
+ * `verifySignInCode` and `toSignInError` are
  * untouched and keep every message, including the rate-limit one, because
  * the verify step does not have this asymmetry (a wrong code and a
  * never-issued code already return the same `otp_expired`).

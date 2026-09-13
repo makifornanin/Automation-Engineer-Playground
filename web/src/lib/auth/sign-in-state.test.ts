@@ -124,16 +124,23 @@ describe("toSignInError — never leaks the raw Supabase message", () => {
 
 describe("toRequestCodeState — request-code step is uniform for every Supabase outcome", () => {
   /**
-   * Once the Supabase Send Email Hook is live, a delivery failure for an
-   * *invited* address (bad signature, timeout, workflow down) surfaces to
-   * `signInWithOtp` as a non-2xx error — the same shape as the "unknown
-   * address" rejection GoTrue returns *before* the hook ever runs. If the
-   * request step ever distinguished those, "Something went wrong" would
-   * mean "this address is invited". These codes are exactly the ones named
-   * in the Aim Point handoff: the three pre-existing enumeration codes, the
-   * two rate-limit codes (closing the second oracle), and four codes that
-   * stand in for hook-failure modes we cannot enumerate in advance — which
-   * is why this is a blanket policy, not an allow-list.
+   * GoTrue rejects an unknown address without dispatching mail. An
+   * *invited* address does dispatch, so only it can hit a rate limit or a
+   * mail-provider failure. If the request step ever distinguished those
+   * from success, "Something went wrong" would mean "this address is
+   * invited". The codes below are the three pre-existing enumeration codes;
+   * `over_email_send_rate_limit`, which counts mail actually dispatched and
+   * so is genuinely invited-only (the second oracle);
+   * `over_request_rate_limit`, covered defensively rather than because it is
+   * known to be address-gated — it is generally an IP/volume throttle; and
+   * stand-ins for delivery-side failures AEP cannot enumerate in advance.
+   * Covering all of them regardless of category is the point: this is a
+   * blanket policy, not an allow-list.
+   *
+   * The `hook_*` names are retained deliberately: they are arbitrary
+   * unknown-code fixtures, and the point of the test is that the policy
+   * holds for codes this file has never seen. They do not imply any hook is
+   * in use — AEP V1 uses Supabase email delivery directly.
    */
   it.each([
     "otp_disabled",

@@ -139,11 +139,15 @@ describe("requestSignInCode", () => {
   });
 
   /**
-   * The delivery-failure oracle this Aim Point exists to close: once the
-   * Send Email Hook is live, a hook failure for an *invited* address comes
-   * back from GoTrue as some non-2xx error whose exact code AEP cannot
-   * predict in advance. Whatever that code turns out to be, it must not be
-   * distinguishable from success.
+   * The delivery-failure oracle this policy exists to close. Only an
+   * *invited* address causes Supabase to dispatch mail, so only an invited
+   * address can produce a mail-related failure — and the exact error code
+   * for one is not something AEP can enumerate in advance. Whatever it
+   * turns out to be, it must not be distinguishable from success.
+   *
+   * The `hook_`-prefixed fixture below is simply an arbitrary code this
+   * file has never seen; it does not imply a hook is in use. AEP V1 uses
+   * Supabase email delivery directly.
    */
   it("resolves an unrecognized/hook-shaped error code as code_sent, not as a distinguishable failure", async () => {
     mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
