@@ -27,7 +27,7 @@ accepted and stay exactly as they are.
 | # | Decision | Resolution |
 |---|---|---|
 | 1 | Supabase project for the website | **Owner decision required before real values are entered.** Code is identical either way; only `web/.env.local` values differ. Recommendation: a project separate from the labs' project, so a leak of the labs service-role key cannot compromise learner auth. **SUPERSEDED 2026-09-11 — reuse the existing AEP Supabase project.** |
-| 2 | Key variable name | `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the conventional name, still supported. If the dashboard issues `sb_publishable_…` instead, rename to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `env.ts` and `web/.env.example` together. |
+| 2 | Key variable name | `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the conventional name, still supported. If the dashboard issues `sb_publishable_…` instead, rename to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `env.ts` and `web/.env.example` together. **SUPERSEDED 2026-09-13 — the conditional fired and the rename was done.** The dashboard offers both key families on this project; the owner chose the new-format `sb_publishable_…` key, so the variable is now `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and the `SupabaseConfig` field is `publishableKey`. Rationale and the full file list are in `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`. |
 | 3 | Sign-in path | `/sign-in` |
 | 4 | `getSession()` name | Kept. ROADMAP Step 1 names it explicitly. The collision with Supabase's forbidden `auth.getSession()` is guarded by a source-scan invariant test. |
 | 5 | `SUPABASE_SERVICE_ROLE_KEY` in `web/.env.example` | Declared as a commented name with no value line, so Step 4 cannot invent a different name and the never-`NEXT_PUBLIC_` rule is documented at the point of temptation. |
@@ -57,6 +57,8 @@ These are the load-bearing rules. Every one is verified by a test or a check in 
 
 ```ts
 // web/src/lib/supabase/env.ts
+// As designed on 2026-09-11. The field was renamed `anonKey` -> `publishableKey`
+// on 2026-09-13 alongside the env-var rename; see decisions row 2 above.
 export function getSupabaseConfig(): { url: string; anonKey: string } | null;
 
 // web/src/lib/supabase/browser-client.ts

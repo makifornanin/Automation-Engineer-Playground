@@ -910,9 +910,16 @@ Give invited learners secure passwordless access and create the minimum persiste
 * [ ] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise
 * [/] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
 
-The four open bullets are open for one reason: **no Supabase project is configured**, so
-no code path here has ever run against a real Auth server. They are not open because work
-is missing.
+The four open bullets were originally open for one reason: **no Supabase project is
+configured**, so no code path here had ever run against a real Auth server. They are not
+open because work is missing.
+
+**Updated 2026-09-13.** The project *is* now configured and the credential pair is
+validated, so that original reason no longer holds. They stay open for a different one:
+there is still no way to create a session. Aim Point 1 ships no sign-in form, route handler
+or auth callback, so `browser-client.ts` has still never executed and no session has ever
+resolved as `authenticated`. `Configure secure environment variables` may move to `[/]`;
+the other three wait on Phase 11 Step 2.
 
 ## Step 2 — Invite-Only Authentication
 
@@ -1004,6 +1011,46 @@ for the record in `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`. This resolves t
 question, not the "blocked" verification status: no Supabase project has been configured
 for the website yet, `web/.env.local` still does not exist, and no code path here has run
 against a real Auth server.
+
+**Updated 2026-09-13 — the project is now configured; the paragraph above is superseded on
+that point only and retained for the record.** `web/.env.local` now exists (git-ignored,
+untracked, UTF-8 no BOM) pointing at the shared AEP Supabase project, so the "blocked"
+bullet above is closed. The verification classification moves as follows:
+
+* live verified — **L1 and L8, against the real configured project.** L1: every protected
+  route (`/`, `/labs`, `/notes`, `/kaz`, `/settings`, `/admin`) returns 307 to `/sign-in`,
+  `/sign-in` returns 200, `/sign-in-help` returns 307 (the proxy-execution discriminator),
+  `/favicon.ico` bypasses the matcher, and following `/` terminates in one hop with no
+  loop. This is no longer the unconfigured path: the server log contains zero "Supabase is
+  not configured" warnings, so the client really was constructed and `auth.getUser()`
+  really was invoked. L8: with the env file moved aside, the sanitized warning fires exactly
+  once and names only the two variable names, with no URL, key, prefix or length, and no
+  500. Independently reproduced by the QA stage
+* live verified — **the URL + publishable key pair is genuinely valid**, proven separately
+  from L1 because L1 cannot prove it: signed out, `getUser()` returns locally without ever
+  contacting the Auth server, so a typo'd ref or revoked key yields a byte-identical PASS.
+  `GET /auth/v1/settings` returns 200 with the configured key, and 401 both with no key and
+  with a bogus one
+* blocked — **L2–L7, on more than a missing user.** The owner must create a test user in
+  the Supabase dashboard, but that alone does not unblock these: Aim Point 1 ships no
+  sign-in form, no route handler and no auth callback, so there is no way to turn those
+  credentials into a session cookie. `browser-client.ts` is still imported by nothing and
+  has still never executed, and the proxy refresh has still never run against a real token.
+  Closing this needs the minimal sign-in of Phase 11 Step 2
+* blocked — **invite-only is not actually enforced at the project level.** `/auth/v1/settings`
+  reports `disable_signup: false`, so public sign-up is currently ENABLED on a product
+  `CLAUDE.md` defines as invite-only. Owner action in the dashboard; a hard prerequisite
+  before any `signInWithOtp` call ships. See the QA doc's OPEN SECURITY GATES section
+* key naming — `NEXT_PUBLIC_SUPABASE_ANON_KEY` was renamed to
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (and the internal `SupabaseConfig.anonKey` field
+  to `publishableKey`) because this project issues new-format `sb_publishable_…` /
+  `sb_secret_…` keys. This fires the rename gate that
+  `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md` had recorded in advance
+* post-revoke lab regression — Capstone 4/4 and Lab 07 2/2 pass; Lab 08 2/3 and Lab 10 1/2,
+  with the two remaining checks **not run rather than failed** because they sit behind
+  trigger nodes the n8n MCP cannot select. Details and execution ids in the QA doc
+
+See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md` for the evidence behind every line above.
 
 Known limitations, recorded not hidden: two `getUser()` calls per full page load
 (middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level

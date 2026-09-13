@@ -230,3 +230,68 @@ created twice for the two probes, deleted both times, never staged.
    convention (for example an `aep_` table prefix) decided and implemented when Phase 11
    Step 5 first needs a table — not before, and not implied by this documentation-only
    Aim Point.
+
+---
+
+# Phase 11 — Aim Point 2, Part 2: Configure the Supabase project + publishable-key rename
+
+Date: 2026-09-13
+Status: implemented 2026-09-13, **not complete** — two blocking items remain, below.
+
+## Relationship to Part 1
+
+Part 1's Goal says "No live Supabase work. No project is configured yet; `web/.env.local`
+does not exist before or after this Aim Point." That was true of Part 1 and is **no longer
+true of the Aim Point as a whole.** Part 1's text is left unedited as a dated record; this
+section supersedes it on that point only.
+
+## What was done
+
+1. **`web/.env.local` created** — git-ignored (`web/.gitignore:34`), untracked, UTF-8 with
+   no BOM, holding `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for the shared AEP project. No value was printed
+   at any point; the key was moved programmatically from where it had been mis-pasted.
+2. **The approved rename**, in one pass: `NEXT_PUBLIC_SUPABASE_ANON_KEY` →
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SupabaseConfig.anonKey` →
+   `publishableKey`. Files: `env.ts`, `env.test.ts`, `browser-client.ts`,
+   `server-client.ts`, `middleware-client.ts`, `middleware-client.test.ts`,
+   `web/.env.example`, `docs/environment-setup.md`, the QA doc, and the Aim Point 1 plan's
+   decisions table. Renaming the internal field too was deliberate — leaving it `anonKey`
+   would have preserved exactly the inaccuracy the rename removes.
+3. **Post-revoke regressions** — Capstone 4/4, Lab 07 2/2, Lab 08 2/3, Lab 10 1/2. Two
+   checks NOT RUN, not failed.
+4. **L1 and L8** run against the real configured project; **L2–L7 not attempted.**
+
+## Three findings that changed the shape of this work
+
+1. **The key was first pasted into the root `.env`, not `web/.env.local`.** Next only
+   reads env files under `web/`, so the site would have stayed signed-out with the key
+   apparently configured.
+2. **L1 cannot validate a credential pair.** Signed out, `getUser()` returns locally
+   (`auth-js/dist/main/GoTrueClient.js:2709`) without contacting the Auth server, and
+   `resolveSession()` swallows errors into `anonymous` — so a typo'd ref or revoked key
+   gives a byte-identical PASS. The pair was validated separately via
+   `GET /auth/v1/settings` (200 with the key; 401 with none and with a bogus one). Any
+   future credential change must be validated this way, not inferred from redirects.
+3. **L8 must be run with `next dev`.** `next start` on a bundle built while credentials
+   were present gives a silent false pass, because `NEXT_PUBLIC_*` is inlined at build time.
+
+## Blocking items — this Aim Point is NOT complete
+
+1. **Public sign-up is enabled** (`disable_signup: false`) on an invite-only product.
+   Owner action in the Supabase dashboard. Hard prerequisite for Step 2.
+2. **No session can be created at all** — no sign-in form, no route handler, no auth
+   callback exists, so L2–L7 are unreachable regardless of whether a test user exists.
+
+## Non-blocking, carried forward
+
+Security Advisor check and Auth URL/redirect config still undone; `approval_requests`
+UPDATE unproven post-revoke; row counts unmeasured because the root `.env`
+`SUPABASE_SECRET_KEY` is stale/invalid; stray publishable-key line still in root `.env`.
+
+## Verification
+
+`npm run verify` exits 0 — lint, typecheck, 119 tests across 15 files, production build of
+8 routes plus Proxy. Scope guard clean: `git diff --stat HEAD -- labs capstone database
+sample-data scripts` is empty. No key material in the diff. Nothing pushed, nothing
+committed, no website tables, Aim Point 3 not started.

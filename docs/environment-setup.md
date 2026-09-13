@@ -235,7 +235,7 @@ documented there; never real values.
 ```text
 NEXT_PUBLIC_SITE_URL            public site origin
 NEXT_PUBLIC_SUPABASE_URL        Supabase project URL — public by design
-NEXT_PUBLIC_SUPABASE_ANON_KEY   anon/publishable key — public by design; RLS is the protection, and RLS must actually be enabled
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   anon/publishable key — public by design; RLS is the protection, and RLS must actually be enabled
 # SUPABASE_SERVICE_ROLE_KEY     server-only, not used yet, arrives with the Admin section
 ```
 
@@ -252,10 +252,26 @@ Two rules that are not negotiable:
 Supabase project while keeping website-specific application data logically isolated
 from Labs and Capstone. The website's variable names above still deliberately differ
 from the labs' root `.env` names for the reason above — that divergence protects against
-a copy-paste mistake, not against project sharing. No project has been configured for
-the website yet, so `web/.env.local` still does not exist and the website continues to
-resolve every session as signed-out, safely, logging one sanitized warning rather than
-crashing. See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
+a copy-paste mistake, not against project sharing.
+
+**Configured 2026-09-13.** `web/.env.local` now exists (git-ignored, untracked, UTF-8 no
+BOM) and holds a validated URL + publishable key pair for the shared AEP project —
+confirmed live, `GET /auth/v1/settings` returns 200 with the key and 401 both without it
+and with a bogus one. With the file removed the app still resolves every session as
+signed-out, safely, logging one sanitized warning rather than crashing.
+
+Two things that bit us here, recorded so they do not bite again:
+
+1. **The key was first pasted into the root `.env`.** Next only loads env files from inside
+   `web/`, so the site stayed signed-out while the key looked configured. If a website
+   variable seems to have no effect, check which file it is actually in.
+2. **A wrong URL or a revoked key looks exactly like success** on the signed-out path.
+   `getUser()` returns locally without contacting the Auth server when there is no session,
+   and `resolveSession()` swallows errors into `anonymous`. Validate a new pair with a
+   direct `GET /auth/v1/settings` (with `apikey`, plus a no-key control) rather than
+   inferring it from the app redirecting correctly.
+
+See `docs/qa/AEP-PHASE-11-AIM-POINT-1-LIVE-QA.md`.
 
 ### Website table security rule
 
