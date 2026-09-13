@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "./env";
+import { SUPABASE_COOKIE_OPTIONS } from "./cookie-options";
 
 /**
  * Refreshes the Supabase auth cookies for one request/response pair.
@@ -36,6 +37,7 @@ export async function updateSession(
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(config.url, config.publishableKey, {
+    cookieOptions: SUPABASE_COOKIE_OPTIONS,
     cookies: {
       getAll() {
         return request.cookies.getAll();

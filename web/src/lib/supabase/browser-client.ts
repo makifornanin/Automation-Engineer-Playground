@@ -3,9 +3,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./env";
 
 /**
- * Supabase client for client components. Nothing in this Aim Point calls it
- * yet — the sign-in page is a static placeholder (Step 2 builds the real
- * passwordless form on top of this).
+ * Supabase client for client components. Nothing calls it, and that is by
+ * design rather than left over: sign-in is deliberately server-side
+ * (`sign-in-actions.ts`), because the session cookie is `httpOnly`
+ * (`cookie-options.ts`) and an `httpOnly` cookie cannot be read or written
+ * from JavaScript at all — a browser-side `signInWithOtp`/`verifyOtp` call
+ * here could not persist the session it received. Do not delete this file
+ * on the assumption that "unused" means "dead": it remains the documented
+ * seam for any future client-side Supabase read (e.g. a realtime
+ * subscription) that does not need to write the auth cookie itself.
  *
  * No cookie adapter is supplied: `@supabase/ssr`'s browser client persists
  * the session via cookies itself and falls back to `document.cookie`, which
