@@ -76,4 +76,13 @@ describe("security invariants", () => {
     const offenders = findOffenders(WEB_DIR, (text) => text.includes("AEP_PLACEHOLDER_ROLE"));
     expect(offenders).toEqual([]);
   });
+
+  it("never passes shouldCreateUser: true anywhere under web/src", () => {
+    // AEP is invite-only: signInWithOtp must never be allowed to silently
+    // create a new account. sign-in-actions.ts hard-codes `false`; this
+    // scan is what stops a future edit from flipping it back without
+    // anyone noticing in review.
+    const offenders = findOffenders(SRC_DIR, (text) => /shouldCreateUser\s*:\s*true/.test(text));
+    expect(offenders).toEqual([]);
+  });
 });
