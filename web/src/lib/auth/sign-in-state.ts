@@ -70,7 +70,7 @@ interface DuckTypedAuthError {
   status?: number;
 }
 
-function extractCode(error: unknown): string | undefined {
+export function extractCode(error: unknown): string | undefined {
   if (typeof error !== "object" || error === null) {
     return undefined;
   }
@@ -103,4 +103,50 @@ export function toSignInError(error: unknown): SignInState {
     default:
       return buildSignInError("generic");
   }
+}
+
+/**
+ * Maps the outcome of the **request-code** step — `requestSignInCode`'s
+ * call to `signInWithOtp` — to a `SignInState`. Every outcome that reached
+ * Supabase at all — a genuine success, any known error code, any error code
+ * this file has never seen before, a thrown value, a rejected promise —
+ * resolves to {@link CODE_SENT_STATE} by reference. There is no branch here
+ * that inspects the error; that absence is the point.
+ *
+ * WHY THIS EXISTS — DO NOT ADD AN ALLOW-LIST HERE: once the Supabase Send
+ * Email Hook forwards `signInWithOtp` to the email-sending workflow, GoTrue
+ * still rejects an uninvited address with `otp_disabled` / `signup_disabled`
+ * / `user_not_found` *before* it ever calls the hook — no email is sent. An
+ * *invited* address does reach the hook, and any delivery failure there
+ * (bad signature, stale timestamp, the workflow being down, a secret
+ * mismatch, a timeout) comes back to `signInWithOtp` as some other, likely
+ * unpredictable, non-2xx error. If this function special-cased a fixed set
+ * of "safe" codes instead of covering every outcome, an unlisted
+ * hook-failure code would fall through to a distinguishable error state —
+ * and because that class of failure can *only* happen to an address that
+ * passed the existence check, "Something went wrong" would then mean "this
+ * address is invited." That is the exact enumeration this file exists to
+ * prevent, so this must stay a blanket policy: reached Supabase → code sent,
+ * full stop, regardless of what came back.
+ *
+ * Deliberate cost, accepted: the request step can no longer show "Too many
+ * attempts" (`over_email_send_rate_limit` / `over_request_rate_limit`) —
+ * that code can only fire for an address that already exists, so it was the
+ * same class of oracle. `verifySignInCode` and `toSignInError` are
+ * untouched and keep every message, including the rate-limit one, because
+ * the verify step does not have this asymmetry (a wrong code and a
+ * never-issued code already return the same `otp_expired`).
+ *
+ * Only local input validation (`invalid_input` for a malformed email, in
+ * `requestSignInCode`, before Supabase is ever called) stays distinguishable
+ * — it cannot be an oracle for anything Supabase-side because Supabase
+ * never saw the request.
+ */
+export function toRequestCodeState(error: unknown): SignInState {
+  // Deliberately unread: see the policy above. `error` stays a parameter
+  // (not an argument-less function) only so call sites read naturally next
+  // to `toSignInError(error)`, and so this signature cannot be swapped for
+  // a real inspection of `error` without a reviewer noticing the diff.
+  void error;
+  return CODE_SENT_STATE;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CODE_SENT_STATE, IDLE_STATE, toSignInError } from "./sign-in-state";
+import { CODE_SENT_STATE, IDLE_STATE, toRequestCodeState, toSignInError } from "./sign-in-state";
 
 /**
  * Pure module: nothing here imports `@supabase/auth-js`. Every "error" this
@@ -118,6 +118,66 @@ describe("toSignInError — never leaks the raw Supabase message", () => {
     const result = toSignInError(new Error("SECRET_INTERNAL_DETAIL"));
     if (result.status === "error") {
       expect(result.message).not.toContain("SECRET_INTERNAL_DETAIL");
+    }
+  });
+});
+
+describe("toRequestCodeState — request-code step is uniform for every Supabase outcome", () => {
+  /**
+   * Once the Supabase Send Email Hook is live, a delivery failure for an
+   * *invited* address (bad signature, timeout, workflow down) surfaces to
+   * `signInWithOtp` as a non-2xx error — the same shape as the "unknown
+   * address" rejection GoTrue returns *before* the hook ever runs. If the
+   * request step ever distinguished those, "Something went wrong" would
+   * mean "this address is invited". These codes are exactly the ones named
+   * in the Aim Point handoff: the three pre-existing enumeration codes, the
+   * two rate-limit codes (closing the second oracle), and four codes that
+   * stand in for hook-failure modes we cannot enumerate in advance — which
+   * is why this is a blanket policy, not an allow-list.
+   */
+  it.each([
+    "otp_disabled",
+    "signup_disabled",
+    "user_not_found",
+    "over_email_send_rate_limit",
+    "over_request_rate_limit",
+    "unexpected_failure",
+    "hook_timeout",
+    "hook_timeout_after_retry",
+    "hook_payload_invalid_state",
+    "some_future_code_nobody_has_seen_yet",
+  ])("%s resolves to the exact same state reference as a real success", (code) => {
+    const result = toRequestCodeState({ code, status: 400, message: "raw supabase message" });
+    expect(result).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves null to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState(null)).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves undefined to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState(undefined)).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves a thrown Error to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState(new Error("network down"))).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves a bare string to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState("boom")).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves a number to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState(42)).toBe(CODE_SENT_STATE);
+  });
+
+  it("resolves an object with a non-string code to CODE_SENT_STATE", () => {
+    expect(toRequestCodeState({ code: 500 })).toBe(CODE_SENT_STATE);
+  });
+
+  it("never throws for any input", () => {
+    for (const input of [null, undefined, "boom", 42, new Error("x"), { code: 500 }, {}]) {
+      expect(() => toRequestCodeState(input)).not.toThrow();
     }
   });
 });

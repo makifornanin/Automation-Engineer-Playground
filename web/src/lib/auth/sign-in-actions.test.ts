@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IDLE_STATE } from "./sign-in-state";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CODE_SENT_STATE, IDLE_STATE } from "./sign-in-state";
 
 const mockSignInWithOtp = vi.fn();
 const mockVerifyOtp = vi.fn();
@@ -39,12 +39,19 @@ function formData(fields: Record<string, string>): FormData {
   return data;
 }
 
+let warnSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   mockSignInWithOtp.mockReset();
   mockVerifyOtp.mockReset();
   mockCreateSupabaseServerClient.mockReset();
   mockRedirect.mockClear();
   mockRevalidatePath.mockClear();
+  warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  warnSpy.mockRestore();
 });
 
 describe("requestSignInCode", () => {
@@ -81,7 +88,7 @@ describe("requestSignInCode", () => {
     const { requestSignInCode } = await import("./sign-in-actions");
     const result = await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
 
-    expect(result.status).toBe("code_sent");
+    expect(result).toBe(CODE_SENT_STATE);
     expect(Object.keys(result)).toEqual(["status"]);
   });
 
@@ -108,10 +115,17 @@ describe("requestSignInCode", () => {
     const { requestSignInCode } = await import("./sign-in-actions");
     const result = await requestSignInCode(IDLE_STATE, formData({ email: "nobody@example.com" }));
 
-    expect(result.status).toBe("code_sent");
+    expect(result).toBe(CODE_SENT_STATE);
   });
 
-  it("maps a rate-limit error to the error state", async () => {
+  /**
+   * REGRESSION (closes the second oracle named in the Aim Point handoff):
+   * `over_email_send_rate_limit` can only fire for an address that already
+   * passed the existence check, so a distinguishable "Too many attempts"
+   * message here would itself leak whether the address is invited. The
+   * request step now resolves it exactly like success.
+   */
+  it("no longer distinguishes a rate-limit error at the request step — resolves as code_sent", async () => {
     mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
     mockSignInWithOtp.mockResolvedValue({
       data: {},
@@ -121,7 +135,27 @@ describe("requestSignInCode", () => {
     const { requestSignInCode } = await import("./sign-in-actions");
     const result = await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
 
-    expect(result.status).toBe("error");
+    expect(result).toBe(CODE_SENT_STATE);
+  });
+
+  /**
+   * The delivery-failure oracle this Aim Point exists to close: once the
+   * Send Email Hook is live, a hook failure for an *invited* address comes
+   * back from GoTrue as some non-2xx error whose exact code AEP cannot
+   * predict in advance. Whatever that code turns out to be, it must not be
+   * distinguishable from success.
+   */
+  it("resolves an unrecognized/hook-shaped error code as code_sent, not as a distinguishable failure", async () => {
+    mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
+    mockSignInWithOtp.mockResolvedValue({
+      data: {},
+      error: { code: "hook_timeout_after_retry", status: 500, message: "hook did not respond" },
+    });
+
+    const { requestSignInCode } = await import("./sign-in-actions");
+    const result = await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
+
+    expect(result).toBe(CODE_SENT_STATE);
   });
 
   it("yields the generic failure rather than throwing when the Supabase client is null", async () => {
@@ -134,14 +168,66 @@ describe("requestSignInCode", () => {
     expect(mockSignInWithOtp).not.toHaveBeenCalled();
   });
 
-  it("yields the generic failure rather than throwing when signInWithOtp itself rejects", async () => {
+  it("resolves as code_sent, not a thrown/generic failure, when signInWithOtp itself rejects", async () => {
     mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
     mockSignInWithOtp.mockRejectedValue(new Error("network down"));
 
     const { requestSignInCode } = await import("./sign-in-actions");
     const result = await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
 
-    expect(result.status).toBe("error");
+    expect(result).toBe(CODE_SENT_STATE);
+  });
+
+  describe("compensating control: the code-only warn", () => {
+    it("warns with the error code when signInWithOtp resolves with an error", async () => {
+      mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
+      mockSignInWithOtp.mockResolvedValue({
+        data: {},
+        error: { code: "hook_timeout", status: 500, message: "SECRET_INTERNAL_DETAIL" },
+      });
+
+      const { requestSignInCode } = await import("./sign-in-actions");
+      await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const loggedArgs = warnSpy.mock.calls[0]!;
+      const loggedText = loggedArgs.map((arg: unknown) => JSON.stringify(arg)).join(" ");
+      expect(loggedText).toContain("hook_timeout");
+      expect(loggedText).not.toContain("ada@example.com");
+      expect(loggedText).not.toContain("SECRET_INTERNAL_DETAIL");
+    });
+
+    it("warns when signInWithOtp rejects, without leaking the email or the thrown message", async () => {
+      mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
+      mockSignInWithOtp.mockRejectedValue(new Error("SECRET_INTERNAL_DETAIL"));
+
+      const { requestSignInCode } = await import("./sign-in-actions");
+      await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const loggedText = warnSpy.mock.calls[0]!.map((arg: unknown) => JSON.stringify(arg)).join(" ");
+      expect(loggedText).not.toContain("ada@example.com");
+      expect(loggedText).not.toContain("SECRET_INTERNAL_DETAIL");
+    });
+
+    it("does not warn on success", async () => {
+      mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
+      mockSignInWithOtp.mockResolvedValue({ data: {}, error: null });
+
+      const { requestSignInCode } = await import("./sign-in-actions");
+      await requestSignInCode(IDLE_STATE, formData({ email: "ada@example.com" }));
+
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not warn for local invalid-input rejection (never reached Supabase)", async () => {
+      mockCreateSupabaseServerClient.mockResolvedValue(buildClient());
+
+      const { requestSignInCode } = await import("./sign-in-actions");
+      await requestSignInCode(IDLE_STATE, formData({ email: "not-an-email" }));
+
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
   });
 });
 

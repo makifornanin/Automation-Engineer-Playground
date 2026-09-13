@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { isLikelyEmail, normalizeEmail } from "./email";
-import { buildSignInError, CODE_SENT_STATE, toSignInError, type SignInState } from "./sign-in-state";
+import {
+  buildSignInError,
+  CODE_SENT_STATE,
+  extractCode,
+  toRequestCodeState,
+  toSignInError,
+  type SignInState,
+} from "./sign-in-state";
 
 /**
  * The only file that calls `signInWithOtp` / `verifyOtp`. Both Server
@@ -41,6 +48,11 @@ export async function requestSignInCode(
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
+    // Deliberately NOT routed through toRequestCodeState. This fires only when the
+    // server itself is unconfigured (getSupabaseConfig() returned null), which is
+    // identical for every request regardless of which email was submitted — so it
+    // cannot signal whether an address is invited. Collapsing it into the uniform
+    // state would only hide a misconfiguration from the operator.
     return toSignInError(null);
   }
 
@@ -51,13 +63,29 @@ export async function requestSignInCode(
     });
 
     if (error) {
-      return toSignInError(error);
+      warnRequestCodeFailure(error);
+      return toRequestCodeState(error);
     }
 
     return CODE_SENT_STATE;
   } catch (error) {
-    return toSignInError(error);
+    warnRequestCodeFailure(error);
+    return toRequestCodeState(error);
   }
+}
+
+/**
+ * Compensating control for `toRequestCodeState` always returning
+ * `CODE_SENT_STATE`: since the learner can no longer see whether the
+ * request step actually succeeded, a broken delivery path (n8n down, a bad
+ * webhook signature, a stale timestamp) would otherwise be silent. This
+ * logs the Supabase error `code` ONLY — never the email address, never
+ * `error.message`, never a token — so it cannot itself become a new leak.
+ */
+function warnRequestCodeFailure(error: unknown): void {
+  console.warn("requestSignInCode: signInWithOtp did not send a code", {
+    code: extractCode(error) ?? "unknown",
+  });
 }
 
 /**
