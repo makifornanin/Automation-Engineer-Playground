@@ -1,7 +1,35 @@
 # Phase 11 — Aim Point 4: n8n as the Authentication Email Delivery Layer
 
 Date: 2026-09-14
-Status: implemented 2026-09-14; **NOT complete** — blocked on two owner environment actions.
+Status: **SUPERSEDED / WITHDRAWN 2026-09-14 by owner decision. Retained for the record.**
+
+> **This architecture was never used.** The Supabase Send Email Hook was never configured, the
+> n8n workflow was never activated, and no hook call ever executed. AEP V1 uses **Supabase Auth
+> email delivery directly**; n8n is not part of authentication. See
+> `2026-09-14-aep-phase-11-aim-point-5-supabase-only-auth.md`.
+>
+> **What was withdrawn:** the Send Email Hook, the n8n delivery workflow, ngrok on the auth
+> path, HMAC/Standard Webhooks verification, `AEP_AUTH_HOOK_SECRET`,
+> `NODE_FUNCTION_ALLOW_BUILTIN=crypto` for auth, and the proposed latency floor — which
+> existed only because the hook inflated the timing delta.
+>
+> **What survived, and where it now lives:**
+> - `toRequestCodeState()` — **kept**, on its own merits. The enumeration asymmetry it closes
+>   is a property of GoTrue plus `shouldCreateUser: false`, not of any mail carrier: only an
+>   invited address dispatches mail, so only an invited address can produce a mail-related
+>   failure. It was an open MEDIUM in Aim Point 3, *before* this architecture was designed.
+>   Reverting it would reopen that. Its comments were rewritten to say so without citing a
+>   hook that no longer exists.
+> - The n8n Code-sandbox finding (`require('crypto')` blocked, no `globalThis.crypto`, Crypto
+>   node takes a string key) — relocated to `docs/environment-setup.md` as a general n8n note.
+>   The auth use was abandoned; the finding stands.
+> - The `{{ .Token }}` email-template requirement — this document retired it as "superseded by
+>   the hook". That is now reversed: it is the **single most critical dashboard setting** again.
+>
+> **Read the "Known exposures" section below.** It is the clearest justification for the
+> decision to withdraw this architecture: routing authentication mail through a laptop, an
+> ngrok tunnel that terminates TLS, and a personal Gmail mailbox that permanently archives
+> every learner's code and address. It is retained deliberately, not quietly retired.
 Preceding work: Aim Point 3 (`2026-09-13-aep-phase-11-aim-point-3-passwordless-sign-in.md`).
 
 ## Goal
@@ -165,7 +193,17 @@ authenticate any user, or reach Supabase at all.
 **If the secret leaks**, the worst case is not auth compromise — it is that an attacker can
 make n8n send arbitrary mail from the owner's real Gmail identity. Treat it as a credential.
 
-## OPEN — response-timing side channel (QA, HIGH). Must be closed or accepted BEFORE the hook goes live.
+## Response-timing side channel (QA, originally HIGH)
+
+> **RE-GRADED LOW and ACCEPTED 2026-09-14 — see the Aim Point 5 plan.** The section below is
+> retained as written. Its recommended mitigation, a latency floor, was **not** implemented and
+> is not to be: the publishable key is in the browser bundle by design, so the oracle is
+> reachable at `POST /auth/v1/otp` with no AEP Server Action in the path, and a floor inside
+> `requestSignInCode` would only bind an attacker who politely uses AEP's own form. The HIGH
+> grade reflected the delta this withdrawn architecture would have introduced (ngrok + n8n +
+> Gmail); with it gone the delta is back to its pre-existing size.
+
+**Original wording, retained — it was a gate on hook activation, and there is no longer a hook:**
 
 The uniform-response fix equalises **what is returned**. It does nothing about **how long it
 takes**, and here that difference is not subtle.

@@ -903,7 +903,9 @@ Give invited learners secure passwordless access and create the minimum persiste
 ## Step 1 — Supabase Web Foundation
 
 * [ ] Configure browser/server Supabase clients correctly
-* [ ] Configure secure environment variables
+* [/] Configure secure environment variables — `web/.env.local` exists, is git-ignored and
+  untracked, and its URL + publishable key pair is validated live (`/auth/v1/settings` 200
+  with the key, 401 without it and with a bogus one)
 * [/] Confirm service-role/admin credentials never reach browser code
 * [ ] Add auth/session middleware or equivalent server-safe session handling
 * [/] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
@@ -1118,8 +1120,31 @@ regardless of whether the theorised oracle was real. The uninvited half was sepa
 confirmed live first: 14/14 requests returned `otp_disabled` (HTTP 422) with no email
 dispatched and no rate-limiting.
 
-**Aim Point 4 — n8n as the authentication email delivery layer. Implemented 2026-09-14; NOT
-complete.** Plan: `docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`.
+**Still resolved after n8n was withdrawn 2026-09-14, and this is the load-bearing sentence:**
+it stays resolved *because `toRequestCodeState` is retained on its own merits*. The asymmetry
+is a property of GoTrue plus `shouldCreateUser: false` — only an invited address dispatches
+mail, so only an invited address can produce a mail-related failure — and it was logged as an
+open MEDIUM in Aim Point 3, before the hook architecture existed. **Reverting that control
+would reopen this.** Do not remove it as n8n leftovers.
+
+**Aim Point 4 — n8n as the authentication email delivery layer. SUPERSEDED / WITHDRAWN
+2026-09-14 by owner decision. Block retained for the record.** Plan:
+`docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`.
+
+> **Never used.** The Send Email Hook was never configured, the n8n workflow was never
+> activated, and no hook call ever ran. AEP V1 uses **Supabase Auth email delivery directly**;
+> n8n is not part of authentication. The two BLOCKED environment actions below
+> (`NODE_FUNCTION_ALLOW_BUILTIN=crypto`, `AEP_AUTH_HOOK_SECRET`) are **void** — do not set
+> them for auth. The hook-payload and Standard-Webhooks claims below are void with them.
+>
+> **Still valid evidence, retained deliberately:** the two live-verified facts (an uninvited
+> address returns `otp_disabled`, HTTP 422, 14/14, ~130ms, no mail dispatched; and
+> `disable_signup: true`), the security-regression narrative that explains why the uniform
+> request-step response exists, and the n8n Code-sandbox finding — now relocated to
+> `docs/environment-setup.md` because it matters to future labs even though its auth use was
+> abandoned.
+>
+> **The OPEN QA HIGH below is re-graded and closed as accepted.** See the Aim Point 5 block.
 
 Architecture recorded: **Supabase = authentication authority; n8n = authentication-email
 delivery; AEP = learner-facing sign-in UI and session consumer.** The chain is
@@ -1154,13 +1179,25 @@ have *created* an enumeration oracle: only an invited address can reach a delive
 making the request step uniform for every Supabase-originated outcome, as a policy rather than
 an allow-list, so an unknown future GoTrue error code cannot defeat it.
 
-**OPEN — QA HIGH, must be closed or explicitly accepted BEFORE the hook is switched on.** The
-uniform-response fix equalises what is returned, not how long it takes. An uninvited address
-is rejected before the hook fires (measured live at ~130ms); an invited address round-trips
-GoTrue → ngrok → n8n → Gmail. An identical message returned in 130ms versus 2s still leaks
-membership, measurably, from a browser. Recommended fix: a constant minimum duration on
-`requestSignInCode`. Not exploitable while the hook is inactive, so it does not hold the
-current diff — it holds the hook.
+**Response-timing side channel — RE-GRADED HIGH → LOW and ACCEPTED 2026-09-14.** The uniform
+response equalises what is returned, not how long it takes: an uninvited address is rejected
+without dispatching mail (~130ms), while an invited address actually sends. The HIGH grade was
+assigned because the n8n hook inflated that delta to seconds across ngrok, n8n and Gmail. With
+n8n withdrawn the delta is back to its pre-existing size.
+
+Accepted rather than mitigated, for a reason stronger than cost:
+**`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is in the browser bundle by design**, so anyone can
+call `POST /auth/v1/otp` against the project directly and time *that*, with no AEP Server
+Action in the path. A latency floor inside `requestSignInCode` could therefore only close the
+channel for an attacker who politely routes through AEP's own form. The oracle lives in
+GoTrue, not in AEP, and it is reachable without AEP — so the floor was never a complete fix.
+It would also put a multi-second stall on the learner's first interaction.
+
+**Re-open if any of these change:** public or self-serve signup is enabled; the learner
+population grows beyond a private invite list where membership is not sensitive; or a
+delivery layer with materially higher latency is reintroduced. If it must ever be closed, the
+fix belongs at the GoTrue/edge layer, not in a Server Action. No latency-floor work is to be
+done in `web/`.
 
 **BLOCKED on:** (1) `NODE_FUNCTION_ALLOW_BUILTIN=crypto` in n8n's environment — its Code
 sandbox blocks `require('crypto')`, exposes no `globalThis.crypto`, and the built-in Crypto
@@ -1169,6 +1206,34 @@ probing the running instance. Hand-rolling SHA-256/HMAC was deliberately refused
 `AEP_AUTH_HOOK_SECRET` set in n8n's environment after generating the hook secret in Supabase.
 The workflow `AEP Auth - Send Sign-In Email` is built and deliberately **inactive** until both
 are done.
+
+**Aim Point 5 — Supabase-only authentication. Implemented 2026-09-14; live verification
+PENDING owner action.** Plan:
+`docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-5-supabase-only-auth.md`.
+
+Final architecture: **Supabase Auth = authentication authority and email delivery; AEP =
+sign-in UI and session consumer; n8n = not involved in authentication.**
+
+* implemented — **no executable change.** `web/` never referenced n8n, so removing it required
+  no code edit. The diff is four comment blocks rewritten so the enumeration control is
+  justified by Supabase-only facts, plus documentation supersession. A changed test count
+  would itself have been a defect signal
+* unit tested — 212 tests across 22 files, unchanged and unweakened
+* structurally verified — `npm run verify` exits 0; 8 routes plus Proxy, no new public route
+* live verified — `disable_signup: true` and `external.email: true`, re-confirmed against the
+  real project after the reversal
+* not tested — **the end-to-end flow.** No code has been emailed, received, or verified.
+  A1–A11 unrun
+* blocked — on owner dashboard configuration, chiefly `{{ .Token }}` in the Magic Link email
+  template, and on the owner driving a browser: nothing in an agent session can read an inbox
+
+**`toRequestCodeState` was retained, not reverted** — see the Resolved note above. **No latency
+floor was added**, per the accepted-risk decision above.
+
+**The n8n workflow** `ABANDONED - AEP Auth - Send Sign-In Email` (`ZF9iA9BT24c7oxOO`) is
+inactive, renamed and described as withdrawn. It was never activated and never executed a real
+call. Not deleted — that would need explicit approval and costs nothing to keep. No other n8n
+workflow was touched.
 
 Known limitations, recorded not hidden: two `getUser()` calls per full page load
 (middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level
@@ -1189,9 +1254,10 @@ evidence is `functions-config-manifest.json`
 `requireSession()`), which returned `307` both before and after the rename. See
 `docs/superpowers/plans/2026-09-11-aep-phase-11-aim-point-2-proxy-migration.md`.
 
-`/admin` remains honestly ungated by role. It now requires a signed-in session, but any
-role may open it. Role enforcement is Step 3. The on-screen notice was updated to say so
-— the Phase 10 wording had become false.
+**Recorded in Aim Point 2 and unchanged since — this is not an Aim Point 5 edit.** `/admin`
+remains honestly ungated by role. It now requires a signed-in session, but any role may open
+it. Role enforcement is Step 3. The on-screen notice was updated to say so at that time — the
+Phase 10 wording had become false. No Aim Point since has touched `admin/page.tsx`.
 
 ## Phase Complete When
 

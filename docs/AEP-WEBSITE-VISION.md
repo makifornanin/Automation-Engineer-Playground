@@ -362,6 +362,27 @@ If the session expires, the learner can use another email magic link.
 > Nothing in §8's learner-visible promises changes: still passwordless, still email-verified,
 > still invite-only, still no password creation.
 
+> **AMENDED 2026-09-14 (second amendment of the day) — n8n is removed from authentication.**
+> The amendment immediately above is retained verbatim as the record of what was decided, and
+> is superseded on one point only: **Supabase Auth delivers the email itself.** The Send Email
+> Hook was never configured and the n8n workflow never ran, so nothing learner-facing ever
+> depended on it.
+>
+> - **Supabase Auth = authentication authority *and* email delivery.**
+> - **AEP = learner-facing sign-in UI and session consumer.**
+> - **n8n = not involved in authentication at all.**
+>
+> Two bullets from the previous amendment are **unchanged and still binding**: Supabase is the
+> authentication authority, and AEP is the sign-in UI and session consumer. Only the
+> n8n-carrier bullet and its chain diagram are withdrawn.
+>
+> **The 2026-09-13 amendment — a 6-digit code rather than a magic link — is entirely
+> unaffected.** Nothing in it depended on who carried the mail. The code flow stands, and it is
+> what makes the `{{ .Token }}` email-template requirement the critical setup step.
+>
+> Learner-visible promises are once again unchanged: passwordless, email-verified,
+> invite-only, no password creation.
+
 ### Roles
 
 Two simple roles:

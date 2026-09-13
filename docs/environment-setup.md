@@ -308,81 +308,111 @@ browser-reachable and must not be given policies without a real learner-facing n
 
 ---
 
-## AEP authentication email delivery (n8n)
+## AEP authentication email delivery (Supabase)
 
 **Architecture, recorded so it is never re-derived from the code:**
 
-- **Supabase = authentication authority.** Approved users, OTP generation, OTP expiry, OTP
-  verification, sessions, roles, invite-only enforcement.
-- **n8n = authentication-email delivery only.** It receives a signed Supabase Auth
-  "Send Email" hook, formats one email, sends it via Gmail, and returns a status. It
-  generates nothing, stores nothing, creates no users, assigns no roles, and holds no
-  Supabase credential.
+- **Supabase Auth = authentication authority AND email delivery.** Approved users, OTP
+  generation, OTP expiry, OTP verification, sessions, roles, invite-only enforcement, and
+  sending the 6-digit code.
 - **AEP website = learner-facing sign-in UI and session consumer.** It calls
-  `signInWithOtp({ shouldCreateUser: false })` and `verifyOtp`, and never calls n8n. It does
-  not know n8n exists.
+  `signInWithOtp({ shouldCreateUser: false })` and `verifyOtp`, and nothing else.
+- **n8n = NOT involved in authentication.** No workflow, no webhook, no hook secret.
 
-The chain is `AEP → Supabase Auth → n8n delivery`, never `AEP → n8n → custom auth`.
+```text
+approved user in Supabase -> learner enters email in AEP
+  -> signInWithOtp({ shouldCreateUser: false })
+  -> Supabase sends the 6-digit code directly
+  -> learner enters the code -> verifyOtp -> authenticated session
+```
+
+> **SUPERSEDED 2026-09-14.** An earlier revision of this section described n8n receiving a
+> Supabase **Send Email Hook** and sending the mail via Gmail. That architecture was
+> withdrawn by owner decision before it ever ran — the hook was never configured and the
+> workflow never executed a real call. `AEP_AUTH_HOOK_SECRET` and
+> `NODE_FUNCTION_ALLOW_BUILTIN=crypto` are **not** part of the auth inventory and should not
+> be set for authentication. The reasoning that justified withdrawing it is preserved in
+> `docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`
+> under "Known exposures" — it is the clearest statement of why routing auth mail through a
+> laptop, a tunnel and a personal mailbox was the wrong trade.
 
 ### Environment names (names only, never values)
 
 ```text
-AEP_AUTH_HOOK_SECRET          in n8n's process environment. The full `v1,whsec_<base64>`
-                              string that Supabase generates when the hook is created.
-                              NEVER in this repo, never in web/.env.local, never
-                              NEXT_PUBLIC_*, never inside the workflow JSON.
-
-NODE_FUNCTION_ALLOW_BUILTIN=crypto    in n8n's process environment. Required - see below.
+NEXT_PUBLIC_SITE_URL                  public site origin; also decides the cookie Secure flag
+NEXT_PUBLIC_SUPABASE_URL              Supabase project URL - public by design
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  publishable key - public by design; RLS is the protection
+# SUPABASE_SERVICE_ROLE_KEY           server-only, not used yet, never NEXT_PUBLIC_
 ```
 
-### Why `NODE_FUNCTION_ALLOW_BUILTIN=crypto` is not optional
+No authentication-specific variable is added. Nothing in `web/` references n8n.
 
-Verified by probing the running instance, not assumed: n8n's Code sandbox blocks
-`require('crypto')` (`Module 'crypto' is disallowed`), exposes no `globalThis.crypto`, and
-has no `crypto.subtle`. `Buffer`, `TextEncoder` and `atob` are available, but none of them
-can compute an HMAC.
+### Supabase dashboard configuration — the minimum for the 6-digit code flow
 
-n8n's built-in **Crypto node cannot substitute**: it takes a *string* key, while Standard
-Webhooks requires the base64-**decoded** key bytes. Passing the base64 string would produce
-a different signature every time.
+1. **Authentication -> Email Templates -> Magic Link: the body MUST contain `{{ .Token }}`.**
+   **This is the hard blocker, and it fails in the worst possible way.** The stock template
+   contains only `{{ .ConfirmationURL }}`, so without this edit the learner receives a link
+   and no six digits, the form sits on the code step, and every code entered returns
+   `otp_expired` — which looks exactly like a broken `verifyOtp`. Do this before anything
+   else. `signInWithOtp` on an existing user renders the **Magic Link** template, not
+   Confirm Signup.
 
-Set exactly `crypto` — **not** `*`, which would also unlock `fs` and `child_process` for
-every Code node in the instance.
+   This is documented by the SDK itself, not inferred —
+   `@supabase/auth-js`'s `GoTrueClient.d.ts`, on `signInWithOtp`: *"Magic links and OTPs
+   share the same implementation. To send users a one-time code instead of a magic link,
+   modify the magic link email template to include `{{ .Token }}` instead of
+   `{{ .ConfirmationURL }}`."*
 
-### Supabase dashboard configuration
-
-> **STOP — one open decision gates step 1.** Enabling the hook widens a response-timing
-> enumeration channel: an uninvited address is rejected in ~130ms without touching the hook,
-> while an invited one round-trips GoTrue → n8n → Gmail. The learner-visible message is
-> already identical for both, but the *latency* is not, and that difference is measurable from
-> a browser. Before switching the hook on, either add a constant minimum duration to
-> `requestSignInCode` (recommended) or record the accepted risk in writing. See "OPEN —
-> response-timing side channel" in
-> `docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`.
-> Do not resolve it by deciding the gap is probably small enough.
-
-1. Authentication → Hooks → **Send Email hook** → Enable → type **HTTPS** → URI
-   `https://<n8n public origin>/webhook/aep-auth-send-email` → Generate secret.
-2. Authentication → Providers → Email → **Email OTP Expiration: 600s**. A 6-digit code with
-   a one-hour life is weak, and a shorter life bounds how long a token sitting in a failed
-   n8n execution record stays useful.
-3. Leave public sign-up **disabled**. That, not application code, is the invite-only
+   Note "**instead of**", not "in addition to": removing `{{ .ConfirmationURL }}` is the
+   documented shape. It also avoids offering the link path at all — `@supabase/ssr` forces
+   PKCE, so a link opened in a different browser or an email client's in-app browser fails
+   with an error the learner cannot act on.
+2. **Authentication -> Providers -> Email:** enabled. Do not add a password requirement.
+3. **Email OTP Expiration: 600s** (from 3600). A 6-digit code with a one-hour life has a
+   large brute-force window on its own terms.
+4. **Public sign-up stays DISABLED.** This, not application code, is the invite-only
    boundary — the publishable key is public, so an attacker can call GoTrue directly.
-4. **Do not use dashboard "Invite user" while the hook is live.** The workflow handles
-   `magiclink` only and returns 422 for `invite`, by design. Create users with
-   **Add user → Auto Confirm User ON**, which sends no email at all.
+   Confirm with `GET /auth/v1/settings` -> `disable_signup: true`.
+5. **Authentication -> Users -> Add user**, with **Auto Confirm User ON**. No metadata is
+   required: `map-user.ts` resolves an absent `app_metadata.role` to `student`.
+6. **Do NOT use "Invite user".** It renders the Invite template with a different action
+   type, so it appears to succeed while delivering the wrong email — a silent, plausible
+   failure. Use Add user.
+7. **Confirm no Send Email Hook is active:** Authentication -> Hooks -> Send Email Hook
+   shows disabled/none. If a hook secret was ever generated while exploring, remove it — it
+   would be a live credential for an endpoint that will never be used.
+
+Not required, do not touch: URL Configuration / Redirect Allow List (a code is
+origin-independent), custom SMTP, and any n8n environment variable.
 
 ### Operational cautions
 
-- The workflow must be **active** — n8n only registers production webhook paths for active
-  workflows. Deactivating it breaks sign-in with a silent 404.
-- **Rollback is one toggle**: disabling the hook in the Supabase dashboard restores stock
-  Supabase delivery instantly, with zero code changes. Stock delivery then needs
-  `{{ .Token }}` in the Magic Link email template, so keep that as a dormant rollback
-  prerequisite.
-- If the Google OAuth consent screen is in **Testing**, Google expires refresh tokens after
-  7 days and sign-in dies on a weekly cycle. Publish it.
-- The signature check uses a ±300s window, so the host clock must be synchronised.
+- **Supabase's built-in mailer is rate-limited** (roughly a couple of sends per hour on a
+  free project). Because the request step is deliberately uniform, the UI keeps saying
+  "check your inbox" while nothing is being sent. The server warn carrying
+  `over_email_send_rate_limit` is the only signal — check it before concluding the flow is
+  broken.
+- The auth cookie's `Secure` flag derives from `NEXT_PUBLIC_SITE_URL`. On
+  `http://localhost` it is correctly absent; a production deploy that mis-sets that variable
+  loses `Secure` with no build-time or runtime error.
+
+### n8n Code-node sandbox finding (retained — not auth-related)
+
+Discovered 2026-09-14 while evaluating the withdrawn auth email hook. The approach was
+abandoned; **the finding itself stands** and will matter to any future lab or Kaz workflow
+that needs an HMAC or another Node builtin:
+
+```text
+require('crypto')            blocked - "Module 'crypto' is disallowed"
+globalThis.crypto            undefined
+crypto.subtle                unavailable
+Buffer / TextEncoder / atob  available
+```
+
+n8n's built-in **Crypto node** takes a *string* key, so it cannot be used where raw
+base64-decoded key bytes are required. Enabling a builtin needs
+`NODE_FUNCTION_ALLOW_BUILTIN=<module>` in n8n's environment — name the specific module, never
+`*`, which would also unlock `fs` and `child_process` for every Code node in the instance.
 
 ---
 
