@@ -308,6 +308,84 @@ browser-reachable and must not be given policies without a real learner-facing n
 
 ---
 
+## AEP authentication email delivery (n8n)
+
+**Architecture, recorded so it is never re-derived from the code:**
+
+- **Supabase = authentication authority.** Approved users, OTP generation, OTP expiry, OTP
+  verification, sessions, roles, invite-only enforcement.
+- **n8n = authentication-email delivery only.** It receives a signed Supabase Auth
+  "Send Email" hook, formats one email, sends it via Gmail, and returns a status. It
+  generates nothing, stores nothing, creates no users, assigns no roles, and holds no
+  Supabase credential.
+- **AEP website = learner-facing sign-in UI and session consumer.** It calls
+  `signInWithOtp({ shouldCreateUser: false })` and `verifyOtp`, and never calls n8n. It does
+  not know n8n exists.
+
+The chain is `AEP → Supabase Auth → n8n delivery`, never `AEP → n8n → custom auth`.
+
+### Environment names (names only, never values)
+
+```text
+AEP_AUTH_HOOK_SECRET          in n8n's process environment. The full `v1,whsec_<base64>`
+                              string that Supabase generates when the hook is created.
+                              NEVER in this repo, never in web/.env.local, never
+                              NEXT_PUBLIC_*, never inside the workflow JSON.
+
+NODE_FUNCTION_ALLOW_BUILTIN=crypto    in n8n's process environment. Required - see below.
+```
+
+### Why `NODE_FUNCTION_ALLOW_BUILTIN=crypto` is not optional
+
+Verified by probing the running instance, not assumed: n8n's Code sandbox blocks
+`require('crypto')` (`Module 'crypto' is disallowed`), exposes no `globalThis.crypto`, and
+has no `crypto.subtle`. `Buffer`, `TextEncoder` and `atob` are available, but none of them
+can compute an HMAC.
+
+n8n's built-in **Crypto node cannot substitute**: it takes a *string* key, while Standard
+Webhooks requires the base64-**decoded** key bytes. Passing the base64 string would produce
+a different signature every time.
+
+Set exactly `crypto` — **not** `*`, which would also unlock `fs` and `child_process` for
+every Code node in the instance.
+
+### Supabase dashboard configuration
+
+> **STOP — one open decision gates step 1.** Enabling the hook widens a response-timing
+> enumeration channel: an uninvited address is rejected in ~130ms without touching the hook,
+> while an invited one round-trips GoTrue → n8n → Gmail. The learner-visible message is
+> already identical for both, but the *latency* is not, and that difference is measurable from
+> a browser. Before switching the hook on, either add a constant minimum duration to
+> `requestSignInCode` (recommended) or record the accepted risk in writing. See "OPEN —
+> response-timing side channel" in
+> `docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`.
+> Do not resolve it by deciding the gap is probably small enough.
+
+1. Authentication → Hooks → **Send Email hook** → Enable → type **HTTPS** → URI
+   `https://<n8n public origin>/webhook/aep-auth-send-email` → Generate secret.
+2. Authentication → Providers → Email → **Email OTP Expiration: 600s**. A 6-digit code with
+   a one-hour life is weak, and a shorter life bounds how long a token sitting in a failed
+   n8n execution record stays useful.
+3. Leave public sign-up **disabled**. That, not application code, is the invite-only
+   boundary — the publishable key is public, so an attacker can call GoTrue directly.
+4. **Do not use dashboard "Invite user" while the hook is live.** The workflow handles
+   `magiclink` only and returns 422 for `invite`, by design. Create users with
+   **Add user → Auto Confirm User ON**, which sends no email at all.
+
+### Operational cautions
+
+- The workflow must be **active** — n8n only registers production webhook paths for active
+  workflows. Deactivating it breaks sign-in with a silent 404.
+- **Rollback is one toggle**: disabling the hook in the Supabase dashboard restores stock
+  Supabase delivery instantly, with zero code changes. Stock delivery then needs
+  `{{ .Token }}` in the Magic Link email template, so keep that as a dormant rollback
+  prerequisite.
+- If the Google OAuth consent screen is in **Testing**, Google expires refresh tokens after
+  7 days and sign-in dies on a weekly cycle. Publish it.
+- The signature check uses a ±300s window, so the host clock must be synchronised.
+
+---
+
 ## Secrets
 
 - Real credentials never go in Git.

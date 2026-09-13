@@ -345,6 +345,23 @@ If the session expires, the learner can use another email magic link.
 > Invite delivery (steps 1–3 above) is still Phase 11 Step 4 and remains unbuilt. Step 6,
 > onboarding, is also unbuilt — sign-in currently lands on `/`.
 
+> **AMENDED 2026-09-14 — who delivers the email.** The code itself is now delivered by n8n
+> rather than by Supabase's built-in mailer. This changes the *carrier*, not the
+> authentication model, and the roles are worth stating once so they are never re-derived
+> from the code:
+>
+> - **Supabase = authentication authority** — approved users, OTP generation, OTP expiry,
+>   OTP verification, sessions, roles, invite-only enforcement.
+> - **n8n = authentication-email delivery only** — it receives a signed Supabase Auth
+>   "Send Email" hook, formats one email, sends it, returns a status. It generates nothing,
+>   stores nothing, creates no users, assigns no roles, and holds no Supabase credential.
+> - **AEP = learner-facing sign-in UI and session consumer** — it never calls n8n and does
+>   not know n8n exists.
+>
+> The chain is `AEP → Supabase Auth → n8n delivery`, never `AEP → n8n → custom auth`.
+> Nothing in §8's learner-visible promises changes: still passwordless, still email-verified,
+> still invite-only, still no password creation.
+
 ### Roles
 
 Two simple roles:

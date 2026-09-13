@@ -1111,6 +1111,65 @@ invited from uninvited addresses even though a single submission does not. Reaso
 code and GoTrue semantics, **not observed.** Confirm or rule out during live verification,
 then accept or fix — do not close it silently either way.
 
+**Resolved 2026-09-14 in Aim Point 4** — closed by design rather than by investigation. The
+uniform request-step response makes *every* Supabase-originated outcome return the same state
+by reference, so `over_email_send_rate_limit` can no longer be distinguished from success
+regardless of whether the theorised oracle was real. The uninvited half was separately
+confirmed live first: 14/14 requests returned `otp_disabled` (HTTP 422) with no email
+dispatched and no rate-limiting.
+
+**Aim Point 4 — n8n as the authentication email delivery layer. Implemented 2026-09-14; NOT
+complete.** Plan: `docs/superpowers/plans/2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md`.
+
+Architecture recorded: **Supabase = authentication authority; n8n = authentication-email
+delivery; AEP = learner-facing sign-in UI and session consumer.** The chain is
+`AEP → Supabase Auth → n8n delivery`, never `AEP → n8n → custom auth`. No custom OTP table,
+no self-generated OTPs, no sessions in n8n, no roles from n8n.
+
+* live verified — **two things only**, both measured against the real project: an uninvited
+  address returns `otp_disabled` (HTTP 422, 14/14 requests, ~130ms, no email dispatched), and
+  public sign-up is disabled (`disable_signup: true`)
+* documentation-verified, **not** live verified — that the Send Email hook payload carries the
+  6-digit `token`, supports HTTPS endpoints, is signed per Standard Webhooks, and is available
+  on Free and Pro. No hook call has ever occurred, so nobody on this project has yet seen an
+  `email_data.token` or a `webhook-signature` header from it
+* inferred, not observed — that the `otp_disabled` rejection happens *before* the hook would be
+  invoked. With no hook configured there is no hook to invoke, so the ordering cannot have been
+  measured. The inference is sound, and the fix is a blanket policy that holds either way
+* unit tested — 212 tests across 22 files, up from 190. The uniform request-step policy is
+  asserted by reference identity across sixteen inputs including thrown values, `null`, a
+  bare string and unknown hook error codes; the compensating warn is proven to carry
+  `error.code` and neither the email nor the error message
+* structurally verified — `npm run verify` exits 0; 8 routes plus Proxy, no new public route.
+  `proxy.ts`, `protected-routes.ts`, `guards.ts`, `lib/session/*`, `lib/supabase/*`,
+  `components/auth/*` and `web/.env.example` are byte-identical
+* not tested — **the entire delivery path.** The n8n workflow has never executed a real hook
+  call and no email has been sent. A1–A10 unrun
+* blocked — on two owner environment actions, below
+
+**A security regression was found and closed before it shipped.** Introducing the hook would
+have *created* an enumeration oracle: only an invited address can reach a delivery failure, so
+"Something went wrong" would have meant *invited* and "check your inbox" would have meant
+*not invited* — inverting the invariant `sign-in-state.test.ts` exists to protect. Closed by
+making the request step uniform for every Supabase-originated outcome, as a policy rather than
+an allow-list, so an unknown future GoTrue error code cannot defeat it.
+
+**OPEN — QA HIGH, must be closed or explicitly accepted BEFORE the hook is switched on.** The
+uniform-response fix equalises what is returned, not how long it takes. An uninvited address
+is rejected before the hook fires (measured live at ~130ms); an invited address round-trips
+GoTrue → ngrok → n8n → Gmail. An identical message returned in 130ms versus 2s still leaks
+membership, measurably, from a browser. Recommended fix: a constant minimum duration on
+`requestSignInCode`. Not exploitable while the hook is inactive, so it does not hold the
+current diff — it holds the hook.
+
+**BLOCKED on:** (1) `NODE_FUNCTION_ALLOW_BUILTIN=crypto` in n8n's environment — its Code
+sandbox blocks `require('crypto')`, exposes no `globalThis.crypto`, and the built-in Crypto
+node takes a string key where Standard Webhooks needs base64-decoded bytes. Verified by
+probing the running instance. Hand-rolling SHA-256/HMAC was deliberately refused. (2)
+`AEP_AUTH_HOOK_SECRET` set in n8n's environment after generating the hook secret in Supabase.
+The workflow `AEP Auth - Send Sign-In Email` is built and deliberately **inactive** until both
+are done.
+
 Known limitations, recorded not hidden: two `getUser()` calls per full page load
 (middleware plus RSC render — `cache()` dedupes within a render pass only); layout-level
 gating does not re-run on client-side navigation between sibling routes, which the
