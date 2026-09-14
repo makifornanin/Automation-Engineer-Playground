@@ -1,7 +1,29 @@
 # Phase 11 — Aim Point 5: Supabase-only Authentication
 
 Date: 2026-09-14
-Status: implemented 2026-09-14; **live verification pending owner action.**
+Status: **COMPLETE 2026-09-14 — core authentication path LIVE VERIFIED.**
+
+> **Owner-reported live evidence, 2026-09-14**, driven in a real browser (no agent session can
+> read an inbox, so this could only ever come from the owner):
+>
+> - an approved user received the OTP email
+> - a valid OTP verified successfully
+> - the authenticated AEP app loaded
+> - the session survived a hard refresh
+> - sign-out returned to `/sign-in`
+> - public sign-up remains disabled
+> - **n8n is not involved in authentication**
+>
+> This is the first real session in the project's history. It closes the auth Aim Point under
+> the owner's stated rule: close once approved-user → OTP email → verify → session → reload →
+> sign-out works live.
+>
+> **Not part of that evidence, and therefore not claimed:** the RSC payload inspected for
+> token-shaped data on a real session (A9), a protected route requested again after sign-out
+> (A11), an unknown address confirmed to create no user, an invalid code, an expired code, and
+> cookie attributes read in devtools. Each is structurally verified or unit-tested already;
+> none was live-observed. Recorded as unobserved rather than quietly folded into the passes
+> above — and **not** reopened as new auth work, per the scope freeze.
 Supersedes: `2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md` (withdrawn).
 
 ## Goal
@@ -156,10 +178,42 @@ needs explicit approval and keeping it costs nothing. No other n8n workflow was 
 - production URL / redirect verification
 - production email-delivery hardening if Supabase's built-in mailer proves unsuitable
 
-## Closure
+## Closure — CLOSED 2026-09-14
 
-The auth Aim Point closes when approved-user → OTP email → verify → session → reload →
-sign-out is observed live. Until the owner reports that, nothing is ticked. **Next Aim Point
-after closure: server-side student/admin role enforcement for `/admin`** — it currently admits
-any signed-in role, and building the learning product on an unenforced admin boundary would
-propagate a false assumption.
+The core path was observed live by the owner (see the header). Roadmap bullets ticked on that
+evidence: Phase 11 Step 1 "configure secure environment variables" and "add auth/session
+middleware"; Step 2 "learner verifies email", "passwordless session is created", "active
+session restores on return".
+
+**Deliberately left open, because evidence did not cover them:** Step 2's invite-flow bullets
+(there is no invite UI — V1 adds learners by hand; "the owner manually adds users" is not
+"invite flow works"), Step 2's expired-session recovery, and the authorization half of
+"unauthorized users cannot enter protected routes" — `/admin` still admits any signed-in role.
+
+**Do not reopen authentication.** The unobserved sub-checks listed in the header are recorded
+as unobserved, not as defects, and are not a reason to start new auth work.
+
+## Next Aim Point
+
+**Server-side `student`/`admin` role enforcement for `/admin`.** It currently admits any
+signed-in role, and building the learning product on an unenforced admin boundary would
+propagate a false assumption into every later feature.
+
+Now unblocked in a way it was not before: its acceptance criterion is *"verified by an actual
+unauthenticated and an actual student request"*, and a student request is finally possible.
+
+Smallest version: `requireRole("admin")` in `web/src/lib/auth/guards.ts` — whose docstring
+already reserves the name — built on the existing `sessionRole()` and the `app_metadata`-only
+resolution in `map-user.ts`, applied in a new server `web/src/app/(app)/admin/layout.tsx` so
+nothing admin-shaped renders before the check. Replace the on-screen "not role-access-controlled
+yet" notice. `proxy.ts` stays defence in depth; do not move authorization into it.
+
+One decision for the Architect: `notFound()` (does not confirm `/admin` exists to a student)
+versus `redirect("/")` (friendlier). Choose deliberately and record why.
+
+Prerequisite worth knowing before starting: role must be set as **`app_metadata.role`** in the
+Supabase dashboard — `user_metadata` is deliberately ignored to prevent self-escalation — so
+live verification needs a second user, or `app_metadata.role = "admin"` on one of two.
+
+Out of scope for it: the Admin invite/list/resend/revoke section (Step 4), any service-role
+key usage, and any new table.

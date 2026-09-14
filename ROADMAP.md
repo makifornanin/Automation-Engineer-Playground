@@ -902,12 +902,19 @@ Give invited learners secure passwordless access and create the minimum persiste
 
 ## Step 1 — Supabase Web Foundation
 
-* [ ] Configure browser/server Supabase clients correctly
-* [/] Configure secure environment variables — `web/.env.local` exists, is git-ignored and
+* [/] Configure browser/server Supabase clients correctly — the **server** client and the
+  proxy client are now live verified end to end by a real session (2026-09-14). The
+  **browser** client is still imported by nothing and has still never executed: sign-in is
+  server-side by design, because JavaScript cannot set an HttpOnly cookie. Kept, documented,
+  deliberately unexercised
+* [x] Configure secure environment variables — `web/.env.local` exists, is git-ignored and
   untracked, and its URL + publishable key pair is validated live (`/auth/v1/settings` 200
-  with the key, 401 without it and with a bogus one)
+  with the key, 401 without it and with a bogus one). A real session has now been issued
+  against it
 * [/] Confirm service-role/admin credentials never reach browser code
-* [ ] Add auth/session middleware or equivalent server-safe session handling
+* [x] Add auth/session middleware or equivalent server-safe session handling — live verified
+  2026-09-14: the proxy and `requireSession()` carried a real authenticated session through a
+  hard refresh. Token *refresh* past the real TTL (L6) is still unrun and deferred
 * [/] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
 * [ ] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise
 * [/] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
@@ -927,15 +934,27 @@ the other three wait on Phase 11 Step 2.
 
 * [ ] Owner/Admin can invite learner by email
 * [ ] Invite creates student access safely
-* [ ] Learner verifies email
-* [ ] Passwordless session is created
-* [ ] Active session restores on return
+* [x] Learner verifies email — live verified 2026-09-14, owner-driven in a real browser
+* [x] Passwordless session is created — live verified 2026-09-14
+* [x] Active session restores on return — live verified 2026-09-14 (survived a hard refresh)
 * [ ] Expired session can recover through magic link
 * [/] Unauthorized users cannot enter protected AEP routes
 
-**Status note, 2026-09-13.** Aim Point 3 built the sign-in flow, but **none of the first
-four bullets may be ticked**: code existing is not evidence, and the flow has never run
-against a real Auth server. They unblock only when L2–L8 are actually exercised.
+**Status note, updated 2026-09-14.** Aim Point 3 built the sign-in flow and Aim Point 5
+finished it Supabase-only. The owner then ran the core path live: OTP email received, code
+verified, app loaded, session survived a hard refresh, sign-out returned to `/sign-in`.
+Bullets 3–5 are ticked on that evidence.
+
+Three bullets stay open, deliberately:
+
+* **Bullets 1 and 2 (invite flow)** are not ticked and must not be. There is no invite UI —
+  V1 creates learners by hand in the Supabase dashboard. "The owner manually adds users" is
+  not "invite flow works." That is Phase 11 Step 4.
+* **Bullet 6** was not part of the reported evidence: sign-out was observed, but a fresh
+  code requested and verified *after* it was not. The mechanism is the same one bullets 3–5
+  just proved, so this is unobserved rather than doubtful — it simply was not run.
+* **Bullet 7 stays `[/]`.** The unauthenticated half is live verified repeatedly. The
+  authorization half is not: `/admin` still admits any signed-in role. That is Step 3.
 
 The fifth is `[/]` deliberately. The **unauthenticated** half is live verified — every
 protected route 307s to `/sign-in`, repeatedly and against the real project. The
@@ -1222,10 +1241,20 @@ sign-in UI and session consumer; n8n = not involved in authentication.**
 * structurally verified — `npm run verify` exits 0; 8 routes plus Proxy, no new public route
 * live verified — `disable_signup: true` and `external.email: true`, re-confirmed against the
   real project after the reversal
-* not tested — **the end-to-end flow.** No code has been emailed, received, or verified.
-  A1–A11 unrun
-* blocked — on owner dashboard configuration, chiefly `{{ .Token }}` in the Magic Link email
-  template, and on the owner driving a browser: nothing in an agent session can read an inbox
+* **live verified 2026-09-14 — the core authentication path, reported by the owner after
+  driving it in a real browser.** An approved user received the OTP email; a valid code
+  verified successfully; the authenticated AEP app loaded; the session survived a hard
+  refresh; sign-out returned to `/sign-in`; public sign-up remains disabled; and **n8n was
+  not involved in authentication**. This is the first time in the project's history that a
+  real session has existed
+* not tested — sub-checks that were not part of the owner's reported evidence and were not
+  separately exercised: the browser-visible RSC payload inspected for token-shaped data on a
+  *real* authenticated session (A9 — the projection remains closed by construction and
+  asserted at `map-user.test.ts:52`, so this is unobserved rather than doubtful); a protected
+  route requested again *after* sign-out (A11); an unknown address confirmed to create no
+  user; an invalid code; an expired code; and cookie attributes read in devtools. Recorded
+  honestly rather than inferred from the passes above
+* not tested — L6 long-duration token refresh past the real access-token TTL. Deferred
 
 **`toRequestCodeState` was retained, not reverted** — see the Resolved note above. **No latency
 floor was added**, per the accepted-risk decision above.
