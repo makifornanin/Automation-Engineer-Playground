@@ -20,8 +20,10 @@ Status: **COMPLETE 2026-09-14 — core authentication path LIVE VERIFIED.**
 >
 > **Not part of that evidence, and therefore not claimed:** the RSC payload inspected for
 > token-shaped data on a real session (A9), a protected route requested again after sign-out
-> (A11), an unknown address confirmed to create no user, an invalid code, an expired code, and
-> cookie attributes read in devtools. Each is structurally verified or unit-tested already;
+> (A11), an unknown address confirmed to create no user, an invalid code, an expired code,
+> cookie attributes read in devtools, and — noted precisely — **a full browser close-and-reopen**.
+> "Active session restores on return" is ticked on the *hard refresh* that was reported; the
+> cookie's 400-day `maxAge` makes a restart very likely to work, but likely is not observed. Each is structurally verified or unit-tested already;
 > none was live-observed. Recorded as unobserved rather than quietly folded into the passes
 > above — and **not** reopened as new auth work, per the scope freeze.
 Supersedes: `2026-09-14-aep-phase-11-aim-point-4-n8n-auth-email-delivery.md` (withdrawn).

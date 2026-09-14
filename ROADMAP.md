@@ -916,7 +916,7 @@ Give invited learners secure passwordless access and create the minimum persiste
   2026-09-14: the proxy and `requireSession()` carried a real authenticated session through a
   hard refresh. Token *refresh* past the real TTL (L6) is still unrun and deferred
 * [/] Replace the Phase 10 placeholder session seam (`web/src/lib/session/get-session.ts`) with a real Supabase session, and delete `AEP_PLACEHOLDER_ROLE` from the code and from `web/.env.example`
-* [ ] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise
+* [/] `getSession()` returns `status: "authenticated"` only for a verified session, and `status: "anonymous"` otherwise — both halves now have live evidence: the authenticated half for the first time on 2026-09-14, the anonymous half repeatedly. The exhaustive "only" invariant is unit-tested across 12 adversarial escalation vectors rather than observed
 * [/] `Session` / `SessionUser` never carry an access token, refresh token, or any other credential — the whole object is serialised into the browser-visible RSC payload by `SessionProvider`
 
 The four open bullets were originally open for one reason: **no Supabase project is
@@ -956,11 +956,6 @@ Three bullets stay open, deliberately:
 * **Bullet 7 stays `[/]`.** The unauthenticated half is live verified repeatedly. The
   authorization half is not: `/admin` still admits any signed-in role. That is Step 3.
 
-The fifth is `[/]` deliberately. The **unauthenticated** half is live verified — every
-protected route 307s to `/sign-in`, repeatedly and against the real project. The
-**authorization** half is not: `/admin` still admits any signed-in role, which is Step 3's
-work and is recorded honestly on the page itself. Do not promote this to `[x]` until Step 3
-lands.
 
 Note also that "recover through magic link" is now "request a fresh code" — see the §8
 amendment in `docs/AEP-WEBSITE-VISION.md`. The capability is unchanged; the mechanism is not.
