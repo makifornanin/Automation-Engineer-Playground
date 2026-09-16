@@ -276,3 +276,37 @@ export function expectFieldSet(
     },
   };
 }
+
+/**
+ * A checkpoint asserting a numeric field falls inside a range, inclusive.
+ *
+ * For evidence that has to tell two correct-looking runs apart without pinning
+ * a number AEP does not own. Lab 05's challenge re-paginates the same public
+ * dataset with a bigger page size: the request count must drop well below the
+ * page-size-5 run, but the exact figure depends on how many records the API
+ * holds that day.
+ */
+export function expectBetween(
+  id: string,
+  label: string,
+  key: string,
+  minimum: number,
+  maximum: number,
+): Checkpoint {
+  return {
+    id,
+    label,
+    evaluate: (actual) => {
+      const found = readScalar(actual, key);
+      const value = found === null ? Number.NaN : Number(found);
+      if (Number.isFinite(value) && value >= minimum && value <= maximum) {
+        return { state: "passed" };
+      }
+      return {
+        state: "failed",
+        expected: key + " between " + String(minimum) + " and " + String(maximum),
+        actual: found === null ? key + " is missing" : key + ": " + JSON.stringify(found),
+      };
+    },
+  };
+}

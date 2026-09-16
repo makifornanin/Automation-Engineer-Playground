@@ -16,6 +16,8 @@ const AUTHORED = [
   "02-conditions-routing",
   "03-apis-webhooks",
   "04-validation-normalization",
+  "05-pagination-large-data",
+  "06-retry-exponential-backoff",
 ] as const;
 
 /**

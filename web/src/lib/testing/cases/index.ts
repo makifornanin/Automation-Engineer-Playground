@@ -4,6 +4,8 @@ import { LAB_01_CHALLENGE_CASE, LAB_01_TRANSFORM_CASE } from "./lab-01";
 import { LAB_02_CHALLENGE_CASE, LAB_02_ROUTING_CASE } from "./lab-02";
 import { LAB_03_CHALLENGE_CASE, LAB_03_SUCCESS_CASE } from "./lab-03";
 import { LAB_04_CHALLENGE_CASE, LAB_04_SUCCESS_CASE } from "./lab-04";
+import { LAB_05_CHALLENGE_CASE, LAB_05_SUCCESS_CASE } from "./lab-05";
+import { LAB_06_CHALLENGE_CASE, LAB_06_SUCCESS_CASE } from "./lab-06";
 import type { TestCase } from "./types";
 
 /**
@@ -20,6 +22,10 @@ const CASES: Readonly<Record<string, TestCase>> = {
   [LAB_03_CHALLENGE_CASE.id]: LAB_03_CHALLENGE_CASE,
   [LAB_04_SUCCESS_CASE.id]: LAB_04_SUCCESS_CASE,
   [LAB_04_CHALLENGE_CASE.id]: LAB_04_CHALLENGE_CASE,
+  [LAB_05_SUCCESS_CASE.id]: LAB_05_SUCCESS_CASE,
+  [LAB_05_CHALLENGE_CASE.id]: LAB_05_CHALLENGE_CASE,
+  [LAB_06_SUCCESS_CASE.id]: LAB_06_SUCCESS_CASE,
+  [LAB_06_CHALLENGE_CASE.id]: LAB_06_CHALLENGE_CASE,
 };
 
 export function getTestCase(id: string): TestCase | null {

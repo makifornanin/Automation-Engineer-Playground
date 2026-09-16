@@ -2,6 +2,8 @@ import { LAB_01_CHUNKS } from "./content/lab-01";
 import { LAB_02_CHUNKS } from "./content/lab-02";
 import { LAB_03_CHUNKS } from "./content/lab-03";
 import { LAB_04_CHUNKS } from "./content/lab-04";
+import { LAB_05_CHUNKS } from "./content/lab-05";
+import { LAB_06_CHUNKS } from "./content/lab-06";
 import type { LessonChunk } from "./types";
 
 /**
@@ -13,6 +15,8 @@ const LESSONS: Readonly<Record<string, readonly LessonChunk[]>> = {
   "02-conditions-routing": LAB_02_CHUNKS,
   "03-apis-webhooks": LAB_03_CHUNKS,
   "04-validation-normalization": LAB_04_CHUNKS,
+  "05-pagination-large-data": LAB_05_CHUNKS,
+  "06-retry-exponential-backoff": LAB_06_CHUNKS,
 };
 
 export function getLessonChunks(slug: string): readonly LessonChunk[] | null {
