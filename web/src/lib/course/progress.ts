@@ -66,3 +66,12 @@ export function deriveCourseState(progress: CourseProgress): CourseState {
 export async function getCourseProgress(): Promise<CourseProgress> {
   return { completedLabSlugs: [], inProgressLabSlug: null };
 }
+
+/**
+ * Whether a lab's hands-on content (Build/Test/Challenge) is open, as
+ * opposed to preview-only. A single source of truth for the Labs journey UI
+ * so "completed or in-progress" isn't re-typed at every call site.
+ */
+export function isHandsOnAvailable(status: LabStatus): boolean {
+  return status === "completed" || status === "in-progress";
+}

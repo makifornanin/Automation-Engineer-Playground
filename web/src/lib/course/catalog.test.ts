@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CAPSTONE, LABS } from "./catalog";
+import { CAPSTONE, LABS, labHref } from "./catalog";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 // web/src/lib/course -> web/src -> web -> repo root -> labs
@@ -67,5 +67,35 @@ describe("CAPSTONE", () => {
   it("has the approved title and carries no lab number", () => {
     expect(CAPSTONE.title).toBe("AI Service Request Agent");
     expect("number" in CAPSTONE).toBe(false);
+  });
+});
+
+/*
+ * "One short sentence" is a copy rule, not just a vibe: cap the length so a
+ * future edit cannot quietly turn a description into a paragraph.
+ */
+const MAX_DESCRIPTION_LENGTH = 140;
+
+describe("Lab descriptions", () => {
+  it("gives every lab a non-empty description within the length cap", () => {
+    for (const lab of LABS) {
+      expect(lab.description.trim().length).toBeGreaterThan(0);
+      expect(lab.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    }
+  });
+});
+
+describe("CAPSTONE description", () => {
+  it("is non-empty and within the length cap", () => {
+    expect(CAPSTONE.description.trim().length).toBeGreaterThan(0);
+    expect(CAPSTONE.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+  });
+});
+
+describe("labHref", () => {
+  it("resolves every lab to its own /labs/<slug> route", () => {
+    for (const lab of LABS) {
+      expect(labHref(lab)).toBe(`/labs/${lab.slug}`);
+    }
   });
 });

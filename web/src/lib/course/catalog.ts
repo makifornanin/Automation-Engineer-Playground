@@ -16,6 +16,12 @@ export interface Lab {
   /** Verbatim H1 title from the lab's README. */
   title: string;
   group: LabGroup;
+  /**
+   * One short sentence, condensed from the lab README's own "The Hook"
+   * section — the owner's learner-facing framing, not invented product
+   * copy. Never a difficulty label (Vision §16).
+   */
+  description: string;
 }
 
 export const LABS: readonly Lab[] = [
@@ -24,60 +30,80 @@ export const LABS: readonly Lab[] = [
     slug: "01-data-mapping-transformation",
     title: "Data Mapping & Transformation",
     group: "Foundations",
+    description:
+      "A lead form sends first_name and email_address; your CRM wants name and email — you build the translator.",
   },
   {
     number: "02",
     slug: "02-conditions-routing",
     title: "Conditions & Routing",
     group: "Foundations",
+    description:
+      "A $5,000 prospect and a tyre kicker hit your workflow at the same time, and it treats them identically.",
   },
   {
     number: "03",
     slug: "03-apis-webhooks",
     title: "APIs & Webhooks",
     group: "Foundations",
+    description:
+      "Your automation has only ever talked to itself — now it answers a live webhook from the outside world.",
   },
   {
     number: "04",
     slug: "04-validation-normalization",
     title: "Validation & Normalization",
     group: "Foundations",
+    description:
+      "A lead arrives with no name, a broken email, and a three-digit phone number, and your workflow saves it anyway.",
   },
   {
     number: "05",
     slug: "05-pagination-large-data",
     title: "Pagination & Large Data Processing",
     group: "Reliability",
+    description:
+      "The customers API hands back five tidy records and calls it done — even though 208 customers exist.",
   },
   {
     number: "06",
     slug: "06-retry-exponential-backoff",
     title: "Retry Logic & Exponential Backoff",
     group: "Reliability",
+    description:
+      "A payment API has one bad afternoon and returns a 503, so your workflow gives up two seconds too early.",
   },
   {
     number: "07",
     slug: "07-idempotency-duplicate-protection",
     title: "Idempotency & Duplicate Protection",
     group: "Reliability",
+    description:
+      "A retried webhook delivers the same new-lead event twice, and your workflow processes it twice.",
   },
   {
     number: "08",
     slug: "08-dead-letter-queue-failure-recovery",
     title: "Dead Letter Queue & Failure Recovery",
     group: "Reliability",
+    description:
+      "Three retries fail, the service is not coming back this afternoon, and the customer's order quietly disappears.",
   },
   {
     number: "09",
     slug: "09-structured-ai-output",
     title: "Structured AI Output",
     group: "AI Engineering",
+    description:
+      "Your AI classifier answers with text that only looks like JSON, and a paying customer vanishes into the void.",
   },
   {
     number: "10",
     slug: "10-ai-guardrails-human-in-the-loop",
     title: "AI Guardrails & Human-in-the-Loop",
     group: "AI Engineering",
+    description:
+      "Your AI is completely right that the customer wants to cancel — which is exactly why it should not act alone.",
   },
 ];
 
@@ -88,18 +114,13 @@ export const LABS: readonly Lab[] = [
  */
 export const CAPSTONE = {
   title: "AI Service Request Agent",
+  description:
+    "Validation, retries, idempotency and AI guardrails combine into one AI Service Request Agent that runs for real.",
 } as const;
 
 /**
- * Where a lab's Continue/Preview action points. Every lab resolves to the
- * same Labs placeholder today — this single function is the seam a future
- * Aim Point flips to real per-lab routes, so no routing layer is needed yet.
+ * Where a lab's Continue/Preview action points.
  */
-// The parameter is the seam: call sites already pass the lab, so Aim Point 2
-// swaps this body for a per-lab route without touching a single caller. The
-// `_`-prefix convention is not enabled in this ESLint config (it still warns),
-// so the rule is silenced explicitly rather than left as standing noise.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- unused only until per-lab routes exist.
 export function labHref(lab: Lab): string {
-  return "/labs";
+  return `/labs/${lab.slug}`;
 }

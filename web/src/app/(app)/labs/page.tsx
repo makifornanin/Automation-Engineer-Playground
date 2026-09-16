@@ -1,46 +1,49 @@
-import { PagePlaceholder } from "@/components/ui/PagePlaceholder";
+import { FeaturedLabCard } from "@/components/labs/FeaturedLabCard";
+import { LabGroupSection } from "@/components/labs/LabGroupSection";
+import { CAPSTONE } from "@/lib/course/catalog";
+import { CAPSTONE_FRAMING, labsByGroup } from "@/lib/course/groups";
+import { deriveCourseState, getCourseProgress } from "@/lib/course/progress";
 
 /**
- * Group headings only. Lab rows, progress and unlocking arrive in Phase 12,
- * and there is no lab data source yet. No difficulty badges — Vision §16 rules
- * out Beginner / Intermediate / Advanced labels anywhere in the product.
+ * The real Labs journey (Vision §16): a featured card for the current lab,
+ * the curriculum grouped into Foundations / Reliability / AI Engineering,
+ * then the Capstone on its own. The Capstone is the only thing on this page
+ * that ever renders as locked — `deriveCourseState()` never marks a lab
+ * locked (see `progress.ts`).
  */
-const GROUPS = [
-  {
-    name: "Foundations",
-    framing:
-      "First, we make data move correctly. Fancy automation means nothing if the basics are shaky.",
-  },
-  {
-    name: "Reliability",
-    framing:
-      "Now we make your workflows survive the real world. APIs fail. Events repeat. Systems get weird.",
-  },
-  {
-    name: "AI Engineering",
-    framing:
-      "Time to let AI make recommendations without letting it run the company unsupervised.",
-  },
-  {
-    name: "Capstone",
-    framing: "Everything you have learned, in one system you build end to end.",
-  },
-];
+export default async function LabsPage() {
+  const progress = await getCourseProgress();
+  const { currentLab, labs, capstone } = deriveCourseState(progress);
+  const grouped = labsByGroup(labs, (item) => item.lab.group);
 
-export default function LabsPage() {
   return (
-    <PagePlaceholder
-      title="Labs"
-      intro="The full journey, grouped so you can see how it builds. Lab content arrives with the learning engine."
-    >
-      <div className="flex flex-col gap-8">
-        {GROUPS.map((group) => (
-          <section key={group.name} className="flex flex-col gap-2 border-t border-line pt-6">
-            <h2 className="text-lg font-medium text-ink">{group.name}</h2>
-            <p className="max-w-prose text-ink-soft">{group.framing}</p>
-          </section>
-        ))}
-      </div>
-    </PagePlaceholder>
+    <div className="flex flex-col gap-8">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Labs</h1>
+
+      <FeaturedLabCard lab={currentLab.lab} />
+
+      {grouped.map(({ group, labs: groupLabs }) => (
+        <LabGroupSection
+          key={group.name}
+          group={group}
+          labs={groupLabs}
+          currentLabSlug={currentLab.lab.slug}
+        />
+      ))}
+
+      <section className="flex flex-col gap-2 border-t border-line pt-6">
+        <h2 className="text-lg font-medium text-ink">Capstone</h2>
+        <p className="max-w-prose text-ink-soft">{CAPSTONE_FRAMING}</p>
+        <div className="flex flex-col gap-1 pt-2">
+          <p className="font-medium text-ink">{CAPSTONE.title}</p>
+          <p className="text-sm text-ink-soft">{CAPSTONE.description}</p>
+          <p className="text-sm text-ink-muted">
+            {capstone.status === "locked"
+              ? "Locked until all ten labs are complete."
+              : "Unlocked."}
+          </p>
+        </div>
+      </section>
+    </div>
   );
 }

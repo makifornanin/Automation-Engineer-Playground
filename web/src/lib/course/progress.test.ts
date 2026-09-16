@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { LABS } from "./catalog";
-import { deriveCourseState, getCourseProgress, type CourseProgress } from "./progress";
+import {
+  deriveCourseState,
+  getCourseProgress,
+  isHandsOnAvailable,
+  type CourseProgress,
+} from "./progress";
 
 const EMPTY: CourseProgress = { completedLabSlugs: [], inProgressLabSlug: null };
 
@@ -65,5 +70,17 @@ describe("deriveCourseState", () => {
 describe("getCourseProgress", () => {
   it("resolves empty progress — there is no persistence yet", async () => {
     await expect(getCourseProgress()).resolves.toEqual(EMPTY);
+  });
+});
+
+describe("isHandsOnAvailable", () => {
+  it("is true for completed and in-progress labs", () => {
+    expect(isHandsOnAvailable("completed")).toBe(true);
+    expect(isHandsOnAvailable("in-progress")).toBe(true);
+  });
+
+  it("is false for not-started and locked labs", () => {
+    expect(isHandsOnAvailable("not-started")).toBe(false);
+    expect(isHandsOnAvailable("locked")).toBe(false);
   });
 });
