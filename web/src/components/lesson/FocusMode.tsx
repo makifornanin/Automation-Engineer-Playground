@@ -2,7 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
+import { KazOrb } from "@/components/kaz/KazOrb";
 import { EVIDENCING_KINDS, isEvidencingKind } from "@/lib/course/progress";
+import { chunkNote } from "@/lib/kaz/notes";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
 import { ContentBlocks } from "./blocks/ContentBlocks";
 import { TeachingNotes } from "./blocks/TeachingNotes";
@@ -122,6 +124,8 @@ export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeP
   const isFirst = index === 0;
   const isLast = index === chunks.length - 1;
   const acknowledgeable = isAcknowledgeable(chunk);
+  // Kaz speaks only at chosen moments, and never on consecutive chunks.
+  const kazNote = chunkNote(chunk.kind, index > 0 ? chunks[index - 1].kind : null);
 
   useEffect(() => {
     if (!hasStepped.current) return;
@@ -171,6 +175,13 @@ export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeP
       >
         {chunk.title}
       </h2>
+
+      {kazNote ? (
+        <div className="flex items-center gap-3">
+          <KazOrb className="size-8" state={kazNote.state} />
+          <p className="text-sm text-ink-soft">{kazNote.text}</p>
+        </div>
+      ) : null}
 
       <ChunkBody chunk={chunk} labSlug={labSlug} />
 

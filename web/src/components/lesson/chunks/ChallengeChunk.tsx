@@ -1,3 +1,4 @@
+import { KazHints } from "@/components/kaz/KazHints";
 import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
 import type { ChallengeChunk as ChallengeChunkData } from "@/lib/lesson/types";
 import { ContentBlocks } from "../blocks/ContentBlocks";
@@ -11,9 +12,9 @@ import { ContentBlocks } from "../blocks/ContentBlocks";
  * being able to read the answer out of the page.
  *
  * Hints are deliberately absent from this payload. `hintCount` says how many
- * exist; fetching them one at a time is what makes progressive hinting real
- * rather than decorative, and serialising them here would put every answer one
- * devtools panel away.
+ * exist, and `KazHints` fetches them from the server one at a time — which is
+ * what makes progressive hinting real rather than decorative. Serialising them
+ * here would put every answer one devtools panel away.
  */
 export function ChallengeChunk({
   chunk,
@@ -50,12 +51,7 @@ export function ChallengeChunk({
         />
       ) : null}
 
-      {chunk.hintCount > 0 ? (
-        <p className="text-sm text-ink-muted">
-          {chunk.hintCount} hints are available in the lab notes if you get stuck. Try it
-          first — predicting is the part that teaches.
-        </p>
-      ) : null}
+      <KazHints labSlug={labSlug} chunkId={chunk.id} hintCount={chunk.hintCount} />
     </div>
   );
 }

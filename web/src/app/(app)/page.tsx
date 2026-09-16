@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ContinueLearningCard } from "@/components/home/ContinueLearningCard";
 import { JourneyStrip } from "@/components/home/JourneyStrip";
 import { KazOrb } from "@/components/kaz/KazOrb";
+import { homeNote } from "@/lib/kaz/notes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { deriveCourseState, labCompletionPercent } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
@@ -27,6 +28,9 @@ export default async function HomePage() {
   // Vision §16 asks for a completion percentage. It is shown only once the
   // learner has actually earned something: a permanent "0%" on a first-time
   // learner's Home is less useful than the position it would replace.
+  // Kaz speaks from real progress, not a fixed greeting (Kaz §4).
+  const kazNote = homeNote(progress.completedLabSlugs, currentLab.lab);
+
   const currentChunks = getLessonChunks(currentLab.lab.slug);
   const percent = currentChunks
     ? labCompletionPercent(currentChunks, progress.labs[currentLab.lab.slug]?.evidence ?? {})
@@ -57,11 +61,8 @@ export default async function HomePage() {
           A note from Kaz
         </h2>
         <div className="flex items-center gap-4">
-          <KazOrb className="size-14" />
-          <p className="text-ink-soft">
-            Ten labs, then the Capstone. I will be here the whole way through
-            — start with Lab 01 whenever you are ready.
-          </p>
+          <KazOrb className="size-14" state={kazNote.state} />
+          <p className="text-ink-soft">{kazNote.text}</p>
         </div>
       </section>
 
