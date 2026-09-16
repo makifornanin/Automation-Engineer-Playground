@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ContinueLearningCard } from "@/components/home/ContinueLearningCard";
+import { JourneyStrip } from "@/components/home/JourneyStrip";
 import { KazOrb } from "@/components/kaz/KazOrb";
-import { GlassSurface } from "@/components/ui/GlassSurface";
+import { deriveCourseState, getCourseProgress } from "@/lib/course/progress";
 import { getSession } from "@/lib/session/get-session";
 import { sessionDisplayName } from "@/lib/session/types";
 
@@ -9,14 +11,16 @@ import { sessionDisplayName } from "@/lib/session/types";
  * Continue Learning, Your Journey, a note from Kaz, and a Notes shortcut.
  * No stat cards, analytics, goals, activity feed or quick-action panel.
  *
- * Everything here is static. There is no progress data source until Phase 12,
- * so the journey strip shows the notation rather than inventing progress.
+ * `getCourseProgress()` is a stub returning empty progress until learner
+ * state is persisted — the journey strip therefore shows the real derivation
+ * of "everything not-started" rather than inventing progress.
  */
-const LAB_NUMBERS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"];
-
 export default async function HomePage() {
   const session = await getSession();
   const name = sessionDisplayName(session);
+
+  const progress = await getCourseProgress();
+  const { currentLab, labs, capstone } = deriveCourseState(progress);
 
   return (
     <div className="flex flex-col gap-10">
@@ -28,34 +32,14 @@ export default async function HomePage() {
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Continue learning
         </h2>
-        <GlassSurface className="p-5">
-          <p className="text-ink-soft">
-            Your current lab and a Continue action appear here once the learning
-            engine is connected.
-          </p>
-        </GlassSurface>
+        <ContinueLearningCard lab={currentLab.lab} />
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Your journey
         </h2>
-        <ol className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-soft">
-          {LAB_NUMBERS.map((lab) => (
-            <li key={lab} className="tabular-nums">
-              {lab} <span aria-hidden>○</span>
-              {/* The glyph is decorative, so the status is spelled out for
-                  assistive tech instead of being lost. */}
-              <span className="sr-only">not started</span>
-            </li>
-          ))}
-        </ol>
-        <p className="text-sm text-ink-muted">
-          {/* The legend explains the glyphs to sighted readers. Screen readers
-              already hear each item's status, so the glyphs are hidden. */}
-          <span aria-hidden>✓ completed · ● in progress · ○ not started.</span>{" "}
-          Progress appears here once lessons are connected.
-        </p>
+        <JourneyStrip labs={labs} capstoneStatus={capstone.status} />
       </section>
 
       <section className="flex flex-col gap-3">
@@ -65,8 +49,8 @@ export default async function HomePage() {
         <div className="flex items-center gap-4">
           <KazOrb className="size-14" />
           <p className="text-ink-soft">
-            Still just a shell for now. Build the foundation properly and the
-            rest gets easier.
+            Ten labs, then the Capstone. I will be here the whole way through
+            — start with Lab 01 whenever you are ready.
           </p>
         </div>
       </section>
