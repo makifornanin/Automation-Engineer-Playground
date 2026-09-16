@@ -18,6 +18,10 @@ const AUTHORED = [
   "04-validation-normalization",
   "05-pagination-large-data",
   "06-retry-exponential-backoff",
+  "07-idempotency-duplicate-protection",
+  "08-dead-letter-queue-failure-recovery",
+  "09-structured-ai-output",
+  "10-ai-guardrails-human-in-the-loop",
 ] as const;
 
 /**
