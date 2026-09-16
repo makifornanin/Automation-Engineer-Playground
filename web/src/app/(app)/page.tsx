@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ContinueLearningCard } from "@/components/home/ContinueLearningCard";
 import { JourneyStrip } from "@/components/home/JourneyStrip";
 import { KazOrb } from "@/components/kaz/KazOrb";
-import { deriveCourseState, getCourseProgress } from "@/lib/course/progress";
+import { getLessonChunks } from "@/lib/lesson/registry";
+import { deriveCourseState, labCompletionPercent } from "@/lib/course/progress";
+import { getCourseProgress } from "@/lib/course/progress-store";
 import { getSession } from "@/lib/session/get-session";
 import { sessionDisplayName } from "@/lib/session/types";
 
@@ -22,6 +24,14 @@ export default async function HomePage() {
   const progress = await getCourseProgress();
   const { currentLab, labs, capstone } = deriveCourseState(progress);
 
+  // Vision §16 asks for a completion percentage. It is shown only once the
+  // learner has actually earned something: a permanent "0%" on a first-time
+  // learner's Home is less useful than the position it would replace.
+  const currentChunks = getLessonChunks(currentLab.lab.slug);
+  const percent = currentChunks
+    ? labCompletionPercent(currentChunks, progress.labs[currentLab.lab.slug]?.evidence ?? {})
+    : null;
+
   return (
     <div className="flex flex-col gap-10">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
@@ -32,7 +42,7 @@ export default async function HomePage() {
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Continue learning
         </h2>
-        <ContinueLearningCard lab={currentLab.lab} />
+        <ContinueLearningCard lab={currentLab.lab} percent={percent} />
       </section>
 
       <section className="flex flex-col gap-3">

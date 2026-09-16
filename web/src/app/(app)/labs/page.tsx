@@ -2,7 +2,9 @@ import { FeaturedLabCard } from "@/components/labs/FeaturedLabCard";
 import { LabGroupSection } from "@/components/labs/LabGroupSection";
 import { CAPSTONE } from "@/lib/course/catalog";
 import { CAPSTONE_FRAMING, labsByGroup } from "@/lib/course/groups";
-import { deriveCourseState, getCourseProgress } from "@/lib/course/progress";
+import { getLessonChunks } from "@/lib/lesson/registry";
+import { deriveCourseState, labCompletionPercent } from "@/lib/course/progress";
+import { getCourseProgress } from "@/lib/course/progress-store";
 
 /**
  * The real Labs journey (Vision §16): a featured card for the current lab,
@@ -16,11 +18,18 @@ export default async function LabsPage() {
   const { currentLab, labs, capstone } = deriveCourseState(progress);
   const grouped = labsByGroup(labs, (item) => item.lab.group);
 
+  // Vision §16's completion percentage, shown only once something is earned —
+  // see the note on Home. Null falls back to position alone.
+  const currentChunks = getLessonChunks(currentLab.lab.slug);
+  const percent = currentChunks
+    ? labCompletionPercent(currentChunks, progress.labs[currentLab.lab.slug]?.evidence ?? {})
+    : null;
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">Labs</h1>
 
-      <FeaturedLabCard lab={currentLab.lab} />
+      <FeaturedLabCard lab={currentLab.lab} percent={percent} />
 
       {grouped.map(({ group, labs: groupLabs }) => (
         <LabGroupSection

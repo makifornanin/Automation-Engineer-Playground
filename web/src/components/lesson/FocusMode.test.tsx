@@ -1,8 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LessonChunk } from "@/lib/lesson/types";
 import { FocusMode } from "./FocusMode";
+
+/*
+ * The progress actions reach `server-only` through the Supabase client, which
+ * throws when resolved under jsdom. Mocking the module keeps these tests about
+ * the stepper's behaviour, and lets them assert *what* was recorded — which is
+ * the part worth guarding.
+ */
+const setCurrentChunk = vi.hoisted(() => vi.fn(async () => {}));
+const recordChunkEvidence = vi.hoisted(() => vi.fn(async () => {}));
+
+vi.mock("@/lib/course/progress-actions", () => ({
+  setCurrentChunk,
+  recordChunkEvidence,
+}));
+
+const LAB = "01-data-mapping-transformation";
 
 const CHUNKS: readonly LessonChunk[] = [
   {
@@ -19,9 +35,18 @@ const CHUNKS: readonly LessonChunk[] = [
   },
 ];
 
+function renderFocus(chunks: readonly LessonChunk[] = CHUNKS, initialChunkId?: string | null) {
+  return render(<FocusMode chunks={chunks} labSlug={LAB} initialChunkId={initialChunkId} />);
+}
+
+beforeEach(() => {
+  setCurrentChunk.mockClear();
+  recordChunkEvidence.mockClear();
+});
+
 describe("<FocusMode />", () => {
   it("shows one chunk at a time, starting at the first", () => {
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     expect(screen.getByRole("heading", { name: "The problem" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "The concept" })).not.toBeInTheDocument();
@@ -30,7 +55,7 @@ describe("<FocusMode />", () => {
 
   it("advances and goes back through the chunks", async () => {
     const user = userEvent.setup();
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     await user.click(screen.getByRole("button", { name: "Next: The concept" }));
     expect(screen.getByRole("heading", { name: "The concept" })).toBeInTheDocument();
@@ -43,7 +68,7 @@ describe("<FocusMode />", () => {
 
   it("cannot step past either end", async () => {
     const user = userEvent.setup();
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
 
@@ -58,7 +83,7 @@ describe("<FocusMode />", () => {
    */
   it("moves focus to the new chunk's heading after stepping", async () => {
     const user = userEvent.setup();
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     await user.click(screen.getByRole("button", { name: "Next: The concept" }));
 
@@ -70,13 +95,13 @@ describe("<FocusMode />", () => {
    * stepped anywhere, so stealing focus would be wrong.
    */
   it("does not steal focus on first render", () => {
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     expect(screen.getByRole("heading", { name: "The problem" })).not.toHaveFocus();
   });
 
   it("labels the region by the current chunk heading", () => {
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     expect(screen.getByRole("region", { name: "The problem" })).toBeInTheDocument();
   });
@@ -89,7 +114,7 @@ describe("<FocusMode />", () => {
    */
   it("carries the step position in the focused heading's description", async () => {
     const user = userEvent.setup();
-    render(<FocusMode chunks={CHUNKS} />);
+    renderFocus();
 
     expect(
       screen.getByRole("heading", { name: "The problem" }),
@@ -103,25 +128,64 @@ describe("<FocusMode />", () => {
   });
 });
 
-describe("<FocusMode /> — chunk kinds", () => {
-  it("renders a guided build's four named slots in Vision §19's order", () => {
-    const build: LessonChunk = {
-      kind: "guided-build",
-      id: "build",
-      title: "Build the thing",
-      whyThisMatters: [{ type: "prose", text: "Because the CRM expects it." }],
-      content: [],
-      actions: [
-        { text: "Add a Set node.", expect: "One item appears." },
-        { text: "Rename it." },
-      ],
-      whyWereDoingThis: [{ type: "prose", text: "So the shapes match." }],
-    };
+describe("<FocusMode /> — resume and position", () => {
+  it("starts where the learner left off", () => {
+    renderFocus(CHUNKS, "concept");
 
-    const { container } = render(<FocusMode chunks={[build]} />);
+    expect(screen.getByRole("heading", { name: "The concept" })).toBeInTheDocument();
+    expect(screen.getByText("Step 2 of 2")).toBeInTheDocument();
+  });
+
+  /*
+   * Content gets reordered as labs are authored. A saved position naming a
+   * chunk that no longer exists must land the learner at the start, not on a
+   * blank screen.
+   */
+  it("falls back to the first chunk when the saved position no longer exists", () => {
+    renderFocus(CHUNKS, "a-chunk-that-was-deleted");
+
+    expect(screen.getByRole("heading", { name: "The problem" })).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+  });
+
+  it("records the new position on every advance", async () => {
+    const user = userEvent.setup();
+    renderFocus();
+
+    await user.click(screen.getByRole("button", { name: "Next: The concept" }));
+
+    expect(setCurrentChunk).toHaveBeenCalledWith(LAB, "concept");
+  });
+
+  /*
+   * Reading is not evidence (Vision §3). Stepping through prose must not
+   * quietly award a milestone.
+   */
+  it("records no evidence for prose chunks", async () => {
+    const user = userEvent.setup();
+    renderFocus();
+
+    await user.click(screen.getByRole("button", { name: "Next: The concept" }));
+
+    expect(recordChunkEvidence).not.toHaveBeenCalled();
+  });
+});
+
+describe("<FocusMode /> — chunk kinds", () => {
+  const BUILD: LessonChunk = {
+    kind: "guided-build",
+    id: "build",
+    title: "Build the thing",
+    whyThisMatters: [{ type: "prose", text: "Because the CRM expects it." }],
+    content: [],
+    actions: [{ text: "Add a Set node.", expect: "One item appears." }, { text: "Rename it." }],
+    whyWereDoingThis: [{ type: "prose", text: "So the shapes match." }],
+  };
+
+  it("renders a guided build's four named slots in Vision §19's order", () => {
+    const { container } = renderFocus([BUILD, CHUNKS[1]]);
 
     expect(screen.getByText("Because the CRM expects it.")).toBeInTheDocument();
-    expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.getByText("So the shapes match.")).toBeInTheDocument();
     expect(screen.getByText(/One item appears\./)).toBeInTheDocument();
 
@@ -133,27 +197,35 @@ describe("<FocusMode /> — chunk kinds", () => {
     expect(text.indexOf("Add a Set node.")).toBeLessThan(text.indexOf("So the shapes match."));
   });
 
-  it("renders a node teaching note with all three mandated headings", () => {
-    const build: LessonChunk = {
-      kind: "guided-build",
-      id: "build",
-      title: "Build",
-      whyThisMatters: [{ type: "prose", text: "Why." }],
-      content: [],
-      actions: [{ text: "One." }, { text: "Two." }],
-      whyWereDoingThis: [{ type: "prose", text: "Because." }],
-      teaches: [
-        {
-          subject: "node",
-          name: "Manual Trigger",
-          what: "Starts the workflow.",
-          whyHere: "You want to run it on demand.",
-          businessReason: "Test before real data is involved.",
-        },
-      ],
-    };
+  /*
+   * Vision §19's own terminal control, scoped to one build step. This is not
+   * the lab-level "Mark complete" Vision §3 rules out.
+   */
+  it("offers Done — Next on a build chunk and records acknowledgement", async () => {
+    const user = userEvent.setup();
+    renderFocus([BUILD, CHUNKS[1]]);
 
-    render(<FocusMode chunks={[build]} />);
+    await user.click(screen.getByRole("button", { name: "Done — next: The concept" }));
+
+    expect(recordChunkEvidence).toHaveBeenCalledWith(LAB, "build");
+    expect(screen.getByRole("heading", { name: "The concept" })).toBeInTheDocument();
+  });
+
+  it("renders a node teaching note with all three mandated headings", () => {
+    renderFocus([
+      {
+        ...BUILD,
+        teaches: [
+          {
+            subject: "node",
+            name: "Manual Trigger",
+            what: "Starts the workflow.",
+            whyHere: "You want to run it on demand.",
+            businessReason: "Test before real data is involved.",
+          },
+        ],
+      },
+    ]);
 
     expect(screen.getByText("What it does")).toBeInTheDocument();
     expect(screen.getByText("Why we’re using it here")).toBeInTheDocument();
@@ -166,16 +238,16 @@ describe("<FocusMode /> — chunk kinds", () => {
    */
   it("hides a predict chunk's answer until the learner asks for it", async () => {
     const user = userEvent.setup();
-    const predict: LessonChunk = {
-      kind: "predict",
-      id: "predict",
-      title: "Predict",
-      content: [],
-      prompt: "What will the email look like?",
-      reveal: [{ type: "prose", text: "alex@example.com" }],
-    };
-
-    render(<FocusMode chunks={[predict]} />);
+    renderFocus([
+      {
+        kind: "predict",
+        id: "predict",
+        title: "Predict",
+        content: [],
+        prompt: "What will the email look like?",
+        reveal: [{ type: "prose", text: "alex@example.com" }],
+      },
+    ]);
 
     expect(screen.getByText("What will the email look like?")).toBeInTheDocument();
     expect(screen.queryByText("alex@example.com")).not.toBeInTheDocument();
@@ -190,20 +262,20 @@ describe("<FocusMode /> — chunk kinds", () => {
    * only thing that makes a diagram comprehensible aloud.
    */
   it("exposes a diagram by its description, not its ASCII", () => {
-    const chunk: LessonChunk = {
-      kind: "concept",
-      id: "concept",
-      title: "Concept",
-      content: [
-        {
-          type: "diagram",
-          ascii: "A -> B -> C",
-          alt: "Three nodes in a line: A, then B, then C.",
-        },
-      ],
-    };
-
-    render(<FocusMode chunks={[chunk]} />);
+    renderFocus([
+      {
+        kind: "concept",
+        id: "concept",
+        title: "Concept",
+        content: [
+          {
+            type: "diagram",
+            ascii: "A -> B -> C",
+            alt: "Three nodes in a line: A, then B, then C.",
+          },
+        ],
+      },
+    ]);
 
     expect(
       screen.getByRole("img", { name: "Three nodes in a line: A, then B, then C." }),

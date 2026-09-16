@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
+import { EVIDENCING_KINDS, isEvidencingKind } from "@/lib/course/progress";
+import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
 import { ContentBlocks } from "./blocks/ContentBlocks";
 import { TeachingNotes } from "./blocks/TeachingNotes";
 import { GuidedBuildChunk } from "./chunks/GuidedBuildChunk";
@@ -9,6 +11,20 @@ import { PredictChunk } from "./chunks/PredictChunk";
 
 export interface FocusModeProps {
   chunks: readonly LessonChunk[];
+  labSlug: string;
+  /** Where this learner left off, if anywhere. */
+  initialChunkId?: string | null;
+}
+
+/**
+ * Whether finishing this chunk is something the learner asserts with a press.
+ *
+ * Only `acknowledged` kinds qualify. `test` and `challenge` earn `verified`
+ * from an evaluator looking at real output — letting a button award that would
+ * make the strongest evidence in the product the easiest to fake.
+ */
+function isAcknowledgeable(chunk: LessonChunk): boolean {
+  return isEvidencingKind(chunk.kind) && EVIDENCING_KINDS[chunk.kind] === "acknowledged";
 }
 
 /**
@@ -77,8 +93,9 @@ function ChunkBody({ chunk }: { chunk: LessonChunk }) {
  * lesson).
  *
  * The app's default is server components; this is the one deliberate client
- * boundary in the lesson, and it owns nothing but the chunk index. All data
- * resolution stays on the server in the page above it.
+ * boundary in the lesson, and it owns the chunk index and nothing else. All
+ * data resolution, and all gating of which chunks exist at all, stays on the
+ * server in the page above it.
  *
  * Accessibility: on a chunk change, focus moves to the new chunk's heading
  * rather than announcing the body through an `aria-live` region. A polite
@@ -88,8 +105,15 @@ function ChunkBody({ chunk }: { chunk: LessonChunk }) {
  * programmatically focusable (`tabIndex={-1}`), so it never joins the tab
  * order.
  */
-export function FocusMode({ chunks }: FocusModeProps) {
-  const [index, setIndex] = useState(0);
+export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeProps) {
+  // Resume where the learner left off. An unknown id — content reordered since
+  // they were last here — falls back to the start rather than to nothing.
+  const resumeIndex = Math.max(
+    chunks.findIndex((chunk) => chunk.id === initialChunkId),
+    0,
+  );
+
+  const [index, setIndex] = useState(resumeIndex);
   const headingRef = useRef<HTMLHeadingElement>(null);
   // Suppresses the focus move on first render: the learner has just arrived
   // and has not stepped anywhere yet, so stealing focus would be wrong.
@@ -100,6 +124,7 @@ export function FocusMode({ chunks }: FocusModeProps) {
   const chunk = chunks[index];
   const isFirst = index === 0;
   const isLast = index === chunks.length - 1;
+  const acknowledgeable = isAcknowledgeable(chunk);
 
   useEffect(() => {
     if (!hasStepped.current) return;
@@ -108,7 +133,22 @@ export function FocusMode({ chunks }: FocusModeProps) {
 
   function step(delta: number) {
     hasStepped.current = true;
-    setIndex((current) => Math.min(Math.max(current + delta, 0), chunks.length - 1));
+    const next = Math.min(Math.max(index + delta, 0), chunks.length - 1);
+    setIndex(next);
+
+    /*
+     * Fire and forget, deliberately. Position is not precious: losing this
+     * write costs one resume point, and awaiting it would put a network round
+     * trip between the learner pressing Next and the next thought appearing.
+     * AEP must feel easier than n8n, and a stalling Next button is the fastest
+     * way to lose that.
+     */
+    void setCurrentChunk(labSlug, chunks[next].id).catch(() => {});
+  }
+
+  function finishAndAdvance() {
+    void recordChunkEvidence(labSlug, chunk.id).catch(() => {});
+    step(1);
   }
 
   return (
@@ -147,15 +187,33 @@ export function FocusMode({ chunks }: FocusModeProps) {
         >
           Back
         </button>
-        <button
-          type="button"
-          onClick={() => step(1)}
-          disabled={isLast}
-          aria-label={isLast ? "Next" : `Next: ${chunks[index + 1].title}`}
-          className="text-sm font-medium text-accent underline-offset-4 hover:underline disabled:text-ink-muted disabled:no-underline"
-        >
-          Next
-        </button>
+
+        {/*
+          Vision §19's "Done — Next". Not a lab-level Mark Complete: it closes
+          one build step the learner has just carried out, which is the
+          acknowledgement §19 itself specifies. Vision §3 rules out a generic
+          completion button as the PRIMARY mechanism, not this.
+        */}
+        {acknowledgeable && !isLast ? (
+          <button
+            type="button"
+            onClick={finishAndAdvance}
+            aria-label={`Done — next: ${chunks[index + 1].title}`}
+            className="text-sm font-medium text-accent underline-offset-4 hover:underline"
+          >
+            Done — Next
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => step(1)}
+            disabled={isLast}
+            aria-label={isLast ? "Next" : `Next: ${chunks[index + 1].title}`}
+            className="text-sm font-medium text-accent underline-offset-4 hover:underline disabled:text-ink-muted disabled:no-underline"
+          >
+            Next
+          </button>
+        )}
       </div>
     </section>
   );

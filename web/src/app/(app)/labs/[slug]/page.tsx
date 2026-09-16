@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { FocusMode } from "@/components/lesson/FocusMode";
 import { LABS } from "@/lib/course/catalog";
-import { deriveCourseState, getCourseProgress, isLessonReadable } from "@/lib/course/progress";
+import { deriveCourseState, isLessonReadable, visibleChunks } from "@/lib/course/progress";
+import { getCourseProgress } from "@/lib/course/progress-store";
+import { startLab } from "@/lib/course/progress-actions";
 import { getLessonChunks } from "@/lib/lesson/registry";
 
 export interface LabPageProps {
@@ -35,23 +37,40 @@ export default async function LabPage({ params }: LabPageProps) {
   const prerequisite = index > 0 ? LABS[index - 1] : null;
   const isCurrent = currentLab.lab.slug === lab.slug;
 
-  /*
-   * Same vocabulary the Labs rows use — Completed / Current / Preview — rather
-   * than the raw `LabStatus`. A learner clicking through from a row marked
-   * "Current" should not arrive at a page calling the same lab "not started".
-   */
-  const stateLabel =
-    status === "completed" ? "Completed" : isCurrent ? "Current" : "Preview";
-
   // A lab is only ever shown as "future" when its lesson is not readable and
   // it has an earlier lab to point to. Lab 01 has no prerequisite, so it can
   // never claim one whatever its status.
   const readable = isLessonReadable(status, isCurrent);
   const isFuture = !readable && prerequisite !== null;
 
-  // Only Lab 01 has lesson content today. Every other readable lab keeps the
-  // honest placeholder rather than pretending a lesson exists.
-  const chunks = readable ? getLessonChunks(lab.slug) : null;
+  const allChunks = readable ? getLessonChunks(lab.slug) : null;
+
+  /*
+   * Opening a readable lesson starts the lab. That is what makes
+   * `in-progress` mean "the learner opened this" rather than "this happens to
+   * be current" — the distinction `isHandsOnAvailable` exists to protect — and
+   * it is what unlocks the hands-on chunks below.
+   *
+   * The status read above is from before this write, so it is recomputed
+   * rather than reused: otherwise a learner's first visit would serve them the
+   * reading-only chunk list and need a refresh to show the build.
+   */
+  if (allChunks) {
+    await startLab(lab.slug);
+  }
+  const effectiveStatus = allChunks && status === "not-started" ? "in-progress" : status;
+
+  // Filtered on the server, before serialisation: a locked chunk must not
+  // reach the browser at all, not merely render as locked.
+  const chunks = allChunks ? visibleChunks(allChunks, effectiveStatus) : null;
+
+  /*
+   * Same vocabulary the Labs rows use — Completed / Current / Preview — rather
+   * than the raw `LabStatus`. A learner clicking through from a row marked
+   * "Current" should not arrive at a page calling the same lab "not started".
+   */
+  const stateLabel =
+    effectiveStatus === "completed" ? "Completed" : isCurrent ? "Current" : "Preview";
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,8 +87,12 @@ export default async function LabPage({ params }: LabPageProps) {
         <p className="text-ink-soft">
           Complete Lab {prerequisite.number} — {prerequisite.title} first.
         </p>
-      ) : chunks ? (
-        <FocusMode chunks={chunks} />
+      ) : chunks && chunks.length > 0 ? (
+        <FocusMode
+          chunks={chunks}
+          initialChunkId={progress.labs[lab.slug]?.currentChunkId ?? null}
+          labSlug={lab.slug}
+        />
       ) : (
         <p className="text-ink-soft">Lesson content arrives with Focus Mode.</p>
       )}

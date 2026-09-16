@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LABS } from "@/lib/course/catalog";
-import { deriveCourseState, getCourseProgress } from "@/lib/course/progress";
+import { deriveCourseState } from "@/lib/course/progress";
+import { getCourseProgress } from "@/lib/course/progress-store";
 import LabsPage from "./page";
 
 /**

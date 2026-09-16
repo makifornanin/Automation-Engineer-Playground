@@ -2,19 +2,23 @@ import { CAPSTONE } from "@/lib/course/catalog";
 import type { LabStatus, LabWithStatus } from "@/lib/course/progress";
 
 /*
- * `locked` deliberately shares the `not-started` glyph, and the visible
- * legend below does not mention it. That is safe only because
- * `deriveCourseState()` never emits `locked` for a lab today and the Capstone
- * renders as its own text line rather than a glyph. If a later Aim Point
- * starts marking labs locked, sighted readers would see no difference while
- * screen reader users would hear one — give `locked` its own glyph and legend
- * entry at that point.
+ * `locked` has its own glyph and its own legend entry.
+ *
+ * It previously shared the `not-started` circle, which was safe only while
+ * `deriveCourseState()` never emitted `locked`. Sequential unlocking makes it
+ * reachable, and a shared glyph would mean sighted readers saw no difference
+ * while screen reader users heard one.
+ *
+ * The dotted circle is deliberately quiet rather than a padlock: Vision §16
+ * says locked labs "should not look disabled or discouraging. They should
+ * create curiosity without allowing the learner to skip the intended
+ * sequence."
  */
 const GLYPH: Record<LabStatus, string> = {
   completed: "✓",
   "in-progress": "●",
   "not-started": "○",
-  locked: "○",
+  locked: "◌",
 };
 
 const STATUS_LABEL: Record<LabStatus, string> = {
@@ -35,18 +39,26 @@ export interface JourneyStripProps {
 }
 
 /**
- * Lightweight Your Journey indicator (Vision §10). Non-interactive this Aim
- * Point — ten identical `/labs` links would be worse than none.
+ * Lightweight Your Journey indicator (Vision §10). Non-interactive: ten
+ * identical `/labs` links would be worse than none.
  *
- * Each item's number and glyph are decorative and hidden from assistive
- * tech; the sr-only text carries the full equivalent — number, title and
- * status — so AT users get the same journey sighted users get from the
- * notation, without ten titles appearing on screen at small widths.
+ * Each item's number and glyph are decorative and hidden from assistive tech;
+ * the sr-only text carries the full equivalent — number, title and status — so
+ * AT users get the same journey sighted users get from the notation, without
+ * ten titles appearing on screen at small widths.
  *
- * The Capstone renders as one line after the strip, not an eleventh
- * numbered item.
+ * The Capstone renders as one line after the strip, not an eleventh numbered
+ * item.
  */
 export function JourneyStrip({ labs, capstoneStatus }: JourneyStripProps) {
+  // Only name the states actually present, so a first-time learner is not
+  // handed a glossary of four symbols for a strip showing two.
+  const present = new Set(labs.map(({ status }) => status));
+  const legend = (["completed", "in-progress", "not-started", "locked"] as const)
+    .filter((status) => present.has(status))
+    .map((status) => `${GLYPH[status]} ${STATUS_LABEL[status]}`)
+    .join(" · ");
+
   return (
     <>
       <ol className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-soft">
@@ -62,7 +74,7 @@ export function JourneyStrip({ labs, capstoneStatus }: JourneyStripProps) {
         ))}
       </ol>
       <p className="text-sm text-ink-muted">
-        <span aria-hidden>✓ completed · ● in progress · ○ not started.</span>
+        <span aria-hidden>{legend}.</span>
       </p>
       <p className="text-sm text-ink-muted">
         Capstone — {CAPSTONE.title}:{" "}
