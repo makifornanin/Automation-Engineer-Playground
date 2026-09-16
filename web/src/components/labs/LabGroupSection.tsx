@@ -2,7 +2,7 @@ import Link from "next/link";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { labHref } from "@/lib/course/catalog";
 import type { LabGroupDef } from "@/lib/course/groups";
-import { isHandsOnAvailable, type LabWithStatus } from "@/lib/course/progress";
+import { isLessonReadable, type LabWithStatus } from "@/lib/course/progress";
 
 type RowState = "completed" | "current" | "preview";
 
@@ -58,8 +58,9 @@ export function LabGroupSection({ group, labs, currentLabSlug }: LabGroupSection
         {labs.map(({ lab, status }) => {
           const isCurrent = lab.slug === currentLabSlug;
           const state = rowState(status, isCurrent);
-          const actionLabel =
-            isCurrent || isHandsOnAvailable(status) ? "Continue" : "Preview";
+          // Continue means "this lab's lesson is open to read", not "its
+          // hands-on work is unlocked" — see `isLessonReadable`.
+          const actionLabel = isLessonReadable(status, isCurrent) ? "Continue" : "Preview";
 
           return (
             <li key={lab.slug}>

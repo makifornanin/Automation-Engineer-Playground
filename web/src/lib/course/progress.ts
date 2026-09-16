@@ -68,10 +68,32 @@ export async function getCourseProgress(): Promise<CourseProgress> {
 }
 
 /**
- * Whether a lab's hands-on content (Build/Test/Challenge) is open, as
- * opposed to preview-only. A single source of truth for the Labs journey UI
- * so "completed or in-progress" isn't re-typed at every call site.
+ * Whether a lab's hands-on content — Guided Build, Success Test, Challenge —
+ * is open, as opposed to preview-only.
+ *
+ * **Being the current lab does not make this true**, and that separation is
+ * deliberate. When Step 3 lands, hands-on work gates on this predicate and
+ * nothing else; "the learner is pointed at this lab" is a different question,
+ * answered by {@link isLessonReadable}. Do not merge the two back together to
+ * save a line.
  */
 export function isHandsOnAvailable(status: LabStatus): boolean {
   return status === "completed" || status === "in-progress";
+}
+
+/**
+ * Whether the learner may open a lab's lesson *reading* at all.
+ *
+ * True when hands-on is available, or when this is simply the lab they are
+ * currently pointed at — Vision §3 states Lab 01 is available to a
+ * first-time learner, and with no persisted progress that lab's status is
+ * still `not-started`.
+ *
+ * This exists so the union is a named concept with a stated meaning rather
+ * than an inline `||` at a call site, where it previously read as though
+ * being current unlocked the hands-on work. Reading is open; building is a
+ * separate question.
+ */
+export function isLessonReadable(status: LabStatus, isCurrent: boolean): boolean {
+  return isCurrent || isHandsOnAvailable(status);
 }

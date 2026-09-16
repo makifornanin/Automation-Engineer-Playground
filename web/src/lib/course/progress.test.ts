@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isLessonReadable } from "./progress";
 import { LABS } from "./catalog";
 import {
   deriveCourseState,
@@ -82,5 +83,28 @@ describe("isHandsOnAvailable", () => {
   it("is false for not-started and locked labs", () => {
     expect(isHandsOnAvailable("not-started")).toBe(false);
     expect(isHandsOnAvailable("locked")).toBe(false);
+  });
+});
+
+describe("isLessonReadable — reading is open, building is a separate question", () => {
+  /*
+   * The seam the owner asked for. Being the lab the learner is pointed at
+   * makes the lesson readable; it must NOT make the hands-on work available.
+   * If someone ever merges these two predicates back together to save a line,
+   * this test is what fails.
+   */
+  it("is true for the current lab even though hands-on is not available", () => {
+    expect(isLessonReadable("not-started", true)).toBe(true);
+    expect(isHandsOnAvailable("not-started")).toBe(false);
+  });
+
+  it("is true for a lab whose hands-on work is already open", () => {
+    expect(isLessonReadable("completed", false)).toBe(true);
+    expect(isLessonReadable("in-progress", false)).toBe(true);
+  });
+
+  it("is false for a future lab that is not the current one", () => {
+    expect(isLessonReadable("not-started", false)).toBe(false);
+    expect(isLessonReadable("locked", false)).toBe(false);
   });
 });
