@@ -58,7 +58,7 @@ describe("<LabPage />", () => {
     // Deliberately not pinned to a chunk count: Lab 01 gains chunks as the
     // lesson is authored, and this test is about which branch rendered.
     expect(screen.getByText(/^Step 1 of \d+$/)).toBeInTheDocument();
-    expect(screen.queryByText("Lesson content arrives with Focus Mode.")).not.toBeInTheDocument();
+    expect(screen.queryByText("This lesson is not available yet.")).not.toBeInTheDocument();
     expect(screen.queryByText(/Complete Lab/)).not.toBeInTheDocument();
   });
 

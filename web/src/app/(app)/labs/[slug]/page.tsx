@@ -16,9 +16,10 @@ export interface LabPageProps {
 }
 
 /**
- * A lab's page: the overview header, then either its lesson in Focus Mode, a
- * prerequisite line, or an honest placeholder. Only Lab 01 has lesson content
- * today; the other nine keep the placeholder rather than pretending otherwise.
+ * A lab's page: the overview header, then either its lesson in Focus Mode or a
+ * prerequisite line. Every lab has authored content; the final fallback below
+ * is kept only so a lab whose content is ever missing says so honestly rather
+ * than rendering an empty lesson.
  *
  * `slug` is untrusted route input. It is only ever compared against the
  * static `LABS` catalog below; it is never interpolated into a filesystem
@@ -110,7 +111,7 @@ export default async function LabPage({ params }: LabPageProps) {
           completion={completion}
         />
       ) : (
-        <p className="text-ink-soft">Lesson content arrives with Focus Mode.</p>
+        <p className="text-ink-soft">This lesson is not available yet.</p>
       )}
     </div>
   );

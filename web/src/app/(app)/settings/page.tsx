@@ -29,8 +29,8 @@ export default function SettingsPage() {
         <section className="flex flex-col gap-2 border-t border-line pt-6">
           <h2 className="text-sm font-medium text-ink">n8n connection</h2>
           <p className="max-w-prose text-ink-muted">
-            Optional and advanced. Connecting your own n8n instance arrives with
-            the testing engine.
+            Optional and advanced. Connecting your own n8n instance for deeper
+            diagnostics is not available yet.
           </p>
         </section>
       </div>

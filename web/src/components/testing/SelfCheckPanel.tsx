@@ -29,7 +29,9 @@ export interface SelfCheckPanelProps {
  * The inline test experience for a lab AEP cannot call (Vision §23).
  *
  * The learner runs their own workflow, pastes the node's output, and gets
- * checkpoint-level feedback rather than a bare pass/fail. Ordering follows
+ * checkpoint-level feedback rather than a bare pass/fail. Used by every lab,
+ * so its own copy stays lab-agnostic: the chunk around it says which node to
+ * copy from. Ordering follows
  * §23's rule: the business scenario first, then the interpretation, and raw
  * detail only on demand — "simple first, depth on demand".
  *
@@ -73,14 +75,14 @@ export function SelfCheckPanel({
         <input type="hidden" name="chunkId" value={chunkId} />
 
         <label htmlFor={fieldId} className="text-sm font-medium text-ink">
-          Paste the output of your Transform for CRM node
+          Paste the output your workflow produced
         </label>
         <textarea
           id={fieldId}
           name="output"
           rows={6}
           spellCheck={false}
-          placeholder={'{\n  "name": "..."\n}'}
+          placeholder="Paste the JSON exactly as n8n shows it"
           className="rounded-card border border-line bg-surface p-3 font-mono text-sm text-ink outline-none focus-visible:border-accent"
         />
 
@@ -102,7 +104,7 @@ export function SelfCheckPanel({
           <>
             <p className="text-sm font-medium text-ink">
               {state.result.passed
-                ? "All checks passed — that is exactly what the CRM expects."
+                ? "All checks passed — your workflow did exactly what this case expects."
                 : "Not there yet. Here is where it first went wrong."}
             </p>
 

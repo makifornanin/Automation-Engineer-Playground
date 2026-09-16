@@ -5,10 +5,12 @@ import { ContentBlocks } from "../blocks/ContentBlocks";
 /**
  * A test chunk: the business scenario, then the check itself.
  *
- * `self-check` is for the labs AEP cannot call — Labs 01, 02, 05 and 06 run on
- * a Manual Trigger with no webhook, so the learner runs their own workflow and
- * pastes the result. `send-test` posts a payload to the learner's webhook and
- * arrives with Lab 03, the first lab that has one.
+ * Every lab currently uses `self-check`: the learner runs their own workflow
+ * and pastes the result. That is the only option for Labs 01, 02, 05 and 06,
+ * which run on a Manual Trigger with no webhook. `send-test` — AEP posting to
+ * the learner's own webhook — needs the URL stored and validated server-side
+ * first, and is not built; no lab content uses it, so the branch below is a
+ * guard rather than a feature.
  */
 export function TestChunk({ chunk, labSlug }: { chunk: TestChunkData; labSlug: string }) {
   return (
@@ -24,7 +26,7 @@ export function TestChunk({ chunk, labSlug }: { chunk: TestChunkData; labSlug: s
         />
       ) : (
         <p className="text-sm text-ink-muted">
-          Send Test arrives with the labs that expose a webhook.
+          This check is not available yet.
         </p>
       )}
     </div>
