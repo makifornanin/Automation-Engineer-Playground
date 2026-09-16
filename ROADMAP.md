@@ -1304,15 +1304,55 @@ Turn the existing 10 labs into a calm, interactive, hands-on learning experience
 
 Build the intentionally minimal Home screen:
 
-* [ ] Greeting
-* [ ] Continue Learning
-* [ ] Current-lab progress
-* [ ] Lightweight Your Journey indicator
-* [ ] Short Kaz note placeholder/event surface
-* [ ] Ask Kaz entry
-* [ ] Notes shortcut
+* [x] Greeting — owner-confirmed 2026-09-16 in an authenticated browser session
+* [/] Continue Learning — the slot is built and is the best-evidenced element on the screen,
+  but Continue lands on the `/labs` foundation shell, not lab content. Complete when
+  `labHref()` resolves somewhere real
+* [/] Current-lab progress — **position only ("Lab 01 of 10"), never a percentage.** Stays
+  partial until learner state is persisted. Do not let this drift to `[x]`
+* [x] Lightweight Your Journey indicator — owner-confirmed 2026-09-16: Labs 01–10 render, the
+  Capstone renders separately, and a narrow viewport shows no blocking break. Matches Vision
+  §10's `01 ✓ 02 ● 03 ○` notation. A real screen-reader pass is still unobserved; the AT
+  contract is unit-tested through RTL role and accessible-name queries, not heard
+* [/] Short Kaz note placeholder/event surface — the **placeholder** exists; the **event
+  surface does not.** Static copy with no mechanism for a contextual note
+* [ ] Ask Kaz entry — **deferred by the owner at Phase 12 Aim Point 1.** `/kaz` holds a
+  permanent dock slot, so the learner is one tap away on every screen. Vision §10 and this
+  bullet still require it; recorded as sequenced, not dropped
+* [/] Notes shortcut — the link exists; its destination is still a shell. Notes itself is Step 6
 
 Do not add goals, large analytics, or activity clutter.
+
+## Current Status
+
+**Aim Point 1 — Real Home Experience. COMPLETE 2026-09-16 — owner browser verification PASS.**
+Plan: `docs/superpowers/plans/2026-09-16-aep-phase-12-aim-point-1-real-home.md`.
+
+Home is no longer placeholder-only: a static course catalog (ten real lab titles, slugs pinned
+to the on-disk `labs/NN-*` folders) plus a pure `deriveCourseState()` now drive a Continue
+Learning card and a Labs 01–10 journey strip with the Capstone shown separately and locked.
+
+* unit tested — 237 tests across 26 files, up from 212/22. The catalog test reads the real
+  `labs/` directory and compares slugs, so it is a genuine drift guard rather than a tautology
+* structurally verified — `npm run verify` exits 0: lint 0 problems, typecheck clean, 237
+  tests, production build of 8 routes plus Proxy. **No new route**, no new dependency, no new
+  design token, no website table
+* **live verified 2026-09-16 — owner browser pass, authenticated.** Home renders; the greeting
+  renders; Continue Learning shows Lab 01 for a first-time learner; Labs 01–10 render in the
+  journey; the Capstone renders separately; the Kaz placeholder is visible; the Notes shortcut
+  is visible and usable; the Continue action has a valid destination; light and dark both
+  remain usable; a narrow viewport shows no blocking visual break. No agent produced this —
+  there is no browser and no obtainable session here, and none was faked
+* still unobserved, and not claimed — **a real screen-reader pass.** The AT contract is
+  unit-tested through RTL role and accessible-name queries, which is stronger evidence than a
+  snapshot but is not the same as hearing it announced
+
+Open and recorded rather than built: the all-labs-completed `currentLab` falls back to the last
+lab instead of pointing at the unlocked Capstone (unreachable without persistence); `locked`
+shares the `not-started` glyph and the legend omits it (safe only while no lab emits `locked`);
+`progress.ts` is not `server-only` (correct while it is a pure stub — add it in the same change
+that swaps the body for an RLS-scoped read); and there is no page-level test, so the greeting,
+Kaz note and Notes shortcut are uncovered.
 
 ## Step 2 — Labs Journey
 
