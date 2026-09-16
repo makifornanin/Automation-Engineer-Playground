@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FeaturedLabCard } from "@/components/labs/FeaturedLabCard";
 import { LabGroupSection } from "@/components/labs/LabGroupSection";
 import { CAPSTONE } from "@/lib/course/catalog";
@@ -51,6 +52,17 @@ export default async function LabsPage() {
               ? "Locked until all ten labs are complete."
               : "Unlocked."}
           </p>
+          <Link
+            href="/capstone"
+            aria-label={
+              (capstone.status === "locked" ? "Preview" : "Open") +
+              " the Capstone — " +
+              CAPSTONE.title
+            }
+            className="w-fit pt-1 text-sm font-medium text-accent underline-offset-4 hover:underline"
+          >
+            {capstone.status === "locked" ? "Preview" : "Open"}
+          </Link>
         </div>
       </section>
     </div>

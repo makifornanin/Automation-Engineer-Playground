@@ -2,7 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
+import Link from "next/link";
 import { KazOrb } from "@/components/kaz/KazOrb";
+import { SaveToNotesButton } from "@/components/notes/SaveToNotesButton";
 import { EVIDENCING_KINDS, isEvidencingKind } from "@/lib/course/progress";
 import { chunkNote } from "@/lib/kaz/notes";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
@@ -13,11 +15,64 @@ import { GuidedBuildChunk } from "./chunks/GuidedBuildChunk";
 import { PredictChunk } from "./chunks/PredictChunk";
 import { TestChunk } from "./chunks/TestChunk";
 
+/**
+ * Whether this lab is finished, and what finishing it opened. Computed on the
+ * server from earned evidence — the client never decides a lab is complete.
+ */
+export interface LabCompletion {
+  complete: boolean;
+  next: { label: string; href: string } | null;
+}
+
 export interface FocusModeProps {
   chunks: readonly LessonChunk[];
   labSlug: string;
   /** Where this learner left off, if anywhere. */
   initialChunkId?: string | null;
+  completion?: LabCompletion;
+}
+
+/** The recap's prose, as plain text for the notebook. */
+function recapText(chunk: LessonChunk): string {
+  const prose = chunk.content
+    .filter((block) => block.type === "prose")
+    .map((block) => (block.type === "prose" ? block.text : ""));
+  return [chunk.title, ...prose].join("\n\n");
+}
+
+/**
+ * Tells the learner, at the end of the lab, whether they have actually
+ * finished it. Completion follows evidence (Vision §3), so a learner who read
+ * to the end without passing the checks is told plainly what is still open
+ * rather than congratulated for scrolling.
+ */
+function RecapCompletion({ completion }: { completion?: LabCompletion }) {
+  if (!completion) return null;
+
+  if (!completion.complete) {
+    return (
+      <p className="max-w-prose text-sm text-ink-muted">
+        This lab completes once its build steps, test and challenge are done. Anything still
+        open is waiting for you back through the steps.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="font-medium text-ink">
+        Lab complete.{completion.next ? " " + completion.next.label + " is unlocked." : ""}
+      </p>
+      {completion.next ? (
+        <Link
+          href={completion.next.href}
+          className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
+        >
+          {"Go to " + completion.next.label}
+        </Link>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -46,7 +101,15 @@ function BaseChunk({ chunk }: { chunk: LessonChunk }) {
   );
 }
 
-function ChunkBody({ chunk, labSlug }: { chunk: LessonChunk; labSlug: string }) {
+function ChunkBody({
+  chunk,
+  labSlug,
+  completion,
+}: {
+  chunk: LessonChunk;
+  labSlug: string;
+  completion?: LabCompletion;
+}) {
   switch (chunk.kind) {
     case "problem":
     case "concept":
@@ -58,6 +121,12 @@ function ChunkBody({ chunk, labSlug }: { chunk: LessonChunk; labSlug: string }) 
       return (
         <div className="flex flex-col gap-4">
           <BaseChunk chunk={chunk} />
+          <RecapCompletion completion={completion} />
+          <SaveToNotesButton
+            labSlug={labSlug}
+            text={recapText(chunk)}
+            label="Save this recap to your notes"
+          />
           {chunk.bridge ? (
             <section className="flex flex-col gap-2 border-t border-line pt-4">
               <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
@@ -104,7 +173,12 @@ function ChunkBody({ chunk, labSlug }: { chunk: LessonChunk; labSlug: string }) 
  * programmatically focusable (`tabIndex={-1}`), so it never joins the tab
  * order.
  */
-export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeProps) {
+export function FocusMode({
+  chunks,
+  labSlug,
+  initialChunkId = null,
+  completion,
+}: FocusModeProps) {
   // Resume where the learner left off. An unknown id — content reordered since
   // they were last here — falls back to the start rather than to nothing.
   const resumeIndex = Math.max(
@@ -183,7 +257,7 @@ export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeP
         </div>
       ) : null}
 
-      <ChunkBody chunk={chunk} labSlug={labSlug} />
+      <ChunkBody chunk={chunk} labSlug={labSlug} completion={completion} />
 
       <div className="flex flex-wrap gap-4 pt-2">
         <button

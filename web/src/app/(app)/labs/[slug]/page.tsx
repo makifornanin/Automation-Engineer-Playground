@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { FocusMode } from "@/components/lesson/FocusMode";
-import { LABS } from "@/lib/course/catalog";
-import { deriveCourseState, isLessonReadable, visibleChunks } from "@/lib/course/progress";
+import { LABS, labHref } from "@/lib/course/catalog";
+import {
+  deriveCourseState,
+  isLabComplete,
+  isLessonReadable,
+  visibleChunks,
+} from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
 import { startLab } from "@/lib/course/progress-actions";
 import { getLessonChunks } from "@/lib/lesson/registry";
@@ -64,6 +69,16 @@ export default async function LabPage({ params }: LabPageProps) {
   // reach the browser at all, not merely render as locked.
   const chunks = allChunks ? visibleChunks(allChunks, effectiveStatus) : null;
 
+  // Completion is decided here, from earned evidence against the lab's full
+  // content — never by the client. Lab 10's "next" is the Capstone.
+  const nextLab = LABS[index + 1] ?? null;
+  const completion = {
+    complete: allChunks ? isLabComplete(allChunks, progress.labs[lab.slug]?.evidence ?? {}) : false,
+    next: nextLab
+      ? { label: "Lab " + nextLab.number + " — " + nextLab.title, href: labHref(nextLab) }
+      : { label: "The Capstone", href: "/capstone" },
+  };
+
   /*
    * Same vocabulary the Labs rows use — Completed / Current / Preview — rather
    * than the raw `LabStatus`. A learner clicking through from a row marked
@@ -92,6 +107,7 @@ export default async function LabPage({ params }: LabPageProps) {
           chunks={chunks}
           initialChunkId={progress.labs[lab.slug]?.currentChunkId ?? null}
           labSlug={lab.slug}
+          completion={completion}
         />
       ) : (
         <p className="text-ink-soft">Lesson content arrives with Focus Mode.</p>

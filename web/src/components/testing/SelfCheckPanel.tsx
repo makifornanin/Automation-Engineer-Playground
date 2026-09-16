@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useId } from "react";
 import { runSelfCheck } from "@/lib/testing/self-check-action";
 import { IDLE_TEST_STATE, type CheckpointResult } from "@/lib/testing/types";
 
@@ -45,6 +46,16 @@ export function SelfCheckPanel({
   caseName,
 }: SelfCheckPanelProps) {
   const [state, action, pending] = useActionState(runSelfCheck, IDLE_TEST_STATE);
+  const router = useRouter();
+
+  // A pass records evidence and may complete the lab. Refreshing the server
+  // tree is what lets the recap and the Labs journey show the unlock now,
+  // rather than only after the learner happens to navigate away.
+  useEffect(() => {
+    if (state.status === "complete" && state.result.passed) {
+      router.refresh();
+    }
+  }, [state, router]);
   const fieldId = useId();
 
   return (

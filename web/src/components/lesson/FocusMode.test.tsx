@@ -18,6 +18,8 @@ vi.mock("@/lib/course/progress-actions", () => ({
   recordChunkEvidence,
 }));
 
+vi.mock("@/lib/notes/notes-actions", () => ({ saveToNotes: vi.fn(async () => null) }));
+
 const LAB = "01-data-mapping-transformation";
 
 const CHUNKS: readonly LessonChunk[] = [
@@ -280,5 +282,79 @@ describe("<FocusMode /> — chunk kinds", () => {
     expect(
       screen.getByRole("img", { name: "Three nodes in a line: A, then B, then C." }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("<FocusMode /> - the end of a lab", () => {
+  const RECAP: LessonChunk = {
+    kind: "recap",
+    id: "recap",
+    title: "What you just built",
+    content: [{ type: "prose", text: "A translator for lead data." }],
+  };
+
+  it("says the lab is complete and names what it unlocked", () => {
+    render(
+      <FocusMode
+        chunks={[RECAP]}
+        labSlug={LAB}
+        completion={{
+          complete: true,
+          next: { label: "Lab 02 - Conditions", href: "/labs/02-conditions-routing" },
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/Lab complete\./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Lab 02 - Conditions" })).toHaveAttribute(
+      "href",
+      "/labs/02-conditions-routing",
+    );
+  });
+
+  /*
+   * Completion follows evidence (Vision section 3). Reading to the last chunk
+   * without passing the checks is not finishing, and the recap must say so
+   * rather than congratulate the learner for scrolling.
+   */
+  it("does not congratulate a learner who has not earned it", () => {
+    render(
+      <FocusMode
+        chunks={[RECAP]}
+        labSlug={LAB}
+        completion={{ complete: false, next: null }}
+      />,
+    );
+
+    expect(screen.queryByText(/Lab complete/)).not.toBeInTheDocument();
+    expect(screen.getByText(/completes once its build steps, test and challenge/)).toBeInTheDocument();
+  });
+
+  it("offers to save the recap to the learner's notes", () => {
+    render(<FocusMode chunks={[RECAP]} labSlug={LAB} />);
+
+    expect(
+      screen.getByRole("button", { name: "Save this recap to your notes" }),
+    ).toBeInTheDocument();
+  });
+
+  /* Kaz speaks when the learner enters Break It - and only then. */
+  it("brings Kaz in at Break It but not while building", () => {
+    const BREAK: LessonChunk = {
+      kind: "break-it",
+      id: "break-it",
+      title: "Break it",
+      content: [{ type: "prose", text: "Change AND to OR." }],
+    };
+
+    render(<FocusMode chunks={[CHUNKS[0], BREAK]} labSlug={LAB} initialChunkId="break-it" />);
+
+    expect(screen.getByRole("img", { name: /Kaz/ })).toBeInTheDocument();
+  });
+
+  it("keeps Kaz quiet on an ordinary reading chunk", () => {
+    render(<FocusMode chunks={CHUNKS} labSlug={LAB} />);
+
+    expect(screen.queryByRole("img", { name: /Kaz/ })).not.toBeInTheDocument();
   });
 });
