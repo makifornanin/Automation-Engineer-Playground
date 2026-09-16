@@ -55,7 +55,9 @@ describe("<LabPage />", () => {
     render(ui);
 
     expect(screen.getByRole("heading", { name: "The problem" })).toBeInTheDocument();
-    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+    // Deliberately not pinned to a chunk count: Lab 01 gains chunks as the
+    // lesson is authored, and this test is about which branch rendered.
+    expect(screen.getByText(/^Step 1 of \d+$/)).toBeInTheDocument();
     expect(screen.queryByText("Lesson content arrives with Focus Mode.")).not.toBeInTheDocument();
     expect(screen.queryByText(/Complete Lab/)).not.toBeInTheDocument();
   });

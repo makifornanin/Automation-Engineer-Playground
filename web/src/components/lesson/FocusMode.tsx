@@ -1,10 +1,74 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { LessonChunk } from "@/lib/lesson/chunks";
+import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
+import { ContentBlocks } from "./blocks/ContentBlocks";
+import { TeachingNotes } from "./blocks/TeachingNotes";
+import { GuidedBuildChunk } from "./chunks/GuidedBuildChunk";
+import { PredictChunk } from "./chunks/PredictChunk";
 
 export interface FocusModeProps {
   chunks: readonly LessonChunk[];
+}
+
+/**
+ * The base layout — content blocks then teaching notes — is the *correct final*
+ * rendering for problem, concept, break-it, debug and recap, not a placeholder.
+ * Those kinds are prose and visuals by nature; only the kinds that carry their
+ * own structure get a bespoke arm.
+ */
+function BaseChunk({ chunk }: { chunk: LessonChunk }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <ContentBlocks blocks={chunk.content} />
+      {chunk.teaches ? <TeachingNotes notes={chunk.teaches} /> : null}
+    </div>
+  );
+}
+
+function ChunkBody({ chunk }: { chunk: LessonChunk }) {
+  switch (chunk.kind) {
+    case "problem":
+    case "concept":
+    case "break-it":
+    case "debug":
+      return <BaseChunk chunk={chunk} />;
+
+    case "recap":
+      return (
+        <div className="flex flex-col gap-4">
+          <BaseChunk chunk={chunk} />
+          {chunk.bridge ? (
+            <section className="flex flex-col gap-2 border-t border-line pt-4">
+              <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
+                What&rsquo;s next
+              </h3>
+              <ContentBlocks blocks={chunk.bridge} />
+            </section>
+          ) : null}
+        </div>
+      );
+
+    case "guided-build":
+      return <GuidedBuildChunk chunk={chunk} />;
+
+    case "predict":
+      return <PredictChunk chunk={chunk} />;
+
+    /*
+     * Both render their prose correctly today. Their interactive regions —
+     * Send Test / self-check for `test`, progressive hints for `challenge` —
+     * arrive with the testing and hint server actions. No content of either
+     * kind exists yet, so nothing renders wrong in the meantime; this arm
+     * exists so the switch stays exhaustive rather than to stand in for them.
+     */
+    case "test":
+    case "challenge":
+      return <BaseChunk chunk={chunk} />;
+
+    default:
+      return assertNeverBlock(chunk);
+  }
 }
 
 /**
@@ -13,8 +77,8 @@ export interface FocusModeProps {
  * lesson).
  *
  * The app's default is server components; this is the one deliberate client
- * boundary, and it owns nothing but the chunk index. All data resolution
- * stays on the server in the page above it.
+ * boundary in the lesson, and it owns nothing but the chunk index. All data
+ * resolution stays on the server in the page above it.
  *
  * Accessibility: on a chunk change, focus moves to the new chunk's heading
  * rather than announcing the body through an `aria-live` region. A polite
@@ -71,16 +135,7 @@ export function FocusMode({ chunks }: FocusModeProps) {
         {chunk.title}
       </h2>
 
-      <div className="flex flex-col gap-3">
-        {chunk.body.map((paragraph, position) => (
-          // Keyed by position within the chunk rather than by the paragraph
-          // text: two identical paragraphs in one chunk would otherwise
-          // collide, and the list is static so index keys are safe here.
-          <p key={`${chunk.id}-${position}`} className="max-w-prose text-ink-soft">
-            {paragraph}
-          </p>
-        ))}
-      </div>
+      <ChunkBody chunk={chunk} />
 
       <div className="flex flex-wrap gap-4 pt-2">
         <button

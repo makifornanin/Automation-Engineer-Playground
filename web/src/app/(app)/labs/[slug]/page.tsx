@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { FocusMode } from "@/components/lesson/FocusMode";
 import { LABS } from "@/lib/course/catalog";
 import { deriveCourseState, getCourseProgress, isLessonReadable } from "@/lib/course/progress";
-import { getLessonChunks } from "@/lib/lesson/chunks";
+import { getLessonChunks } from "@/lib/lesson/registry";
 
 export interface LabPageProps {
   params: Promise<{ slug: string }>;

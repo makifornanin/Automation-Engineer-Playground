@@ -1,12 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { LessonChunk } from "@/lib/lesson/chunks";
+import type { LessonChunk } from "@/lib/lesson/types";
 import { FocusMode } from "./FocusMode";
 
 const CHUNKS: readonly LessonChunk[] = [
-  { id: "problem", title: "The problem", body: ["Systems disagree about names."] },
-  { id: "concept", title: "The concept", body: ["Mapping translates between them."] },
+  {
+    kind: "problem",
+    id: "problem",
+    title: "The problem",
+    content: [{ type: "prose", text: "Systems disagree about names." }],
+  },
+  {
+    kind: "concept",
+    id: "concept",
+    title: "The concept",
+    content: [{ type: "prose", text: "Mapping translates between them." }],
+  },
 ];
 
 describe("<FocusMode />", () => {
@@ -90,5 +100,113 @@ describe("<FocusMode />", () => {
     expect(
       screen.getByRole("heading", { name: "The concept" }),
     ).toHaveAccessibleDescription("Step 2 of 2");
+  });
+});
+
+describe("<FocusMode /> — chunk kinds", () => {
+  it("renders a guided build's four named slots in Vision §19's order", () => {
+    const build: LessonChunk = {
+      kind: "guided-build",
+      id: "build",
+      title: "Build the thing",
+      whyThisMatters: [{ type: "prose", text: "Because the CRM expects it." }],
+      content: [],
+      actions: [
+        { text: "Add a Set node.", expect: "One item appears." },
+        { text: "Rename it." },
+      ],
+      whyWereDoingThis: [{ type: "prose", text: "So the shapes match." }],
+    };
+
+    const { container } = render(<FocusMode chunks={[build]} />);
+
+    expect(screen.getByText("Because the CRM expects it.")).toBeInTheDocument();
+    expect(screen.getByRole("list")).toBeInTheDocument();
+    expect(screen.getByText("So the shapes match.")).toBeInTheDocument();
+    expect(screen.getByText(/One item appears\./)).toBeInTheDocument();
+
+    // The reason must come before the actions, and a second reason after them.
+    const text = container.textContent ?? "";
+    expect(text.indexOf("Because the CRM expects it.")).toBeLessThan(
+      text.indexOf("Add a Set node."),
+    );
+    expect(text.indexOf("Add a Set node.")).toBeLessThan(text.indexOf("So the shapes match."));
+  });
+
+  it("renders a node teaching note with all three mandated headings", () => {
+    const build: LessonChunk = {
+      kind: "guided-build",
+      id: "build",
+      title: "Build",
+      whyThisMatters: [{ type: "prose", text: "Why." }],
+      content: [],
+      actions: [{ text: "One." }, { text: "Two." }],
+      whyWereDoingThis: [{ type: "prose", text: "Because." }],
+      teaches: [
+        {
+          subject: "node",
+          name: "Manual Trigger",
+          what: "Starts the workflow.",
+          whyHere: "You want to run it on demand.",
+          businessReason: "Test before real data is involved.",
+        },
+      ],
+    };
+
+    render(<FocusMode chunks={[build]} />);
+
+    expect(screen.getByText("What it does")).toBeInTheDocument();
+    expect(screen.getByText("Why we’re using it here")).toBeInTheDocument();
+    expect(screen.getByText("Business reason")).toBeInTheDocument();
+    expect(screen.getByText("Starts the workflow.")).toBeInTheDocument();
+  });
+
+  /*
+   * A prediction the learner can read the answer to is not a prediction.
+   */
+  it("hides a predict chunk's answer until the learner asks for it", async () => {
+    const user = userEvent.setup();
+    const predict: LessonChunk = {
+      kind: "predict",
+      id: "predict",
+      title: "Predict",
+      content: [],
+      prompt: "What will the email look like?",
+      reveal: [{ type: "prose", text: "alex@example.com" }],
+    };
+
+    render(<FocusMode chunks={[predict]} />);
+
+    expect(screen.getByText("What will the email look like?")).toBeInTheDocument();
+    expect(screen.queryByText("alex@example.com")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Show me what happens" }));
+
+    expect(screen.getByText("alex@example.com")).toBeInTheDocument();
+  });
+
+  /*
+   * ASCII art read character by character is noise. The description is the
+   * only thing that makes a diagram comprehensible aloud.
+   */
+  it("exposes a diagram by its description, not its ASCII", () => {
+    const chunk: LessonChunk = {
+      kind: "concept",
+      id: "concept",
+      title: "Concept",
+      content: [
+        {
+          type: "diagram",
+          ascii: "A -> B -> C",
+          alt: "Three nodes in a line: A, then B, then C.",
+        },
+      ],
+    };
+
+    render(<FocusMode chunks={[chunk]} />);
+
+    expect(
+      screen.getByRole("img", { name: "Three nodes in a line: A, then B, then C." }),
+    ).toBeInTheDocument();
   });
 });
