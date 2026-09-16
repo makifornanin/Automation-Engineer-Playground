@@ -6,8 +6,10 @@ import { EVIDENCING_KINDS, isEvidencingKind } from "@/lib/course/progress";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
 import { ContentBlocks } from "./blocks/ContentBlocks";
 import { TeachingNotes } from "./blocks/TeachingNotes";
+import { ChallengeChunk } from "./chunks/ChallengeChunk";
 import { GuidedBuildChunk } from "./chunks/GuidedBuildChunk";
 import { PredictChunk } from "./chunks/PredictChunk";
+import { TestChunk } from "./chunks/TestChunk";
 
 export interface FocusModeProps {
   chunks: readonly LessonChunk[];
@@ -42,7 +44,7 @@ function BaseChunk({ chunk }: { chunk: LessonChunk }) {
   );
 }
 
-function ChunkBody({ chunk }: { chunk: LessonChunk }) {
+function ChunkBody({ chunk, labSlug }: { chunk: LessonChunk; labSlug: string }) {
   switch (chunk.kind) {
     case "problem":
     case "concept":
@@ -71,16 +73,11 @@ function ChunkBody({ chunk }: { chunk: LessonChunk }) {
     case "predict":
       return <PredictChunk chunk={chunk} />;
 
-    /*
-     * Both render their prose correctly today. Their interactive regions —
-     * Send Test / self-check for `test`, progressive hints for `challenge` —
-     * arrive with the testing and hint server actions. No content of either
-     * kind exists yet, so nothing renders wrong in the meantime; this arm
-     * exists so the switch stays exhaustive rather than to stand in for them.
-     */
     case "test":
+      return <TestChunk chunk={chunk} labSlug={labSlug} />;
+
     case "challenge":
-      return <BaseChunk chunk={chunk} />;
+      return <ChallengeChunk chunk={chunk} labSlug={labSlug} />;
 
     default:
       return assertNeverBlock(chunk);
@@ -175,7 +172,7 @@ export function FocusMode({ chunks, labSlug, initialChunkId = null }: FocusModeP
         {chunk.title}
       </h2>
 
-      <ChunkBody chunk={chunk} />
+      <ChunkBody chunk={chunk} labSlug={labSlug} />
 
       <div className="flex flex-wrap gap-4 pt-2">
         <button

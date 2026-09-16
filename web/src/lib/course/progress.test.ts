@@ -43,7 +43,6 @@ function chunk(kind: LessonChunk["kind"], id: string): LessonChunk {
         testCaseId: `case-${id}`,
         caseName: id,
         mode: "self-check",
-        checkpoints: [],
       };
     case "challenge":
       return { ...base, kind, hintCount: 0 };

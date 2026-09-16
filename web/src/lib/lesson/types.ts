@@ -149,7 +149,6 @@ export interface TestChunk extends LessonChunkBase {
   mode: "send-test" | "self-check";
   /** Present only for `send-test`; the payload AEP posts to the learner. */
   payload?: JsonValue;
-  checkpoints: readonly { id: string; label: string }[];
 }
 
 /**
@@ -162,6 +161,17 @@ export interface ChallengeChunk extends LessonChunkBase {
   kind: "challenge";
   hintCount: number;
   verification?: readonly string[];
+  /**
+   * Optional self-check, so a challenge can earn real `verified` evidence
+   * rather than the learner's word for it (FEATURES 16 — "provide a way to
+   * verify the final result").
+   *
+   * Without this a challenge could never be completed, because `verified` is
+   * only ever granted by an evaluator — which would leave any lab containing
+   * one permanently incomplete and the next lab permanently locked.
+   */
+  testCaseId?: string;
+  caseName?: string;
 }
 
 export type LessonChunk =

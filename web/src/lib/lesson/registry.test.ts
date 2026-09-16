@@ -45,6 +45,10 @@ function allText(chunk: LessonChunk): string {
     for (const action of chunk.actions) parts.push(action.text, action.expect ?? "");
   }
   if (chunk.kind === "predict") parts.push(chunk.prompt);
+  if (chunk.kind === "test") parts.push(chunk.caseName);
+  if (chunk.kind === "challenge") {
+    parts.push(chunk.caseName ?? "", ...(chunk.verification ?? []));
+  }
 
   for (const note of chunk.teaches ?? []) {
     parts.push(note.name);
@@ -59,15 +63,34 @@ function allText(chunk: LessonChunk): string {
 }
 
 describe("getLessonChunks", () => {
-  it("returns Lab 01's chunks in teaching order", () => {
+  /*
+   * Asserts the teaching arc rather than an exact chunk list: the arc is the
+   * thing CLAUDE.md's Learning Experience Rule actually requires, and pinning
+   * the literal sequence would break every time a lab gains a chunk.
+   *
+   * Consecutive chunks of the same kind collapse — a lab may need two build
+   * steps — but the ORDER of distinct kinds must hold. Understanding comes
+   * before building, prediction before testing, and debugging before the
+   * challenge that depends on it.
+   */
+  it("walks Lab 01 through the full teaching arc, in order", () => {
     const chunks = getLessonChunks(LAB_01);
-
     expect(chunks).not.toBeNull();
-    expect(chunks?.map((chunk) => chunk.kind)).toEqual([
+
+    const arc = (chunks ?? [])
+      .map((chunk) => chunk.kind)
+      .filter((kind, index, all) => kind !== all[index - 1]);
+
+    expect(arc).toEqual([
       "problem",
       "concept",
       "guided-build",
-      "guided-build",
+      "predict",
+      "test",
+      "break-it",
+      "debug",
+      "challenge",
+      "recap",
     ]);
   });
 

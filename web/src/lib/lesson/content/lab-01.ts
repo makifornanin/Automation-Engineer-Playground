@@ -213,4 +213,212 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
       },
     ],
   },
+  {
+    kind: "predict",
+    id: "predict",
+    title: "Before you run it",
+    content: [
+      {
+        type: "prose",
+        text: "Your workflow is built. Do not run it yet — commit to an answer first, because a prediction you make after seeing the result is not a prediction.",
+      },
+      {
+        type: "prose",
+        text: "The form sent an email of \" ALEX@EXAMPLE.COM \", with a leading space, a trailing space, and every letter capitalised.",
+      },
+    ],
+    prompt:
+      "What exactly will the email field contain — and how many fields will the final output have?",
+    reveal: [
+      {
+        type: "code",
+        language: "json",
+        code: `{
+  "name": "Alex Rivera",
+  "email": "alex@example.com",
+  "company": "Northstar Commerce",
+  "lead_source": "Facebook Lead Form"
+}`,
+        caption: "Four fields. Not five, not nine.",
+      },
+      {
+        type: "prose",
+        text: "If you expected the original first_name and email_address to still be there, that is the Include Other Input Fields setting — and it is the difference between a CRM record you can trust and one with two competing email fields in it.",
+      },
+    ],
+  },
+  {
+    kind: "test",
+    id: "success-test",
+    title: "Prove it",
+    mode: "self-check",
+    testCaseId: "lab-01-transform-for-crm",
+    caseName: "A Facebook lead arrives and the CRM gets exactly what it expects",
+    content: [
+      {
+        type: "prose",
+        text: "Run the whole workflow in n8n, open the Transform for CRM node, and copy its output. Paste it below and AEP will check it field by field.",
+      },
+      {
+        type: "callout",
+        tone: "note",
+        title: "Copy whatever n8n gives you",
+        text: "The output panel may show an array, a single object, or n8n's json wrapper. All three are fine — paste it as it comes.",
+      },
+    ],
+  },
+  {
+    kind: "break-it",
+    id: "break-it",
+    title: "Now break it on purpose",
+    content: [
+      {
+        type: "prose",
+        text: "A working workflow teaches you one thing. A broken one teaches you how to fix the next fifty, so let us break this deliberately while the stakes are zero.",
+      },
+      {
+        type: "actions",
+        items: [
+          {
+            text: "Open Sample Lead Input and rename the field email_address to email.",
+          },
+          {
+            text: "Change nothing in Transform for CRM. Leave the expression exactly as it is.",
+            code: {
+              language: "javascript",
+              code: "{{ $json.email_address.trim().toLowerCase() }}",
+            },
+          },
+          {
+            text: "Run the workflow again and look at the email field.",
+            expect: "An error, or an email that is undefined or null.",
+          },
+        ],
+      },
+      {
+        type: "prose",
+        text: "The source object no longer has an email_address, but the transformation still asks for one. Nothing about the expression changed — the data underneath it did.",
+      },
+    ],
+  },
+  {
+    kind: "debug",
+    id: "debug-it",
+    title: "Work out why",
+    content: [
+      {
+        type: "prose",
+        text: "Resist changing the expression until you can say what is wrong. Debugging is reading, not editing.",
+      },
+      {
+        type: "actions",
+        items: [
+          {
+            text: "What failed? Name the field, not the workflow.",
+            expect: "The email transformation.",
+          },
+          {
+            text: "Where did it fail? Open each node and find the first one whose output is already wrong.",
+            expect: "Transform for CRM.",
+          },
+          {
+            text: "Why? Compare what the node asks for against what its input actually contains.",
+            expect: "It reads email_address; the input now has email.",
+          },
+        ],
+      },
+      {
+        type: "callout",
+        tone: "gotcha",
+        title: "The root cause has a name: schema mismatch",
+        text: "The structure of the source data no longer matches what the transformation expects. The expression was never wrong — it was right about a shape that stopped existing.",
+      },
+      {
+        type: "prose",
+        text: "Restore email_address in Sample Lead Input and run it again. The original output comes back, and no other field was affected.",
+      },
+      {
+        type: "prose",
+        text: "The habit worth keeping: when a workflow suddenly breaks, inspect the actual input before you change any logic. Most integration failures are a shape that moved, not a rule that was wrong.",
+      },
+    ],
+  },
+  {
+    kind: "challenge",
+    id: "challenge",
+    title: "Challenge: a real payload, with less help",
+    hintCount: 5,
+    testCaseId: "lab-01-nested-lead-to-crm",
+    caseName: "A nested lead payload flattens into one clean CRM record",
+    content: [
+      {
+        type: "prose",
+        text: "Real lead payloads are not flat. This one has nested objects and arrays, and the same job: turn it into one clean CRM record.",
+      },
+      {
+        type: "code",
+        language: "json",
+        code: `{
+  "contact":   { "first": "  jamie ", "last": "LEE  ",
+                 "email": " JAMIE.LEE@EMAIL.COM " },
+  "company":   { "name": " Northstar Commerce ",
+                 "role": "operations manager" },
+  "marketing": { "source": "facebook",
+                 "campaign": "AEP September Campaign" },
+  "location":  { "city": "  Perth ", "country": "AU" },
+  "interests": ["Automation", "CRM", "AI"],
+  "tags":      ["Hot Lead", "Facebook", "Automation"]
+}`,
+        caption: "Also in labs/01-data-mapping-transformation/challenge/challenge-input.json",
+      },
+      {
+        type: "callout",
+        tone: "warning",
+        title: "Read the expected values character by character",
+        text: "interests and tags do not use the same separator. And only one field gets lowercased — if a value in your output looks tidier than expected, you have applied a transformation somewhere nobody asked for.",
+      },
+    ],
+    verification: [
+      "first and last name are combined, with the original casing left alone",
+      "the email is trimmed and lowercased",
+      "nested company, marketing and location values are pulled up to the top level",
+      "interests becomes one comma-separated string",
+      "location becomes City, Country",
+      "tags becomes one pipe-separated string",
+      "only CRM-ready fields remain",
+    ],
+  },
+  {
+    kind: "recap",
+    id: "recap",
+    title: "What you just built",
+    content: [
+      {
+        type: "prose",
+        text: "You built a translator. Messy lead data goes in, exactly the structure a CRM expects comes out, and nothing else travels with it.",
+      },
+      {
+        type: "prose",
+        text: "Along the way you renamed fields, combined two into one, cleaned a value with trim and toLowerCase, reached into nested objects, joined arrays into strings, and dropped everything the destination did not ask for.",
+      },
+      {
+        type: "prose",
+        text: "You also broke it on purpose and found the cause from the evidence rather than by guessing. Schema mismatch is the failure you will meet most often in real integration work, and you have now seen exactly what it looks like from the inside.",
+      },
+      {
+        type: "prose",
+        text: "The engineering habit that transfers: a green execution is not a correct one. This workflow ran perfectly while producing an undefined email, and only the output told you the truth.",
+      },
+    ],
+    bridge: [
+      {
+        type: "prose",
+        text: "Your data is clean and every field is where the CRM expects it. And every single lead still takes exactly the same path.",
+      },
+      {
+        type: "prose",
+        text: "A $5,000 hot prospect and a tyre kicker get identical treatment, because your workflow has no way to tell them apart. Clean data is only useful once something acts differently on it. Lab 02 teaches your workflow to decide.",
+      },
+    ],
+  },
 ];
