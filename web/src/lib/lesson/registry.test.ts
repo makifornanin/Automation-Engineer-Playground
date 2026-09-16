@@ -3,7 +3,35 @@ import { LABS } from "@/lib/course/catalog";
 import { getLessonChunks } from "./registry";
 import type { ContentBlock, LessonChunk } from "./types";
 
-const LAB_01 = "01-data-mapping-transformation";
+/**
+ * Labs whose lessons have been authored.
+ *
+ * Deliberately an explicit list rather than something derived from the
+ * registry, which would make every assertion below a tautology. Adding a lab
+ * is one intentional line here, and until it is added that lab must return
+ * null so its page keeps the honest placeholder.
+ */
+const AUTHORED = ["01-data-mapping-transformation", "02-conditions-routing"] as const;
+
+/**
+ * The arc every lab walks (CLAUDE.md's Learning Experience Rule).
+ *
+ * Consecutive chunks of the same kind collapse — a lab may need two or three
+ * build steps — but the ORDER of distinct kinds has to hold. Understanding
+ * before building, prediction before testing, debugging before the challenge
+ * that depends on it.
+ */
+const TEACHING_ARC = [
+  "problem",
+  "concept",
+  "guided-build",
+  "predict",
+  "test",
+  "break-it",
+  "debug",
+  "challenge",
+  "recap",
+] as const;
 
 /** Every block a chunk can reach, including the guided-build named slots. */
 function allBlocks(chunk: LessonChunk): readonly ContentBlock[] {
@@ -62,61 +90,16 @@ function allText(chunk: LessonChunk): string {
   return parts.join(" ");
 }
 
+function chunksFor(slug: string): readonly LessonChunk[] {
+  const chunks = getLessonChunks(slug);
+  if (!chunks) throw new Error("Expected authored lesson for " + slug);
+  return chunks;
+}
+
 describe("getLessonChunks", () => {
-  /*
-   * Asserts the teaching arc rather than an exact chunk list: the arc is the
-   * thing CLAUDE.md's Learning Experience Rule actually requires, and pinning
-   * the literal sequence would break every time a lab gains a chunk.
-   *
-   * Consecutive chunks of the same kind collapse — a lab may need two build
-   * steps — but the ORDER of distinct kinds must hold. Understanding comes
-   * before building, prediction before testing, and debugging before the
-   * challenge that depends on it.
-   */
-  it("walks Lab 01 through the full teaching arc, in order", () => {
-    const chunks = getLessonChunks(LAB_01);
-    expect(chunks).not.toBeNull();
-
-    const arc = (chunks ?? [])
-      .map((chunk) => chunk.kind)
-      .filter((kind, index, all) => kind !== all[index - 1]);
-
-    expect(arc).toEqual([
-      "problem",
-      "concept",
-      "guided-build",
-      "predict",
-      "test",
-      "break-it",
-      "debug",
-      "challenge",
-      "recap",
-    ]);
-  });
-
-  it("gives every chunk a title, a stable id and something to render", () => {
-    const chunks = getLessonChunks(LAB_01) ?? [];
-
-    expect(chunks.length).toBeGreaterThan(0);
-    for (const chunk of chunks) {
-      expect(chunk.title.trim()).not.toBe("");
-      expect(chunk.id.trim()).not.toBe("");
-      expect(allBlocks(chunk).length).toBeGreaterThan(0);
-    }
-  });
-
-  it("gives every chunk in a lab a unique id", () => {
-    const ids = (getLessonChunks(LAB_01) ?? []).map((chunk) => chunk.id);
-
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  /*
-   * Only Lab 01 has content. The other nine must return null so their pages
-   * keep the honest placeholder rather than rendering an empty lesson.
-   */
   it("returns null for every lab that has no lesson yet", () => {
-    for (const lab of LABS.filter((entry) => entry.slug !== LAB_01)) {
+    const authored = new Set<string>(AUTHORED);
+    for (const lab of LABS.filter((entry) => !authored.has(entry.slug))) {
       expect(getLessonChunks(lab.slug)).toBeNull();
     }
   });
@@ -125,76 +108,88 @@ describe("getLessonChunks", () => {
     expect(getLessonChunks("not-a-lab")).toBeNull();
   });
 
-  /*
-   * A real Vision §16 guard. The README this copy is condensed from carries a
-   * "Difficulty: Beginner" line directly above the Hook, which is exactly the
-   * region the problem chunk draws from.
-   */
-  it("never carries a difficulty label into the lesson copy", () => {
-    const text = (getLessonChunks(LAB_01) ?? []).map(allText).join(" ");
-
-    expect(text).not.toMatch(/beginner|intermediate|advanced|difficulty/i);
+  it("only claims labs that really exist", () => {
+    const slugs = new Set(LABS.map((lab) => lab.slug));
+    for (const slug of AUTHORED) {
+      expect(slugs.has(slug)).toBe(true);
+    }
   });
 });
 
-describe("guided-build chunks — Vision §19", () => {
-  const builds = (getLessonChunks(LAB_01) ?? []).filter(
-    (chunk) => chunk.kind === "guided-build",
-  );
+describe.each(AUTHORED)("lesson content for %s", (slug) => {
+  it("walks the full teaching arc, in order", () => {
+    const arc = chunksFor(slug)
+      .map((chunk) => chunk.kind)
+      .filter((kind, index, all) => kind !== all[index - 1]);
 
-  it("has at least one to check", () => {
-    expect(builds.length).toBeGreaterThan(0);
+    expect(arc).toEqual([...TEACHING_ARC]);
+  });
+
+  it("gives every chunk a title, a stable id and something to render", () => {
+    for (const chunk of chunksFor(slug)) {
+      expect(chunk.title.trim()).not.toBe("");
+      expect(chunk.id.trim()).not.toBe("");
+      expect(allBlocks(chunk).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("gives every chunk a unique id", () => {
+    const ids = chunksFor(slug).map((chunk) => chunk.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   /*
-   * "Keep a normal chunk to roughly 2-4 related actions." Enforced by test
-   * rather than by the type: a tuple union of 2-, 3- and 4-length arrays would
-   * be unreadable for no safety gain.
+   * A real Vision §16 guard. Each README carries a "Difficulty" line directly
+   * above the Hook, which is exactly the region a problem chunk draws from.
    */
-  it("carries 2 to 4 actions — not one click per sentence, not a wall", () => {
+  it("never carries a difficulty label into the lesson copy", () => {
+    const text = chunksFor(slug).map(allText).join(" ");
+
+    expect(text).not.toMatch(/beginner|intermediate|advanced|difficulty/i);
+  });
+
+  /*
+   * Vision §19 keeps a normal chunk to roughly 2-4 related actions. Enforced
+   * by test rather than by the type: a tuple union of 2-, 3- and 4-length
+   * arrays would be unreadable for no safety gain.
+   */
+  it("keeps every guided build to 2 to 4 actions", () => {
+    const builds = chunksFor(slug).filter((chunk) => chunk.kind === "guided-build");
+
+    expect(builds.length).toBeGreaterThan(0);
     for (const chunk of builds) {
       expect(chunk.actions.length).toBeGreaterThanOrEqual(2);
       expect(chunk.actions.length).toBeLessThanOrEqual(4);
-    }
-  });
-
-  /*
-   * The reason before AND the reason after. Dropping the second is what turns
-   * a build chunk back into copy-paste instructions, so an empty one fails.
-   */
-  it("explains why before the actions and why after them", () => {
-    for (const chunk of builds) {
-      expect(chunk.whyThisMatters.length).toBeGreaterThan(0);
-      expect(chunk.whyWereDoingThis.length).toBeGreaterThan(0);
-    }
-  });
-
-  it("gives every action something for the learner to actually do", () => {
-    for (const chunk of builds) {
       for (const action of chunk.actions) {
         expect(action.text.trim()).not.toBe("");
       }
     }
   });
-});
 
-/*
- * CLAUDE.md's Guided Build Rule: a node is explained by What / Why here /
- * Business reason, and code by intent / inputs / logic / output / engineering
- * reason. Asserting each field is non-empty is what makes "never teach code as
- * just paste this" mechanical rather than aspirational.
- */
-describe("teaching notes — CLAUDE.md Guided Build Rule", () => {
-  const notes = (getLessonChunks(LAB_01) ?? []).flatMap((chunk) => chunk.teaches ?? []);
-
-  it("has at least one to check", () => {
-    expect(notes.length).toBeGreaterThan(0);
+  /*
+   * The reason before AND the reason after. Dropping the second is what turns
+   * a build chunk back into copy-paste instructions.
+   */
+  it("explains why before the actions and why after them", () => {
+    for (const chunk of chunksFor(slug)) {
+      if (chunk.kind !== "guided-build") continue;
+      expect(chunk.whyThisMatters.length).toBeGreaterThan(0);
+      expect(chunk.whyWereDoingThis.length).toBeGreaterThan(0);
+    }
   });
 
-  it("fills every mandated field", () => {
+  /*
+   * CLAUDE.md's Guided Build Rule: a node is explained by What / Why here /
+   * Business reason, and code by intent / inputs / logic / output /
+   * engineering reason. Asserting each field is non-empty is what makes
+   * "never teach code as just paste this" mechanical rather than aspirational.
+   */
+  it("fills every mandated field of every teaching note", () => {
+    const notes = chunksFor(slug).flatMap((chunk) => chunk.teaches ?? []);
+
+    expect(notes.length).toBeGreaterThan(0);
     for (const note of notes) {
       expect(note.name.trim()).not.toBe("");
-
       if (note.subject === "node") {
         expect(note.what.trim()).not.toBe("");
         expect(note.whyHere.trim()).not.toBe("");
@@ -209,18 +204,28 @@ describe("teaching notes — CLAUDE.md Guided Build Rule", () => {
       }
     }
   });
-});
 
-describe("diagrams", () => {
-  it("always carries a text alternative — ASCII alone is unreadable aloud", () => {
-    const diagrams = (getLessonChunks(LAB_01) ?? [])
+  it("always gives a diagram a text alternative", () => {
+    const diagrams = chunksFor(slug)
       .flatMap(allBlocks)
       .filter((block) => block.type === "diagram");
 
-    expect(diagrams.length).toBeGreaterThan(0);
     for (const diagram of diagrams) {
       expect(diagram.alt.trim()).not.toBe("");
       expect(diagram.ascii.trim()).not.toBe("");
+    }
+  });
+
+  /*
+   * A lab has to be finishable. Its challenge earns `verified`, which only an
+   * evaluator can grant — so a challenge with no case would leave the lab
+   * permanently incomplete and the next lab permanently locked.
+   */
+  it("gives every challenge a way to be verified", () => {
+    for (const chunk of chunksFor(slug)) {
+      if (chunk.kind !== "challenge") continue;
+      expect(chunk.testCaseId).toBeTruthy();
+      expect(chunk.caseName).toBeTruthy();
     }
   });
 });

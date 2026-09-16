@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { LABS } from "@/lib/course/catalog";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { allTestCases, getTestCase } from "./cases";
-import { expectField, expectNoFields, type Checkpoint } from "./cases/types";
+import {
+  expectCount,
+  expectField,
+  expectFieldSet,
+  expectNoFields,
+  type Checkpoint,
+} from "./cases/types";
 import { evaluateCheckpoints, normaliseSubmittedOutput } from "./evaluate";
 import type { JsonValue } from "./types";
 
@@ -163,5 +169,72 @@ describe("the test case registry", () => {
       );
       expect(referenced).toBe(true);
     }
+  });
+});
+
+/*
+ * Several labs prove themselves by how many records reached a branch rather
+ * than by one record's fields. Collapsing those to the first item would throw
+ * the evidence away.
+ */
+describe("items-shaped output", () => {
+  const LEADS: readonly JsonValue[] = [
+    { name: "Jamie Lee", route: "Manual Review" },
+    { name: "Jordan Patel", route: "Manual Review" },
+    { name: "Casey Wong", route: "Manual Review" },
+  ];
+
+  it("keeps the whole list rather than the first item", () => {
+    expect(normaliseSubmittedOutput(LEADS, "items")).toHaveLength(3);
+  });
+
+  it("unwraps n8n's json envelope on every item", () => {
+    const wrapped = LEADS.map((json) => ({ json }));
+    expect(normaliseSubmittedOutput(wrapped, "items")).toEqual(LEADS);
+  });
+
+  it("treats a lone pasted object as a list of one", () => {
+    expect(normaliseSubmittedOutput({ name: "Alex" }, "items")).toHaveLength(1);
+  });
+
+  it("counts what reached the branch", () => {
+    const check = [expectCount("count", "Three reached Manual Review", 3)];
+
+    expect(evaluateCheckpoints("c", check, normaliseSubmittedOutput(LEADS, "items")).passed).toBe(
+      true,
+    );
+    expect(
+      evaluateCheckpoints("c", check, normaliseSubmittedOutput([LEADS[0]], "items")).passed,
+    ).toBe(false);
+  });
+
+  /*
+   * The Lab 02 bug in miniature: with ANY/OR a second lead arrives in a branch
+   * that should have had one. A field check on the first item would pass.
+   */
+  it("fails when an extra record slipped into the branch", () => {
+    const check = [expectCount("count", "Exactly one reached Priority Sales", 1)];
+    const withExtra = [
+      { name: "Alex Rivera", route: "Priority Sales" },
+      { name: "Jamie Lee", route: "Priority Sales" },
+    ];
+
+    const result = evaluateCheckpoints("c", check, normaliseSubmittedOutput(withExtra, "items"));
+    expect(result.passed).toBe(false);
+    expect(result.firstFailure?.actual).toContain("2");
+  });
+
+  it("compares membership rather than order", () => {
+    const check = [
+      expectFieldSet("who", "The right three", "name", [
+        "Casey Wong",
+        "Jamie Lee",
+        "Jordan Patel",
+      ]),
+    ];
+
+    expect(evaluateCheckpoints("c", check, normaliseSubmittedOutput(LEADS, "items")).passed).toBe(
+      true,
+    );
   });
 });

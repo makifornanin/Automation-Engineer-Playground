@@ -71,7 +71,7 @@ export async function runSelfCheck(
   const result = evaluateCheckpoints(
     testCase.name,
     testCase.checkpoints,
-    normaliseSubmittedOutput(parsed),
+    normaliseSubmittedOutput(parsed, testCase.shape),
   );
 
   /*
