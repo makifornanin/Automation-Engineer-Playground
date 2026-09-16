@@ -31,6 +31,7 @@ export function KazHints({ labSlug, chunkId, hintCount }: KazHintsProps) {
 
   async function askForHint() {
     setPending(true);
+    setUnavailable(false);
     try {
       const hint = await revealNextHint(labSlug, chunkId, revealed.length);
       if (hint) {

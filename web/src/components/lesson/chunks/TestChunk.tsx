@@ -21,7 +21,6 @@ export function TestChunk({ chunk, labSlug }: { chunk: TestChunkData; labSlug: s
         <SelfCheckPanel
           labSlug={labSlug}
           chunkId={chunk.id}
-          testCaseId={chunk.testCaseId}
           caseName={chunk.caseName}
         />
       ) : (

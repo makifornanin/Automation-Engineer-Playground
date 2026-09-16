@@ -14,9 +14,9 @@ import { sessionDisplayName } from "@/lib/session/types";
  * Continue Learning, Your Journey, a note from Kaz, and a Notes shortcut.
  * No stat cards, analytics, goals, activity feed or quick-action panel.
  *
- * `getCourseProgress()` is a stub returning empty progress until learner
- * state is persisted — the journey strip therefore shows the real derivation
- * of "everything not-started" rather than inventing progress.
+ * `getCourseProgress()` reads the learner's own rows under RLS. When learner
+ * state is unavailable it falls back to Lab 01 in progress with nothing saved,
+ * so Home still shows a real derivation rather than inventing progress.
  */
 export default async function HomePage() {
   const session = await getSession();

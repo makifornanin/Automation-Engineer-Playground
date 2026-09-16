@@ -142,7 +142,7 @@ function ChunkBody({
       return <GuidedBuildChunk chunk={chunk} />;
 
     case "predict":
-      return <PredictChunk chunk={chunk} />;
+      return <PredictChunk chunk={chunk} labSlug={labSlug} />;
 
     case "test":
       return <TestChunk chunk={chunk} labSlug={labSlug} />;

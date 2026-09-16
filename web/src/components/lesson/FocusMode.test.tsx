@@ -254,9 +254,64 @@ describe("<FocusMode /> — chunk kinds", () => {
     expect(screen.getByText("What will the email look like?")).toBeInTheDocument();
     expect(screen.queryByText("alex@example.com")).not.toBeInTheDocument();
 
+    await user.type(
+      screen.getByRole("textbox", { name: "What will the email look like?" }),
+      "lowercase, no spaces",
+    );
     await user.click(screen.getByRole("button", { name: "Show me what happens" }));
 
     expect(screen.getByText("alex@example.com")).toBeInTheDocument();
+    // Shown back beside the real answer — comparing the two is the lesson.
+    expect(screen.getByText("lowercase, no spaces")).toBeInTheDocument();
+  });
+
+  /*
+   * The QA BLOCKER. A predict chunk demands `predicted` evidence, and before
+   * this nothing ever wrote it — so no lab could complete. The reveal is the
+   * one place it is earned.
+   */
+  it("records predicted evidence when the learner reveals the answer", async () => {
+    const user = userEvent.setup();
+    renderFocus([
+      {
+        kind: "predict",
+        id: "predict",
+        title: "Predict",
+        content: [],
+        prompt: "How many leads reach Priority Sales?",
+        reveal: [{ type: "prose", text: "One." }],
+      },
+    ]);
+
+    await user.type(screen.getByRole("textbox"), "just one");
+    await user.click(screen.getByRole("button", { name: "Show me what happens" }));
+
+    expect(recordChunkEvidence).toHaveBeenCalledWith(LAB, "predict");
+  });
+
+  /*
+   * A reveal button alone would award a milestone to anyone who clicked past
+   * the question. Requiring words is what makes the evidence mean something.
+   */
+  it("will not reveal until the learner has written a prediction", async () => {
+    const user = userEvent.setup();
+    renderFocus([
+      {
+        kind: "predict",
+        id: "predict",
+        title: "Predict",
+        content: [],
+        prompt: "How many leads reach Priority Sales?",
+        reveal: [{ type: "prose", text: "One." }],
+      },
+    ]);
+
+    const reveal = screen.getByRole("button", { name: "Show me what happens" });
+    expect(reveal).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox"), "   ");
+    expect(reveal).toBeDisabled();
+    expect(recordChunkEvidence).not.toHaveBeenCalled();
   });
 
   /*

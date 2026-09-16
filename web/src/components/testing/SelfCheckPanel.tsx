@@ -20,7 +20,6 @@ const SPOKEN: Record<CheckpointResult["state"], string> = {
 export interface SelfCheckPanelProps {
   labSlug: string;
   chunkId: string;
-  testCaseId: string;
   /** The business behaviour being proved, shown before any raw data. */
   caseName: string;
 }
@@ -44,7 +43,6 @@ export interface SelfCheckPanelProps {
 export function SelfCheckPanel({
   labSlug,
   chunkId,
-  testCaseId,
   caseName,
 }: SelfCheckPanelProps) {
   const [state, action, pending] = useActionState(runSelfCheck, IDLE_TEST_STATE);
@@ -70,7 +68,6 @@ export function SelfCheckPanel({
       </div>
 
       <form action={action} className="flex flex-col gap-3">
-        <input type="hidden" name="caseId" value={testCaseId} />
         <input type="hidden" name="labSlug" value={labSlug} />
         <input type="hidden" name="chunkId" value={chunkId} />
 

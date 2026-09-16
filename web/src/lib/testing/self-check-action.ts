@@ -1,6 +1,7 @@
 "use server";
 
 import { recordChunkEvidence } from "@/lib/course/progress-actions";
+import { getLessonChunks } from "@/lib/lesson/registry";
 import { getTestCase } from "./cases";
 import { evaluateCheckpoints, normaliseSubmittedOutput } from "./evaluate";
 import {
@@ -18,23 +19,29 @@ import {
  * nothing to send a request to — but there is still a correct answer, and the
  * learner still has to produce it.
  *
- * Security shape, which is the same one the webhook-backed Send Test will use:
- * the client names a case, it never supplies expectations. Every expected
- * value and every predicate lives in the `server-only` case registry, so the
- * browser receives the verdict and nothing that would let a learner work
- * backwards to the answer.
+ * The client names a lab and a chunk, and nothing else. It does NOT name the
+ * test case. The server resolves the chunk from the lesson content and uses
+ * that chunk's own configured case, so the case that decides whether a chunk
+ * earns `verified` evidence is fixed by the content, not by the request.
+ *
+ * That is deliberate, and it was a real defect before it was. When the case id
+ * came from a hidden form field and was checked only against the lab, a
+ * learner could edit that one field to point a Challenge at the same lab's
+ * easier guided case, paste the easy answer, and collect the Challenge's
+ * evidence. Removing the field removes the attack rather than validating it.
+ *
+ * Every expected value and predicate lives in the server-only case registry,
+ * so the browser receives a verdict and nothing it could work backwards from.
  */
 export async function runSelfCheck(
   _prevState: TestState,
   formData: FormData,
 ): Promise<TestState> {
-  const caseId = formData.get("caseId");
   const labSlug = formData.get("labSlug");
   const chunkId = formData.get("chunkId");
   const submitted = formData.get("output");
 
   if (
-    typeof caseId !== "string" ||
     typeof labSlug !== "string" ||
     typeof chunkId !== "string" ||
     typeof submitted !== "string"
@@ -53,10 +60,13 @@ export async function runSelfCheck(
     return buildTestError("too_large");
   }
 
-  const testCase = getTestCase(caseId);
-  // The case must belong to the lab that claims it. Without this, a learner
-  // could point an easier lab's case at a harder lab's chunk and collect its
-  // evidence.
+  // The chunk decides the case. Only a test or challenge chunk that carries a
+  // case can be checked, and that case must belong to the same lab.
+  const chunk = getLessonChunks(labSlug)?.find((entry) => entry.id === chunkId);
+  const caseId =
+    chunk && (chunk.kind === "test" || chunk.kind === "challenge") ? chunk.testCaseId : undefined;
+  const testCase = caseId ? getTestCase(caseId) : null;
+
   if (!testCase || testCase.labSlug !== labSlug) {
     return buildTestError("unknown_case");
   }

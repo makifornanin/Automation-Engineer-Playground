@@ -240,3 +240,53 @@ describe.each(AUTHORED)("lesson content for %s", (slug) => {
     }
   });
 });
+
+/*
+ * The QA BLOCKER this guards. Every evidencing chunk must have a real path in
+ * the product that can award its evidence - otherwise isLabComplete can never
+ * return true, no lab completes, and nothing ever unlocks. That shipped once:
+ * predict chunks demanded `predicted` evidence that no code ever wrote, in
+ * every lab, and 455 green tests did not notice.
+ *
+ * The paths, as built:
+ *   acknowledged -> FocusMode's "Done - Next", which renders only when the
+ *                   chunk is NOT the last one;
+ *   predicted    -> PredictChunk's reveal;
+ *   verified     -> a passing self-check, which needs the chunk's own case.
+ */
+describe.each(AUTHORED)("every milestone in %s is reachable", (slug) => {
+  it("gives each evidencing chunk a real way to earn its evidence", async () => {
+    const { EVIDENCING_KINDS, isEvidencingKind } = await import("@/lib/course/progress");
+    const { getTestCase } = await import("@/lib/testing/cases");
+    const chunks = chunksFor(slug);
+
+    chunks.forEach((chunk, index) => {
+      if (!isEvidencingKind(chunk.kind)) return;
+      const evidence = EVIDENCING_KINDS[chunk.kind];
+
+      if (evidence === "acknowledged") {
+        // Done - Next is hidden on the final chunk, so an acknowledged chunk
+        // there could never be acknowledged.
+        expect(index).toBeLessThan(chunks.length - 1);
+      } else if (evidence === "predicted") {
+        expect(chunk.kind).toBe("predict");
+      } else {
+        const caseId =
+          chunk.kind === "test" || chunk.kind === "challenge" ? chunk.testCaseId : undefined;
+        expect(caseId, chunk.id + " needs a case to be verified").toBeTruthy();
+        expect(getTestCase(caseId ?? "")?.labSlug).toBe(slug);
+      }
+    });
+  });
+
+  it("can therefore be completed", async () => {
+    const { isLabComplete, requiredMilestones } = await import("@/lib/course/progress");
+    const chunks = chunksFor(slug);
+    const earned = Object.fromEntries(
+      requiredMilestones(chunks).map(({ chunkId, evidence }) => [chunkId, evidence]),
+    );
+
+    expect(requiredMilestones(chunks).length).toBeGreaterThan(0);
+    expect(isLabComplete(chunks, earned)).toBe(true);
+  });
+});

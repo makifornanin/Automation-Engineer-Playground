@@ -46,7 +46,6 @@ export function ChallengeChunk({
         <SelfCheckPanel
           labSlug={labSlug}
           chunkId={chunk.id}
-          testCaseId={chunk.testCaseId}
           caseName={chunk.caseName}
         />
       ) : null}
