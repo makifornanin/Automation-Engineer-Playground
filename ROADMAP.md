@@ -1305,9 +1305,13 @@ Turn the existing 10 labs into a calm, interactive, hands-on learning experience
 Build the intentionally minimal Home screen:
 
 * [x] Greeting — owner-confirmed 2026-09-16 in an authenticated browser session
-* [/] Continue Learning — the slot is built and is the best-evidenced element on the screen,
-  but Continue lands on the `/labs` foundation shell, not lab content. Complete when
-  `labHref()` resolves somewhere real
+* [/] Continue Learning — **updated 2026-09-16 (Step 2).** `labHref()` now resolves to a
+  lab-specific `/labs/<slug>` overview rather than the shared shell, so the literal condition
+  written here before ("complete when `labHref()` resolves somewhere real") is met, and the
+  owner re-verified live that Home's Continue opens the correct Lab 01 destination — necessary,
+  because Step 2 changed that href underneath the Aim Point 1 evidence. The intent is still not
+  met: the overview's body reads "Lesson content arrives with Focus Mode." Better than a shell,
+  still not lab content. **Flips at Step 4.**
 * [/] Current-lab progress — **position only ("Lab 01 of 10"), never a percentage.** Stays
   partial until learner state is persisted. Do not let this drift to `[x]`
 * [x] Lightweight Your Journey indicator — owner-confirmed 2026-09-16: Labs 01–10 render, the
@@ -1356,14 +1360,56 @@ Kaz note and Notes shortcut are uncovered.
 
 ## Step 2 — Labs Journey
 
-* [ ] Featured current-lab card
-* [ ] Foundations group — Labs 01–04
-* [ ] Reliability group — Labs 05–08
-* [ ] AI Engineering group — Labs 09–10
-* [ ] Capstone
-* [ ] Completed/current/preview-locked states
-* [ ] Future-lab preview
-* [ ] No difficulty badges
+* [x] Featured current-lab card — owner-confirmed 2026-09-16. Shows **position ("Lab 01 of
+  10"), not the completion percentage Vision §16 asks for**, because no persistence exists to
+  back a figure. That substitution is deliberate and carries to Step 3
+* [x] Foundations group — Labs 01–04 — owner-confirmed 2026-09-16
+* [x] Reliability group — Labs 05–08 — owner-confirmed 2026-09-16
+* [x] AI Engineering group — Labs 09–10 — owner-confirmed 2026-09-16
+* [x] Capstone — owner-confirmed 2026-09-16: renders as its own section at the bottom, locked.
+  **Its copy is provisional by owner decision** — `CAPSTONE.description` and `CAPSTONE_FRAMING`
+  have no Vision §16 source text, unlike the three group framing lines, and the owner has
+  accepted them as-is rather than spending time polishing now. Recorded, not silently blessed
+* [/] Completed/current/preview-locked states — three labels render, are unit-tested, and
+  `current` / `preview` were confirmed live. But `completed` and `in-progress` remain
+  **unreachable at runtime** with the empty-progress stub, and nothing is actually locked
+  except the Capstone. Closes with Step 3
+* [/] Future-lab preview — **deliberately partial, deferred by the owner 2026-09-16.** Vision
+  §3/§16 list four preview elements; the overview delivers why it matters and the prerequisite
+  (both confirmed live). "What will be built" and "concepts involved" wait until the real
+  lesson experience exists, since that is where the material comes from
+* [x] No difficulty badges — the lab READMEs carry a `Difficulty` line under each H1 and Vision
+  §16 forbids surfacing it; a test scans rendered output to keep it out, and the catalog has no
+  difficulty field. This asserts an absence, which a browser pass could not strengthen
+
+**Step 2 — Labs Journey. COMPLETE 2026-09-16 — owner browser verification PASS.** Plan:
+`docs/superpowers/plans/2026-09-16-aep-phase-12-step-2-labs-journey.md`.
+
+* **live verified 2026-09-16, owner-driven in an authenticated browser** — `/labs` renders the
+  journey; Lab 01 reads Current and offers Continue; that Continue opens the correct Lab 01
+  overview; future labs render as Preview and their pages name the prerequisite; all three
+  groups are present; the Capstone renders separately at the bottom, locked; an invalid lab URL
+  404s without crashing; **Home's Continue Learning opens the correct Lab 01 destination**;
+  light mode shows no blocking issue; ~375px shows no clipping or broken layout; keyboard tab
+  navigation works through the journey links
+* unit tested — 268 tests across 31 files, up from 237/26
+* structurally verified — `npm run verify` exits 0: lint 0 problems, typecheck clean, 268
+  tests, production build of 8 routes plus Proxy. Routes 7 → 8, `/labs/[slug]` the only
+  addition. `components/home/**` untouched and its tests pass unedited; `progress.ts` has zero
+  deletions, so `deriveCourseState()` is unchanged
+* still unobserved, and not claimed — **dark mode** (the owner confirmed light only) and a real
+  screen-reader pass. The AT contract is unit-tested through RTL role and accessible-name
+  queries, which beats a snapshot but is not the same as hearing it announced
+
+**A defect was found in review and fixed before commit.** With no persisted progress every lab
+is `not-started`, including the current one, so Lab 01's row rendered "Preview" directly beneath
+a featured card offering "Continue" for it — two clickable links, opposing verbs, conflicting
+accessible names, one destination, and worse for screen-reader users who lack the layout cues
+that might suggest the two surfaces differ. Vision §3 settled it independently: "Lab 01 —
+available/completed", so "Preview" was wrong on its own terms. The row now takes the current
+lab's slug and agrees with the card. A composition test driving the real
+`getCourseProgress()` → `deriveCourseState()` → page path is the regression net; every component
+had been tested only in isolation, which is exactly why nothing caught it.
 
 ## Step 3 — Sequential Unlocking
 
