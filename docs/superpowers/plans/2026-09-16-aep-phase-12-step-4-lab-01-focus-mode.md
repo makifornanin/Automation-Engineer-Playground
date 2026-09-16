@@ -1,7 +1,21 @@
 # Phase 12 — Step 4: Lab 01 Focus Mode
 
 Date: 2026-09-16
-Status: planned 2026-09-16.
+Status: **COMPLETE 2026-09-16 — owner browser verification PASS.**
+
+> **Owner-reported browser evidence, 2026-09-16**, verified while authenticated: Home's Continue
+> opens Lab 01 Focus Mode; Step 1 shows "The problem" with "Step 1 of 2" visible and Back
+> disabled; Next opens "The concept" with "Step 2 of 2" visible and Next disabled; Back returns
+> correctly; keyboard Enter navigation works and focus moves to the new heading; the mouse-click
+> behaviour reads as intentional under `focus-visible`; light and dark are both readable; ~375px
+> shows no clipping on the navigation row.
+>
+> No agent could produce this — there is no browser and no obtainable session here, and none was
+> faked.
+>
+> **Still unobserved, and not claimed:** a real screen-reader pass. The step position is exposed
+> as the focused heading's accessible description and asserted in jsdom, which proves it is
+> *computed*, not that an assistive technology announces it.
 Preceding work: Phase 12 Step 2 (Labs Journey), closed 2026-09-16.
 
 > **Process note, recorded rather than hidden.** The Architect stage was attempted as a
@@ -149,6 +163,20 @@ YAGNI. Recording the shape as **settled** would not be. The next Aim Point must 
 deliberately rather than force-fitting instructions into paragraphs, and **its Architect stage is
 mandatory** — that is where this stops being a private detail of two prose chunks and becomes the
 contract for every remaining chunk type.
+
+**Owner direction, 2026-09-16 — the contract the next Architect stage must design for:**
+
+| Must support | Status today |
+|---|---|
+| prose | built — `body: readonly string[]` |
+| ordered actions | not expressible |
+| code blocks | not expressible |
+| diagrams / visuals where useful | not expressible |
+| future Send Test blocks | not expressible |
+
+Design the shape against all five, and build only what the smallest Guided Build slice for Lab
+01 actually needs. The point of designing against the full list is that the *shape* survives;
+it is not licence to implement chunk kinds nothing renders yet.
 
 ## Open notes — recorded, deliberately not fixed here
 

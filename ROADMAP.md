@@ -1305,13 +1305,12 @@ Turn the existing 10 labs into a calm, interactive, hands-on learning experience
 Build the intentionally minimal Home screen:
 
 * [x] Greeting — owner-confirmed 2026-09-16 in an authenticated browser session
-* [/] Continue Learning — **updated 2026-09-16 (Step 2).** `labHref()` now resolves to a
-  lab-specific `/labs/<slug>` overview rather than the shared shell, so the literal condition
-  written here before ("complete when `labHref()` resolves somewhere real") is met, and the
-  owner re-verified live that Home's Continue opens the correct Lab 01 destination — necessary,
-  because Step 2 changed that href underneath the Aim Point 1 evidence. The intent is still not
-  met: the overview's body reads "Lesson content arrives with Focus Mode." Better than a shell,
-  still not lab content. **Flips at Step 4.**
+* [x] Continue Learning — **completed 2026-09-16 at Step 4.** The destination is finally real
+  lesson content: the owner verified live that Home's Continue opens Lab 01 Focus Mode showing
+  "The problem", not a placeholder. This bullet moved twice for a reason worth keeping — at
+  Step 2 `labHref()` changed underneath Aim Point 1's evidence, and at Step 4 the destination's
+  *content* changed underneath Step 2's, so each time it was re-verified live rather than
+  inferred from the code change.
 * [/] Current-lab progress — **position only ("Lab 01 of 10"), never a percentage.** Stays
   partial until learner state is persisted. Do not let this drift to `[x]`
 * [x] Lightweight Your Journey indicator — owner-confirmed 2026-09-16: Labs 01–10 render, the
@@ -1423,8 +1422,10 @@ had been tested only in isolation, which is exactly why nothing caught it.
 
 Support learning chunks for:
 
-* [ ] Problem
-* [ ] Concept
+* [/] Problem — owner-confirmed 2026-09-16, **Lab 01 only**. This is content existing, not a
+  supported chunk *kind*: the renderer has no chunk type, so prose is all `LessonChunk` can
+  currently express
+* [/] Concept — owner-confirmed 2026-09-16, same annotation
 * [ ] Guided Build
 * [ ] Predict
 * [ ] Test
@@ -1437,12 +1438,45 @@ Support learning chunks for:
 
 Rules:
 
-* [ ] one meaningful chunk at a time
-* [ ] roughly 2–4 related actions per Build chunk
-* [ ] avoid one click per sentence
-* [ ] autosave progress
-* [ ] expandable compact section roadmap
-* [ ] revisit completed sections
+* [/] one meaningful chunk at a time — owner-confirmed 2026-09-16. `[x]` only once a chunk
+  carrying 2–4 actions proves the rule against the content it was written to govern; two prose
+  chunks are a weak test of it
+* [ ] roughly 2–4 related actions per Build chunk — no Build chunk exists
+* [/] avoid one click per sentence — holds for the only two chunks that exist
+* [ ] autosave progress — deliberately not built; chunk position is component state, so leaving
+  the lab and returning resets to Step 1. Trivial at two chunks; **persistence becomes required
+  before Lab 01 exceeds roughly four**
+* [ ] expandable compact section roadmap — not built
+* [ ] revisit completed sections — **not satisfied by Back.** Back is within-session stepping;
+  this means revisiting across the lab, which needs persistence
+
+**Step 4 — Focus Mode. Lab 01's two prose chunks only. NOT a completed renderer.** Plan:
+`docs/superpowers/plans/2026-09-16-aep-phase-12-step-4-lab-01-focus-mode.md`.
+
+* **live verified 2026-09-16, owner-driven in an authenticated browser** — Home's Continue opens
+  Lab 01 Focus Mode; Step 1 shows "The problem" with "Step 1 of 2" visible and Back disabled;
+  Next opens "The concept" with "Step 2 of 2" visible and Next disabled; Back returns correctly;
+  keyboard Enter navigation works and focus moves to the new heading; mouse-click behaviour reads
+  as intentional under `focus-visible`; light and dark are both readable; ~375px shows no
+  clipping on the navigation row
+* unit tested — 284 tests across 33 files, up from 268/31
+* structurally verified — `npm run verify` exits 0: lint 0 problems, typecheck clean, 284 tests,
+  production build. **Route count unchanged at 8** — Focus Mode added no route, per the owner's
+  decision to host it on the existing `/labs/[slug]`
+* still unobserved, and not claimed — **a real screen-reader pass.** The step position is exposed
+  as the focused heading's accessible description and asserted in jsdom, which proves it is
+  *computed*, not that an assistive technology announces it
+
+**Scale, so this block is not misread:** this is one lab's two prose chunks out of eleven chunk
+types across ten labs. `isHandsOnAvailable` was also split onto its own seam so Step 3 can gate
+Build / Test / Challenge on it alone — reading a lesson is now a separate question from having
+hands-on access unlocked.
+
+**The Architect stage did not run for this Aim Point** — its subagent died on a session rate
+limit, and the design decisions were made directly and recorded as such. Judged acceptable once,
+given a small and reversible blast radius, but `LessonChunk` is now an unreviewed contract that
+cannot express ordered actions, code blocks, diagrams or Send Test. **The next Aim Point's
+Architect stage is mandatory.**
 
 ## Step 5 — Node & Code Teaching
 
