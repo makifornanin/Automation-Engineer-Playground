@@ -1426,14 +1426,14 @@ Support learning chunks for:
   supported chunk *kind*: the renderer has no chunk type, so prose is all `LessonChunk` can
   currently express
 * [/] Concept — owner-confirmed 2026-09-16, same annotation
-* [ ] Guided Build
-* [ ] Predict
+* [/] Guided Build — all ten labs, 2–4 actions per build chunk enforced by test. Unit tested, not live
+* [/] Predict — all ten labs; learner writes a prediction before the reveal, which records `predicted` evidence
 * [ ] Test
-* [ ] Understand Result
-* [ ] Break It
-* [ ] Debug It
+* [/] Understand Result — **mapped, not a separate kind:** the result region of a `test` chunk (Vision §17: steps need not map one-to-one to screens)
+* [/] Break It — all ten labs
+* [/] Debug It — all ten labs
 * [ ] Challenge
-* [ ] Make It Your Own
+* [ ] Make It Your Own — **mapped, not a separate kind:** authored inside each lab's challenge. Not independently built
 * [ ] Recap
 
 Rules:
@@ -1441,7 +1441,7 @@ Rules:
 * [/] one meaningful chunk at a time — owner-confirmed 2026-09-16. `[x]` only once a chunk
   carrying 2–4 actions proves the rule against the content it was written to govern; two prose
   chunks are a weak test of it
-* [ ] roughly 2–4 related actions per Build chunk — no Build chunk exists
+* [/] roughly 2–4 related actions per Build chunk — enforced by test across all ten labs
 * [/] avoid one click per sentence — holds for the only two chunks that exist
 * [ ] autosave progress — deliberately not built; chunk position is component state, so leaving
   the lab and returning resets to Step 1. Trivial at two chunks; **persistence becomes required
@@ -2011,6 +2011,28 @@ Do not claim that AEP is used by an academy until it is actually adopted or acti
 
 ---
 
+# AEP V1 Fast-Track Completion — Status
+
+**Built 2026-09-16 → 2026-09-17 as one continuous program, by owner direction.** Log and evidence:
+`docs/superpowers/plans/2026-09-17-aep-v1-fast-track-completion.md`.
+
+The full learner journey now exists in code: Home → Labs → a lesson walking problem, concept, guided
+build, predict, test, break it, debug it, challenge and recap in **all ten labs** → progress and
+sequential unlocking → Notes → Kaz V1 → Capstone.
+
+* structurally verified and unit tested — lint 0, typecheck clean, 484 tests across 41 files,
+  production build 9 routes plus Proxy
+* QA — one consolidated pass returned FAIL (no lab could ever complete; self-check case binding
+  trusted the client). Both fixed with mutation-proven regression tests; targeted retest PASS
+* **not live verified** — the `aep_web_*` tables do not exist yet, so nothing persists and no lab
+  has actually completed. No browser pass has been run on this program
+* blocked on the owner — apply `database/aep_web_schema.sql`, then confirm RLS isolation with a
+  second learner
+
+In the checklist below, `[/]` means implemented and structurally verified, **not** live verified.
+
+---
+
 # Final AEP V1 Completion Checklist
 
 AEP V1 is considered complete when:
@@ -2052,22 +2074,22 @@ AEP V1 is considered complete when:
 
 ## Learning Experience
 
-* [ ] Home complete
-* [ ] Labs journey complete
-* [ ] Focus Mode lesson engine complete
-* [ ] Learner progress persistence complete
-* [ ] Sequential unlocking complete
-* [ ] Notes complete
+* [/] Home complete — contextual Kaz note and completion percentage added; not live verified since
+* [/] Labs journey complete — `locked` state and Capstone link added
+* [/] Focus Mode lesson engine complete — nine chunk kinds, all ten labs authored
+* [/] Learner progress persistence complete — implemented; **schema not yet applied**, so it has never run against a real table
+* [/] Sequential unlocking complete — structurally verified; blocked on the schema for live proof
+* [/] Notes complete — autosave, general + per-lab, Save to Notes from the recap
 * [ ] Interactive lesson visuals complete
 
 ## Test & Diagnostics
 
-* [ ] Inline Send Test complete
-* [ ] Expected-vs-actual complete
-* [ ] Checkpoint diagnostics complete
+* [ ] Inline Send Test complete — **not built.** Every lab uses a paste-output self-check instead; see the fast-track log
+* [/] Expected-vs-actual complete — self-check, 20 cases across ten labs
+* [/] Checkpoint diagnostics complete — stop-at-first-failure checkpoints
 * [ ] Per-lab webhook storage complete
 * [ ] Optional n8n connection complete and secure
-* [ ] Supabase in-lab guidance complete
+* [/] Supabase in-lab guidance complete — SQL setup is a build step inside Labs 07, 08 and 10
 
 ## Kaz
 
@@ -2075,9 +2097,9 @@ AEP V1 is considered complete when:
 * [ ] Knowledge retrieval complete
 * [ ] Learner/test context integration complete
 * [ ] Teaching modes complete
-* [ ] Challenge guardrails complete
+* [/] Challenge guardrails complete — progressive server-side hints, one per request; no model involved
 * [ ] English/Tagalog/Taglish complete
-* [ ] Alien-orb website experience complete
+* [/] Alien-orb website experience complete — orb states (intensity only), timing rules; no Ask Kaz chat
 
 ## Completion & Sharing
 

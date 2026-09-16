@@ -85,8 +85,43 @@ would record nothing real.
 
 ## Verification — last full run
 
-`615a75a`: lint 0 problems, typecheck clean, **455 tests across 40 files**,
+`3ccd857`: lint 0 problems, typecheck clean, **484 tests across 41 files**,
 production build **9 routes plus Proxy** (8 → 9 for `/capstone`).
+
+Client bundle checked against build output after the final fix: zero expected
+answers, hint text or case ids in `.next/static`, with a client-component
+literal present as a positive control.
+
+---
+
+## QA — one consolidated pass
+
+**First pass: FAIL.** Two real defects, both in work from this program:
+
+- **BLOCKER — no lab could ever be completed.** Every lab has a `predict` chunk
+  demanding `predicted` evidence, and nothing in the product wrote it.
+  `isLabComplete` was therefore false for every lab forever — a wiring bug, not
+  a persistence gap, so applying the schema would not have fixed it. 455 green
+  tests did not notice because none walked a real lab's milestones. Fixed: the
+  learner writes a prediction, and the reveal records `predicted`.
+- **HIGH — a self-check could credit a chunk with a different case.** The case
+  id came from a hidden form field checked only against the lab, so one
+  devtools edit let the easy guided case credit the Challenge. Fixed by removing
+  the field: the server uses the chunk's own case.
+- Two LOWs fixed: a stale "stub" docstring on Home; a hint error banner that
+  never cleared after a successful retry.
+
+Both regression tests were **proven by mutation**, not by being green:
+reintroducing each bug turns its guarding test red. QA reproduced the
+case-binding mutation independently.
+
+**Targeted retest: PASS.** Lab 02's full evidence chain traced to a reachable
+path for every milestone; no remaining client-controlled case selector; no
+regressions; no new defects.
+
+Accepted and not re-raised: `hint-actions` trusts the client's count of hints
+already seen (same category as self-awarded evidence); a disabled button
+carries no separate reason text (a pre-existing pattern).
 
 ---
 
