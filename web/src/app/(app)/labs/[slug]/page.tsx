@@ -1,14 +1,17 @@
 import { notFound } from "next/navigation";
+import { FocusMode } from "@/components/lesson/FocusMode";
 import { LABS } from "@/lib/course/catalog";
-import { deriveCourseState, getCourseProgress, isHandsOnAvailable } from "@/lib/course/progress";
+import { deriveCourseState, getCourseProgress, isLessonReadable } from "@/lib/course/progress";
+import { getLessonChunks } from "@/lib/lesson/chunks";
 
 export interface LabPageProps {
   params: Promise<{ slug: string }>;
 }
 
 /**
- * A lab overview, not a lesson — Focus Mode (Phase 12 Step 4) renders the
- * actual lesson later.
+ * A lab's page: the overview header, then either its lesson in Focus Mode, a
+ * prerequisite line, or an honest placeholder. Only Lab 01 has lesson content
+ * today; the other nine keep the placeholder rather than pretending otherwise.
  *
  * `slug` is untrusted route input. It is only ever compared against the
  * static `LABS` catalog below; it is never interpolated into a filesystem
@@ -40,11 +43,15 @@ export default async function LabPage({ params }: LabPageProps) {
   const stateLabel =
     status === "completed" ? "Completed" : isCurrent ? "Current" : "Preview";
 
-  // A lab is only ever shown as "future" when it is not the current lab, lacks
-  // hands-on access, and has an earlier lab to point to. Lab 01 has no
-  // prerequisite, so it can never claim one whatever its status.
-  const isFuture =
-    !isCurrent && !isHandsOnAvailable(status) && prerequisite !== null;
+  // A lab is only ever shown as "future" when its lesson is not readable and
+  // it has an earlier lab to point to. Lab 01 has no prerequisite, so it can
+  // never claim one whatever its status.
+  const readable = isLessonReadable(status, isCurrent);
+  const isFuture = !readable && prerequisite !== null;
+
+  // Only Lab 01 has lesson content today. Every other readable lab keeps the
+  // honest placeholder rather than pretending a lesson exists.
+  const chunks = readable ? getLessonChunks(lab.slug) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,6 +68,8 @@ export default async function LabPage({ params }: LabPageProps) {
         <p className="text-ink-soft">
           Complete Lab {prerequisite.number} — {prerequisite.title} first.
         </p>
+      ) : chunks ? (
+        <FocusMode chunks={chunks} />
       ) : (
         <p className="text-ink-soft">Lesson content arrives with Focus Mode.</p>
       )}

@@ -44,16 +44,33 @@ describe("<LabPage />", () => {
   });
 
   /*
-   * Lab 01 has no prerequisite, so it must not claim one — it falls through
-   * to the honest note instead.
+   * Lab 01 is the current lab, so its lesson is readable and it has content:
+   * the page hands off to Focus Mode. It has no prerequisite either, so it
+   * must never claim one.
    */
-  it("gives Lab 01 the honest note rather than an invented prerequisite", async () => {
+  it("renders Focus Mode for Lab 01 rather than a placeholder or a prerequisite", async () => {
     const lab01 = LABS[0];
 
     const ui = await LabPage({ params: Promise.resolve({ slug: lab01.slug }) });
     render(ui);
 
-    expect(screen.getByText("Lesson content arrives with Focus Mode.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "The problem" })).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+    expect(screen.queryByText("Lesson content arrives with Focus Mode.")).not.toBeInTheDocument();
     expect(screen.queryByText(/Complete Lab/)).not.toBeInTheDocument();
+  });
+
+  /*
+   * A future lab must not leak lesson content, whether or not one exists for
+   * it — the prerequisite branch is checked before content is even looked up.
+   */
+  it("shows no lesson content on a future lab", async () => {
+    const futureLab = LABS[1];
+
+    const ui = await LabPage({ params: Promise.resolve({ slug: futureLab.slug }) });
+    render(ui);
+
+    expect(screen.queryByRole("heading", { name: "The problem" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Step \d+ of \d+$/)).not.toBeInTheDocument();
   });
 });
