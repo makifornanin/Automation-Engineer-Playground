@@ -11,7 +11,12 @@ import type { ContentBlock, LessonChunk } from "./types";
  * is one intentional line here, and until it is added that lab must return
  * null so its page keeps the honest placeholder.
  */
-const AUTHORED = ["01-data-mapping-transformation", "02-conditions-routing"] as const;
+const AUTHORED = [
+  "01-data-mapping-transformation",
+  "02-conditions-routing",
+  "03-apis-webhooks",
+  "04-validation-normalization",
+] as const;
 
 /**
  * The arc every lab walks (CLAUDE.md's Learning Experience Rule).

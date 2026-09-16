@@ -16,7 +16,7 @@ export interface Checkpoint {
   id: string;
   /** Learner-facing and business-shaped: "Email cleaned", not "assert eq". */
   label: string;
-  /** Pure. No I/O, no network, no clock - a checkpoint must be replayable. */
+  /** Pure. No I/O, no network, no clock — a checkpoint must be replayable. */
   evaluate: (actual: JsonValue) => CheckpointVerdict;
 }
 
@@ -51,22 +51,39 @@ function asObject(value: JsonValue): Record<string, JsonValue> | null {
   return value as Record<string, JsonValue>;
 }
 
-/** Reads a field as a displayable scalar, treating absent as null. */
-function readScalar(value: JsonValue, key: string): string | null {
-  const object = asObject(value);
-  if (!object) return null;
-  const field = object[key];
-  if (field === undefined || field === null) return null;
-  if (typeof field === "object") return null;
-  return String(field);
-}
-
 function asArray(value: JsonValue): readonly JsonValue[] | null {
   return Array.isArray(value) ? value : null;
 }
 
 /**
- * A checkpoint asserting one field equals one value.
+ * Walks a dotted path, so a checkpoint can reach into a nested response.
+ *
+ * Several labs wrap their result: Lab 04 returns the normalised lead under
+ * `data`, and asking a learner to paste only the inner object instead would
+ * mean asking them to edit their own evidence before submitting it.
+ */
+function readPath(value: JsonValue, path: string): JsonValue | undefined {
+  let current: JsonValue | undefined = value;
+  for (const segment of path.split(".")) {
+    const object: Record<string, JsonValue> | null =
+      current === undefined ? null : asObject(current);
+    if (!object) return undefined;
+    current = object[segment];
+  }
+  return current;
+}
+
+/** Reads a path as a displayable scalar, treating absent or nested as null. */
+function readScalar(value: JsonValue, path: string): string | null {
+  const found = readPath(value, path);
+  if (found === undefined || found === null) return null;
+  if (typeof found === "object") return null;
+  return String(found);
+}
+
+/**
+ * A checkpoint asserting one field equals one value. `key` may be a dotted
+ * path such as "data.email".
  *
  * The failure text separates "absent" from "present but wrong", which for a
  * mapping lab is exactly the difference between forgetting a field and
@@ -94,9 +111,57 @@ export function expectField(
 }
 
 /**
+ * A checkpoint asserting a field exists and carries something.
+ *
+ * For values that are real but unpredictable — a timestamp, a generated id.
+ * Asserting the exact value would make the test a clock test.
+ */
+export function expectPresent(id: string, label: string, key: string): Checkpoint {
+  return {
+    id,
+    label,
+    evaluate: (actual) => {
+      const found = readScalar(actual, key);
+      if (found !== null && found.trim().length > 0) return { state: "passed" };
+      return { state: "failed", expected: key + " to carry a value", actual: key + " is empty" };
+    },
+  };
+}
+
+/**
+ * A checkpoint asserting a numeric field reaches at least some floor.
+ *
+ * Used where the exact number belongs to a system AEP does not control — Lab
+ * 05 paginates a public API whose record count can change. Pinning 208 would
+ * make a correct workflow fail the day the dataset moves, while "more than one
+ * page was fetched" is the thing the lab actually teaches and stays true.
+ */
+export function expectAtLeast(
+  id: string,
+  label: string,
+  key: string,
+  minimum: number,
+): Checkpoint {
+  return {
+    id,
+    label,
+    evaluate: (actual) => {
+      const found = readScalar(actual, key);
+      const value = found === null ? Number.NaN : Number(found);
+      if (Number.isFinite(value) && value >= minimum) return { state: "passed" };
+      return {
+        state: "failed",
+        expected: key + " of at least " + String(minimum),
+        actual: found === null ? key + " is missing" : key + ": " + JSON.stringify(found),
+      };
+    },
+  };
+}
+
+/**
  * A checkpoint asserting the output carries no leftover source fields.
  *
- * Catches "Include Other Input Fields" being left on - a mistake that produces
+ * Catches "Include Other Input Fields" being left on — a mistake that produces
  * a result which looks correct until something downstream reads the wrong one.
  */
 export function expectNoFields(
