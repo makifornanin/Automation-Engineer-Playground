@@ -46,7 +46,11 @@ export default async function HomePage() {
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Continue learning
         </h2>
-        <ContinueLearningCard lab={currentLab.lab} percent={percent} />
+        <ContinueLearningCard
+          lab={currentLab.lab}
+          percent={percent}
+          capstoneUnlocked={capstone.status !== "locked"}
+        />
       </section>
 
       <section className="flex flex-col gap-3">

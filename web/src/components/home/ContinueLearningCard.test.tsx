@@ -7,6 +7,21 @@ const LAB = LABS[0];
 
 describe("<ContinueLearningCard />", () => {
   /*
+   * Found in the live E2E pass: with every lab complete, Home still offered
+   * "Lab 10 · 100% complete — Continue", pointing a finished learner back at a
+   * finished lab while the Capstone waited unlocked.
+   */
+  it("points a learner who has finished every lab at the Capstone", () => {
+    render(<ContinueLearningCard lab={LABS[LABS.length - 1]} percent={100} capstoneUnlocked />);
+
+    expect(screen.getByRole("link", { name: /^Start the Capstone/ })).toHaveAttribute(
+      "href",
+      "/capstone",
+    );
+    expect(screen.queryByText(/100% complete/)).not.toBeInTheDocument();
+  });
+
+  /*
    * The destination is generic today — `labHref()` resolves every lab to
    * `/labs` — so the lab identity has to live in the accessible name or it
    * is not conveyed to assistive tech at all.

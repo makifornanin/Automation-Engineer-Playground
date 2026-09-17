@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { GlassSurface } from "@/components/ui/GlassSurface";
-import { LABS, labHref, type Lab } from "@/lib/course/catalog";
+import { CAPSTONE, LABS, labHref, type Lab } from "@/lib/course/catalog";
 
 export interface ContinueLearningCardProps {
   lab: Lab;
@@ -9,6 +9,11 @@ export interface ContinueLearningCardProps {
    * measure. Rendered only when above zero — see the component docstring.
    */
   percent?: number | null;
+  /**
+   * Every lab is complete. The one thing left to continue is the Capstone, so
+   * the card points there instead of back at a finished Lab 10.
+   */
+  capstoneUnlocked?: boolean;
 }
 
 /**
@@ -23,8 +28,28 @@ export interface ContinueLearningCardProps {
  * The link's visible text is short ("Continue"), so the accessible name
  * carries the lab number and title.
  */
-export function ContinueLearningCard({ lab, percent = null }: ContinueLearningCardProps) {
+export function ContinueLearningCard({
+  lab,
+  percent = null,
+  capstoneUnlocked = false,
+}: ContinueLearningCardProps) {
   const showPercent = percent !== null && percent > 0;
+
+  if (capstoneUnlocked) {
+    return (
+      <GlassSurface className="flex flex-col gap-3 p-5">
+        <p className="text-sm text-ink-muted">Capstone · all ten labs complete</p>
+        <p className="text-lg font-medium text-ink">{CAPSTONE.title}</p>
+        <Link
+          href="/capstone"
+          aria-label={`Start the Capstone — ${CAPSTONE.title}`}
+          className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
+        >
+          Start the Capstone
+        </Link>
+      </GlassSurface>
+    );
+  }
 
   return (
     <GlassSurface className="flex flex-col gap-3 p-5">
