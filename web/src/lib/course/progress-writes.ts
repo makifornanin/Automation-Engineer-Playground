@@ -83,6 +83,14 @@ async function labAccess(labSlug: string): Promise<LabAccess> {
 }
 
 /**
+ * Whether the learner's hands-on work in a lab is open. For server actions
+ * that serve hands-on content rather than write it, such as challenge hints.
+ */
+export async function hasHandsOnAccess(labSlug: string): Promise<boolean> {
+  return (await labAccess(labSlug)) === "hands-on";
+}
+
+/**
  * Marks a lab as started so its hands-on chunks unlock.
  *
  * This is what makes `in-progress` mean "the learner opened this lab" rather

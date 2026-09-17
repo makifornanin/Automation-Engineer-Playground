@@ -1,5 +1,6 @@
 "use server";
 
+import { hasHandsOnAccess } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { getSession } from "@/lib/session/get-session";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
@@ -30,9 +31,10 @@ export interface RevealedHint {
  * state is unavailable the hint is still served — being unable to save how
  * stuck someone is must not stop Kaz from helping them.
  *
- * A determined learner could ask for hint 3 directly. That is the same accepted
- * risk as self-awarded evidence: an invited learner skipping their own
- * thinking. What this prevents is the answer being sitting in the page.
+ * A determined learner could ask for hint 3 directly. That is accepted: an
+ * invited learner skipping their own thinking in a lab they have open. What
+ * this prevents is the answer sitting in the page, and any hint being served
+ * for a lab whose hands-on work is still locked.
  */
 export async function revealNextHint(
   labSlug: string,
@@ -45,6 +47,9 @@ export async function revealNextHint(
   // Only a real challenge chunk in this lab may ask for this lab's hints.
   const chunk = getLessonChunks(labSlug)?.find((entry) => entry.id === chunkId);
   if (!chunk || chunk.kind !== "challenge") return null;
+
+  // A challenge is hands-on content, so its hints stay behind the same lock.
+  if (!(await hasHandsOnAccess(labSlug))) return null;
 
   const hints = getChallengeHints(labSlug);
   if (alreadySeen >= hints.length) return null;
