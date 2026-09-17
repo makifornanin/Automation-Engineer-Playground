@@ -3,36 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId } from "react";
 import { runSelfCheck } from "@/lib/testing/self-check-action";
-import { IDLE_TEST_STATE, type CheckpointResult } from "@/lib/testing/types";
-
-const GLYPH: Record<CheckpointResult["state"], string> = {
-  passed: "✓",
-  failed: "✕",
-  skipped: "·",
-};
-
-const SPOKEN: Record<CheckpointResult["state"], string> = {
-  passed: "passed",
-  failed: "failed",
-  skipped: "not checked",
-};
+import { IDLE_TEST_STATE } from "@/lib/testing/types";
+import { CheckResultView } from "./CheckResultView";
 
 export interface SelfCheckPanelProps {
   labSlug: string;
   chunkId: string;
-  /** The business behaviour being proved, shown before any raw data. */
-  caseName: string;
+  /**
+   * The business behaviour being proved, shown before any raw data. Omitted
+   * when this panel is a fallback inside Send Test, which already shows it.
+   */
+  caseName?: string;
+  title?: string;
 }
 
 /**
- * The inline test experience for a lab AEP cannot call (Vision §23).
+ * The paste-the-output check (Vision §23), for labs AEP cannot call and as the
+ * fallback when Send Test cannot reach a learner's n8n.
  *
- * The learner runs their own workflow, pastes the node's output, and gets
+ * The learner runs their own workflow, pastes the output, and gets
  * checkpoint-level feedback rather than a bare pass/fail. Used by every lab,
  * so its own copy stays lab-agnostic: the chunk around it says which node to
- * copy from. Ordering follows
- * §23's rule: the business scenario first, then the interpretation, and raw
- * detail only on demand — "simple first, depth on demand".
+ * copy from.
  *
  * A `role="status"` live region is correct here, and is the opposite call from
  * the chunk stepper. There the result of pressing Next is that focus moves, so
@@ -44,9 +36,11 @@ export function SelfCheckPanel({
   labSlug,
   chunkId,
   caseName,
+  title = "Test it",
 }: SelfCheckPanelProps) {
   const [state, action, pending] = useActionState(runSelfCheck, IDLE_TEST_STATE);
   const router = useRouter();
+  const fieldId = useId();
 
   // A pass records evidence and may complete the lab. Refreshing the server
   // tree is what lets the recap and the Labs journey show the unlock now,
@@ -56,15 +50,12 @@ export function SelfCheckPanel({
       router.refresh();
     }
   }, [state, router]);
-  const fieldId = useId();
 
   return (
     <div className="flex flex-col gap-4 rounded-card border border-line bg-surface-sunken p-4">
       <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
-          Test it
-        </h3>
-        <p className="max-w-prose text-ink-soft">{caseName}</p>
+        <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">{title}</h3>
+        {caseName ? <p className="max-w-prose text-ink-soft">{caseName}</p> : null}
       </div>
 
       <form action={action} className="flex flex-col gap-3">
@@ -93,51 +84,8 @@ export function SelfCheckPanel({
       </form>
 
       <div role="status" className="flex flex-col gap-3">
-        {state.status === "error" ? (
-          <p className="text-sm text-ink-soft">{state.message}</p>
-        ) : null}
-
-        {state.status === "complete" ? (
-          <>
-            <p className="text-sm font-medium text-ink">
-              {state.result.passed
-                ? "All checks passed — your workflow did exactly what this case expects."
-                : "Not there yet. Here is where it first went wrong."}
-            </p>
-
-            <ul className="flex flex-col gap-1">
-              {state.result.checkpoints.map((checkpoint) => (
-                <li key={checkpoint.id} className="text-sm text-ink-soft">
-                  <span aria-hidden>{GLYPH[checkpoint.state]} </span>
-                  {checkpoint.label}
-                  <span className="sr-only">{`: ${SPOKEN[checkpoint.state]}`}</span>
-                </li>
-              ))}
-            </ul>
-
-            {/*
-              Expected and actual are shown only for the checkpoint that
-              failed. Printing them for passing checkpoints would hand the
-              learner the rest of the answer they have not reached yet.
-            */}
-            {state.result.firstFailure ? (
-              <dl className="flex flex-col gap-1 border-t border-line pt-3 text-sm">
-                <div className="flex gap-2">
-                  <dt className="font-medium text-ink">Expected</dt>
-                  <dd className="font-mono text-ink-soft">
-                    {state.result.firstFailure.expected}
-                  </dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="font-medium text-ink">Found</dt>
-                  <dd className="font-mono text-ink-soft">
-                    {state.result.firstFailure.actual}
-                  </dd>
-                </div>
-              </dl>
-            ) : null}
-          </>
-        ) : null}
+        {state.status === "error" ? <p className="text-sm text-ink-soft">{state.message}</p> : null}
+        {state.status === "complete" ? <CheckResultView result={state.result} /> : null}
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import {
 import { getCourseProgress } from "@/lib/course/progress-store";
 import { startLab } from "@/lib/course/progress-actions";
 import { getLessonChunks } from "@/lib/lesson/registry";
+import { getLabWebhookHost } from "@/lib/testing/webhook-store";
 
 export interface LabPageProps {
   params: Promise<{ slug: string }>;
@@ -70,6 +71,13 @@ export default async function LabPage({ params }: LabPageProps) {
   // reach the browser at all, not merely render as locked.
   const chunks = allChunks ? visibleChunks(allChunks, effectiveStatus) : null;
 
+  // Only labs with a Send Test read the saved webhook (Vision §25: webhook
+  // configuration exists only where a lab needs it). Hostname only.
+  const usesSendTest = (chunks ?? []).some(
+    (chunk) => chunk.kind === "test" && chunk.mode === "send-test",
+  );
+  const webhookHost = usesSendTest ? await getLabWebhookHost(lab.slug) : null;
+
   // Completion is decided here, from earned evidence against the lab's full
   // content — never by the client. Lab 10's "next" is the Capstone.
   const nextLab = LABS[index + 1] ?? null;
@@ -109,6 +117,7 @@ export default async function LabPage({ params }: LabPageProps) {
           initialChunkId={progress.labs[lab.slug]?.currentChunkId ?? null}
           labSlug={lab.slug}
           completion={completion}
+          webhookHost={webhookHost}
         />
       ) : (
         <p className="text-ink-soft">This lesson is not available yet.</p>

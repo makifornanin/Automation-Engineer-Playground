@@ -226,13 +226,15 @@ export const LAB_10_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-10-restricted-held",
+    payload: { request_id: "req_guard_restricted_001", message: "Please cancel my account today." },
+    expected: "Held as pending approval, with a human required — not executed.",
     caseName: "A confident request to cancel an account waits for a human instead of executing",
     content: [
       {
         type: "prose",
-        text: "Send labs/10-ai-guardrails-human-in-the-loop/sample-data/restricted-request.json and paste the response below. Note the new pending row's id in Supabase — you will need it.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers. Each send creates a pending row in approval_requests — note its id in Supabase, you will need it for the challenge.",
       },
     ],
   },

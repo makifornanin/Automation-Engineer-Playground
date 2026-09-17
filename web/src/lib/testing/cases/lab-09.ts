@@ -17,7 +17,7 @@ export const LAB_09_SALES_CASE: TestCase = {
   id: "lab-09-sales-routed",
   labSlug: "09-structured-ai-output",
   name: "A pricing question is classified as sales and routed only after validation",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("success", "The classification was accepted", "success", "true"),
     expectField("classification", "Classified as sales", "classification", "sales"),

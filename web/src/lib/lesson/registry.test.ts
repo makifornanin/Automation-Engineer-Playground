@@ -290,3 +290,42 @@ describe.each(AUTHORED)("every milestone in %s is reachable", (slug) => {
     expect(isLabComplete(chunks, earned)).toBe(true);
   });
 });
+
+/*
+ * Send Test is only real where a lab's workflow starts with a Webhook node.
+ * Labs 01, 02, 05 and 06 run on a Manual Trigger, so a send-test chunk there
+ * would give the learner a button that can never work.
+ */
+describe("Send Test placement", () => {
+  const WEBHOOK_LABS = new Set([
+    "03-apis-webhooks",
+    "04-validation-normalization",
+    "07-idempotency-duplicate-protection",
+    "08-dead-letter-queue-failure-recovery",
+    "09-structured-ai-output",
+    "10-ai-guardrails-human-in-the-loop",
+  ]);
+
+  it("gives every webhook lab a Send Test, and no other lab one", () => {
+    for (const slug of AUTHORED) {
+      const sendTests = chunksFor(slug).filter(
+        (chunk) => chunk.kind === "test" && chunk.mode === "send-test",
+      );
+      expect(sendTests.length, slug).toBe(WEBHOOK_LABS.has(slug) ? 1 : 0);
+    }
+  });
+
+  it("gives every Send Test a payload, an expected outcome and a matching case", async () => {
+    const { getTestCase } = await import("@/lib/testing/cases");
+    for (const slug of AUTHORED) {
+      for (const chunk of chunksFor(slug)) {
+        if (chunk.kind !== "test" || chunk.mode !== "send-test") continue;
+        expect(chunk.payload, slug).toBeDefined();
+        expect(chunk.expected?.trim(), slug).toBeTruthy();
+        const testCase = getTestCase(chunk.testCaseId);
+        expect(testCase?.labSlug).toBe(slug);
+        expect(testCase?.mode).toBe("send-test");
+      }
+    }
+  });
+});

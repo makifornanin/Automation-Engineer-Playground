@@ -16,7 +16,7 @@ export const LAB_07_DUPLICATE_CASE: TestCase = {
   id: "lab-07-duplicate-ignored",
   labSlug: "07-idempotency-duplicate-protection",
   name: "The same event delivered twice performs its business action only once",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("success", "The duplicate is handled as success, not an error", "success", "true"),
     expectField("duplicate", "It was recognised as a duplicate", "duplicate", "true"),

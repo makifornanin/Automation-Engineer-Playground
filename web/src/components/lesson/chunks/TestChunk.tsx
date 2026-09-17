@@ -1,32 +1,41 @@
 import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
+import { SendTestPanel } from "@/components/testing/SendTestPanel";
 import type { TestChunk as TestChunkData } from "@/lib/lesson/types";
 import { ContentBlocks } from "../blocks/ContentBlocks";
 
 /**
  * A test chunk: the business scenario, then the check itself.
  *
- * Every lab currently uses `self-check`: the learner runs their own workflow
- * and pastes the result. That is the only option for Labs 01, 02, 05 and 06,
- * which run on a Manual Trigger with no webhook. `send-test` — AEP posting to
- * the learner's own webhook — needs the URL stored and validated server-side
- * first, and is not built; no lab content uses it, so the branch below is a
- * guard rather than a feature.
+ * `send-test` is for the labs whose workflow starts with a Webhook node —
+ * 03, 04, 07, 08, 09 and 10 — where AEP posts the lab's sample request to the
+ * learner's own n8n and judges the answer. `self-check` is for Labs 01, 02, 05
+ * and 06, which run on a Manual Trigger and have nothing AEP could call, so
+ * the learner pastes the output instead.
  */
-export function TestChunk({ chunk, labSlug }: { chunk: TestChunkData; labSlug: string }) {
+export function TestChunk({
+  chunk,
+  labSlug,
+  webhookHost,
+}: {
+  chunk: TestChunkData;
+  labSlug: string;
+  webhookHost: string | null;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <ContentBlocks blocks={chunk.content} />
 
-      {chunk.mode === "self-check" ? (
-        <SelfCheckPanel
+      {chunk.mode === "send-test" && chunk.payload !== undefined ? (
+        <SendTestPanel
           labSlug={labSlug}
           chunkId={chunk.id}
           caseName={chunk.caseName}
+          expected={chunk.expected}
+          payload={chunk.payload}
+          webhookHost={webhookHost}
         />
       ) : (
-        <p className="text-sm text-ink-muted">
-          This check is not available yet.
-        </p>
+        <SelfCheckPanel labSlug={labSlug} chunkId={chunk.id} caseName={chunk.caseName} />
       )}
     </div>
   );

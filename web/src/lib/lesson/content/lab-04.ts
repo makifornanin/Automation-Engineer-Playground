@@ -189,13 +189,15 @@ export const LAB_04_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-04-lead-accepted",
+    payload: { name: "   Dana Reyes   ", email: "  DANA.REYES@EXAMPLE.COM ", phone: "0917 555 0142", country: " ph ", preferred_contact_date: "08/09/2026" },
+    expected: "HTTP 200 and Lead accepted, with every field cleaned into one consistent format.",
     caseName: "A messy but valid lead is cleaned up and accepted",
     content: [
       {
         type: "prose",
-        text: "Send the valid lead from the lab sample data and paste the whole response below — the envelope as well as the data.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers. This is the messy-but-valid lead below.",
       },
       {
         type: "code",

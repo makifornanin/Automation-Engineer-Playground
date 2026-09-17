@@ -13,7 +13,7 @@ export const LAB_08_QUEUED_CASE: TestCase = {
   id: "lab-08-queued-for-recovery",
   labSlug: "08-dead-letter-queue-failure-recovery",
   name: "An event that fails permanently is preserved for recovery instead of being lost",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("success", "Processing honestly reports failure", "success", "false"),
     expectField("queued", "But the event was queued for recovery", "queued_for_recovery", "true"),

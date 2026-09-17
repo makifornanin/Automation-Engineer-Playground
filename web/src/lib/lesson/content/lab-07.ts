@@ -245,13 +245,16 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-07-duplicate-ignored",
+    payload: { event_id: "evt_504", event_type: "lead.created", data: { lead_id: "lead_104", name: "New Event", email: "new@example.com" } },
+    expected: "The second delivery comes back as a duplicate, deliberately ignored.",
+    deliveries: 2,
     caseName: "The same event delivered twice performs its business action only once",
     content: [
       {
         type: "prose",
-        text: "Send labs/07-idempotency-duplicate-protection/sample-data/new-event.json twice. Paste the response to the SECOND delivery below — the first proves nothing, because it succeeds whether protection exists or not.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers. AEP sends the same event twice and judges the second answer — the first proves nothing, because it succeeds whether protection exists or not.",
       },
     ],
   },

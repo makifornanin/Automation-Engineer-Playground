@@ -222,13 +222,15 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-09-sales-routed",
+    payload: { request_id: "req_ai_001", message: "Hi, I'm interested in your service and would like to know your pricing." },
+    expected: "Classified as sales and routed to the sales team, only after validation.",
     caseName: "A pricing question is classified as sales and routed only after validation",
     content: [
       {
         type: "prose",
-        text: "Send labs/09-structured-ai-output/sample-data/sales-inquiry.json and paste the response below.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers. Gemini runs inside your workflow, so allow it a few seconds.",
       },
     ],
   },

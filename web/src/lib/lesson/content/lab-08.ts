@@ -217,13 +217,15 @@ export const LAB_08_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-08-queued-for-recovery",
+    payload: { event_id: "evt_dlq_001", event_type: "lead.sync", scenario: "permanent_failure", max_attempts: 3, data: { lead_id: "lead_301", name: "DLQ Test Lead", email: "dlq@example.com" } },
+    expected: "success is false, but the event is queued for recovery after all 3 attempts — not lost.",
     caseName: "An event that fails permanently is preserved for recovery instead of being lost",
     content: [
       {
         type: "prose",
-        text: "Send labs/08-dead-letter-queue-failure-recovery/sample-data/permanent-failure-event.json and paste the response below.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers. This event fails on every attempt, by design.",
       },
     ],
   },

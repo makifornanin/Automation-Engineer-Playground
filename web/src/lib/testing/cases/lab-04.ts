@@ -17,7 +17,7 @@ export const LAB_04_SUCCESS_CASE: TestCase = {
   id: "lab-04-lead-accepted",
   labSlug: "04-validation-normalization",
   name: "A messy but valid lead is cleaned up and accepted",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("accepted", "The lead was accepted", "success", "true"),
     expectField("name", "Name trimmed", "data.name", "Dana Reyes"),

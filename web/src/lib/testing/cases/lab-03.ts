@@ -20,7 +20,7 @@ export const LAB_03_SUCCESS_CASE: TestCase = {
   id: "lab-03-customer-found",
   labSlug: "03-apis-webhooks",
   name: "A known customer is looked up in the external API and returned to the caller",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("success", "The workflow reports success", "success", "true"),
     expectField(

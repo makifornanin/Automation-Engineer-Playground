@@ -30,6 +30,8 @@ export interface FocusModeProps {
   /** Where this learner left off, if anywhere. */
   initialChunkId?: string | null;
   completion?: LabCompletion;
+  /** Hostname of this lab's saved webhook, for Send Test. Null when none. */
+  webhookHost?: string | null;
 }
 
 /** The recap's prose, as plain text for the notebook. */
@@ -105,10 +107,12 @@ function ChunkBody({
   chunk,
   labSlug,
   completion,
+  webhookHost,
 }: {
   chunk: LessonChunk;
   labSlug: string;
   completion?: LabCompletion;
+  webhookHost: string | null;
 }) {
   switch (chunk.kind) {
     case "problem":
@@ -145,7 +149,7 @@ function ChunkBody({
       return <PredictChunk chunk={chunk} labSlug={labSlug} />;
 
     case "test":
-      return <TestChunk chunk={chunk} labSlug={labSlug} />;
+      return <TestChunk chunk={chunk} labSlug={labSlug} webhookHost={webhookHost} />;
 
     case "challenge":
       return <ChallengeChunk chunk={chunk} labSlug={labSlug} />;
@@ -178,6 +182,7 @@ export function FocusMode({
   labSlug,
   initialChunkId = null,
   completion,
+  webhookHost = null,
 }: FocusModeProps) {
   // Resume where the learner left off. An unknown id — content reordered since
   // they were last here — falls back to the start rather than to nothing.
@@ -257,7 +262,12 @@ export function FocusMode({
         </div>
       ) : null}
 
-      <ChunkBody chunk={chunk} labSlug={labSlug} completion={completion} />
+      <ChunkBody
+        chunk={chunk}
+        labSlug={labSlug}
+        completion={completion}
+        webhookHost={webhookHost}
+      />
 
       <div className="flex flex-wrap gap-4 pt-2">
         <button

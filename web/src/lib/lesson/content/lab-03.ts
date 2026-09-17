@@ -209,13 +209,15 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
     kind: "test",
     id: "success-test",
     title: "Prove it",
-    mode: "self-check",
+    mode: "send-test",
     testCaseId: "lab-03-customer-found",
+    payload: { user_id: 5, name: "Alex Rivera", email: "alex@example.com", company: "Northstar Commerce", interest: "Automation Services", source: "website" },
+    expected: "success is true, with the real name and email of customer 5 — not the text of an expression.",
     caseName: "A known customer is looked up in the external API and returned to the caller",
     content: [
       {
         type: "prose",
-        text: "Send user_id 5 and paste the response your workflow returned — the body the caller received, not the HTTP Request node output.",
+        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers.",
       },
     ],
   },

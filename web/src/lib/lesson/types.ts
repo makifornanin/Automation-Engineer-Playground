@@ -149,6 +149,18 @@ export interface TestChunk extends LessonChunkBase {
   mode: "send-test" | "self-check";
   /** Present only for `send-test`; the payload AEP posts to the learner. */
   payload?: JsonValue;
+  /**
+   * The business outcome that counts as a pass, in plain words. This is not a
+   * predicate and reveals no expected values — those stay in the server-only
+   * case — it is what the learner is trying to make happen.
+   */
+  expected?: string;
+  /**
+   * How many times Send Test delivers the payload; the last response is the
+   * one judged. Lab 07 needs two, because only a repeat proves duplicate
+   * protection. Capped server-side.
+   */
+  deliveries?: number;
 }
 
 /**

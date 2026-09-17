@@ -21,7 +21,7 @@ export const LAB_10_HELD_CASE: TestCase = {
   id: "lab-10-restricted-held",
   labSlug: "10-ai-guardrails-human-in-the-loop",
   name: "A confident request to cancel an account waits for a human instead of executing",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("success", "Holding it counts as the system working", "success", "true"),
     expectField("status", "It is pending approval, not executed", "status", "pending_approval"),
