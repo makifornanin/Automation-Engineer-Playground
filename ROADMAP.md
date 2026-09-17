@@ -1519,10 +1519,10 @@ Make AEP the normal learner-facing test console so the learner can focus on AEP 
 
 ## Step 1 — Per-Lab Test Configuration
 
-* [ ] Identify labs that require webhook/API testing
-* [ ] Save webhook URL per learner + lab
-* [ ] Allow edit/reconnect
-* [ ] Show test setup only in labs that need it
+* [/] Identify labs that require webhook/API testing
+* [/] Save webhook URL per learner + lab
+* [/] Allow edit/reconnect
+* [/] Show test setup only in labs that need it
 
 ## Step 2 — AEP Backend Test Mediation
 
@@ -1544,39 +1544,39 @@ Website
 
 Build:
 
-* [ ] server-side test endpoint/action
-* [ ] safe URL/input validation
-* [ ] timeout handling
-* [ ] connection-error handling
-* [ ] response-size/sanitization rules
-* [ ] no learner secret leakage
+* [/] server-side test endpoint/action
+* [/] safe URL/input validation
+* [/] timeout handling
+* [/] connection-error handling
+* [/] response-size/sanitization rules
+* [/] no learner secret leakage
 
 ## Step 3 — Test Cases
 
 For applicable labs:
 
-* [ ] predefined business test case
-* [ ] payload preview
-* [ ] Send Test
-* [ ] Try Again
-* [ ] expected result
-* [ ] actual result
-* [ ] meaningful checkpoint evaluation
+* [/] predefined business test case
+* [/] payload preview
+* [/] Send Test
+* [/] Try Again
+* [/] expected result
+* [/] actual result
+* [/] meaningful checkpoint evaluation
 
 ## Step 4 — Diagnostics UI
 
 Default learner view:
 
-* [ ] simple checkpoint statuses
-* [ ] first likely failure area
-* [ ] expected vs actual
+* [/] simple checkpoint statuses
+* [/] first likely failure area
+* [/] expected vs actual
 * [ ] Ask Kaz action
 
 Technical details on demand:
 
-* [ ] raw request
-* [ ] raw response
-* [ ] checkpoint data
+* [/] raw request
+* [/] raw response
+* [/] checkpoint data
 * [ ] execution ID
 
 ## Step 5 — Optional n8n API Connection
@@ -2018,16 +2018,21 @@ Do not claim that AEP is used by an academy until it is actually adopted or acti
 
 The full learner journey now exists in code: Home → Labs → a lesson walking problem, concept, guided
 build, predict, test, break it, debug it, challenge and recap in **all ten labs** → progress and
-sequential unlocking → Notes → Kaz V1 → Capstone.
+sequential unlocking → Notes → Kaz V1 → Capstone. The six webhook labs test through a real Send
+Test to the learner's own n8n.
 
-* structurally verified and unit tested — lint 0, typecheck clean, 484 tests across 41 files,
-  production build 9 routes plus Proxy
-* QA — one consolidated pass returned FAIL (no lab could ever complete; self-check case binding
-  trusted the client). Both fixed with mutation-proven regression tests; targeted retest PASS
+* structurally verified and unit tested — final `npm run verify` exit 0: lint 0, typecheck clean,
+  606 tests across 48 files, production build 9 routes plus Proxy
+* QA — consolidated pass FAIL (no lab could ever complete; self-check case binding trusted the
+  client), fixed, retest PASS. Send Test pass FAIL (a browser-callable action could award `verified`
+  evidence and unlock any lab), fixed behind `server-only`, retest PASS WITH FINDINGS; its MEDIUM
+  (challenge hints ignored the lock) fixed. Integration review of Send Test PASS WITH FINDINGS; its
+  MEDIUM (IPv6 6to4/Teredo) fixed. All regression tests mutation-proven
 * **not live verified** — the `aep_web_*` tables do not exist yet, so nothing persists and no lab
-  has actually completed. No browser pass has been run on this program
-* blocked on the owner — apply `database/aep_web_schema.sql`, then confirm RLS isolation with a
-  second learner
+  has actually completed; no request has reached a real n8n. Signed-out routes and `/sign-in` were
+  smoke-tested on the production build; no signed-in browser pass has been run
+* blocked on the owner — apply `database/aep_web_schema.sql`, confirm RLS isolation with a second
+  learner, exercise Send Test once against an activated workflow, then one browser pass
 
 In the checklist below, `[/]` means implemented and structurally verified, **not** live verified.
 
@@ -2084,10 +2089,10 @@ AEP V1 is considered complete when:
 
 ## Test & Diagnostics
 
-* [ ] Inline Send Test complete — **not built.** Every lab uses a paste-output self-check instead; see the fast-track log
-* [/] Expected-vs-actual complete — self-check, 20 cases across ten labs
-* [/] Checkpoint diagnostics complete — stop-at-first-failure checkpoints
-* [ ] Per-lab webhook storage complete
+* [/] Inline Send Test complete — the six webhook labs (03, 04, 07, 08, 09, 10), with paste-the-response fallback; Manual Trigger labs and challenges stay paste-only. No request has reached a real n8n yet
+* [/] Expected-vs-actual complete — 20 cases across ten labs, via Send Test or paste
+* [/] Checkpoint diagnostics complete — stop-at-first-failure checkpoints, plus a hint per Send Test failure
+* [/] Per-lab webhook storage complete — `aep_web_lab_webhooks`, owner-scoped RLS; **schema not yet applied**
 * [ ] Optional n8n connection complete and secure
 * [/] Supabase in-lab guidance complete — SQL setup is a build step inside Labs 07, 08 and 10
 

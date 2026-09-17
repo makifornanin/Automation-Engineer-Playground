@@ -32,6 +32,8 @@ against its fail-safe fallback.
 | Kaz V1 — progressive challenge hints, timing rules, honest page | unit tested | `96bfc18` |
 | Capstone page, Save to Notes from the recap, visible unlock | unit tested | `1a04e6c` |
 | Lab-agnostic self-check copy; stale copy removed | unit tested | `615a75a` |
+| Send Test — Labs 03, 04, 07, 08, 09, 10 call the learner's own webhook; SSRF controls; paste fallback | unit tested, **not live verified** | `cd85c3a` → `17c5a08` |
+| Progress writes behind `server-only`; `verified` and the lock unreachable from a browser | unit tested, mutation-proven | `b6a0cdd` |
 
 All ten labs walk: problem → concept → guided build → predict → test →
 break it → debug it → challenge → recap.
@@ -40,12 +42,29 @@ break it → debug it → challenge → recap.
 
 ## Decisions that shape the product
 
-**Every lab is self-check, not Send Test.** Labs 01, 02, 05 and 06 run on a
-Manual Trigger and expose no webhook, so AEP has nothing to call. The learner
-runs their own workflow and pastes the output; the server evaluates it against a
-`server-only` case registry. Send Test (AEP posting to the learner's webhook)
-needs a stored, SSRF-validated URL and is not built. The evidence is the same
-either way: the output the learner's own workflow produced.
+**Send Test where a webhook exists; paste-the-output where it does not.** Labs
+03, 04, 07, 08, 09 and 10 start with a Webhook node, so their success test is a
+real Send Test: the learner saves the Production URL once per lab, AEP's server
+posts the lab's sample request, and the response is judged against a
+`server-only` case. Labs 01, 02, 05 and 06 run on a Manual Trigger and expose no
+webhook, so the learner pastes their output instead. Paste-the-response also
+stays under every Send Test: a deployed AEP cannot reach n8n on a learner's own
+machine, and those learners must still finish. Challenges remain paste-only.
+Either way the evidence is the output the learner's own workflow produced.
+
+**Send Test is the one learner-chosen outbound request, so it is fenced.** The
+browser names a lab and a chunk and nothing else — the URL comes from the
+learner's own saved row and is re-checked at send time; the payload, case and
+evidence all come from the server. Controls: https on the default port, no
+credentials, no IP literals or internal names; DNS resolved at send time and
+refused if *any* address is non-public (IPv6 by allow-list); redirects never
+followed; 15s timeout; 64KB response cap; two outbound headers; a 2s per-learner,
+per-lab throttle. The redirect and private-address controls are proven by
+mutation. Accepted residual: DNS rebinding between resolution and connection,
+and an in-memory throttle that is per warm instance on serverless.
+
+**Lab 07 sends the same event twice and judges the second answer.** Only a
+repeat proves duplicate protection.
 
 **Answers never reach the browser.** Expected values, checkpoint predicates and
 hint text live in `server-only` modules. Proven against build output, not
@@ -53,9 +72,15 @@ assumed: a grep of `.next/static` finds three positive-control literals from
 client components and zero of six server-only strings, while those same answers
 exist in `.next/server`.
 
-**Evidence is derived, never accepted.** Server actions name a lab and a chunk;
-the server derives the evidence value from the chunk's kind. No action takes an
-evidence value, an expected output or a checkpoint from the client.
+**Evidence is derived, never accepted — and `verified` is never reachable from a
+browser.** Server actions name a lab and a chunk; the server derives the
+evidence value from the chunk's kind. No action takes an evidence value, an
+expected output or a checkpoint from the client. Every export of a `"use
+server"` file is a browser-callable endpoint, so progress writers live behind
+`server-only`: the browser can record position and self-reported steps, and
+only a passing self-check or Send Test writes `verified`. Every write refuses a
+lab the learner could not have opened, because the lock is derived from those
+same rows.
 
 **Test cases were checked against the real workflows, not the READMEs.** Every
 asserted field was verified against the lab's exported n8n JSON. That caught
@@ -85,12 +110,25 @@ would record nothing real.
 
 ## Verification — last full run
 
-`3ccd857`: lint 0 problems, typecheck clean, **484 tests across 41 files**,
-production build **9 routes plus Proxy** (8 → 9 for `/capstone`).
+**Final `npm run verify` at `9756359`: exit 0.** Lint 0 problems, typecheck
+clean, **606 tests across 48 files**, production build **9 routes plus Proxy**
+(`/capstone` added by this program; Send Test added no route).
 
-Client bundle checked against build output after the final fix: zero expected
-answers, hint text or case ids in `.next/static`, with a client-component
-literal present as a positive control.
+Client bundle, grepped in `.next/static` against the same build: zero hits for
+expected answers, hint text, the Send Test user agent and n8n error matching,
+the evidence table name and the server-only writer names. All of them are
+present in `.next/server`, and three client-component literals are present in
+`.next/static` as positive controls.
+
+Signed-out smoke test against `next start` on that build: every app route,
+including `/capstone`, `/admin` and a lab page, and a POST to a lab page, answers
+307 to `/sign-in`. `/sign-in` itself answers 200, and the server logged no
+errors. `/sign-in` screenshotted at 1280px and a true 375px (Playwright's
+headless shell; desktop Chrome enforces a wider minimum window) in forced light
+and forced dark: the card fits with a gutter, and both themes render.
+
+**Not run:** any signed-in page in a browser. That needs an invited account's
+code, which this program does not hold. It is the owner's final pass.
 
 ---
 
@@ -123,6 +161,59 @@ Accepted and not re-raised: `hint-actions` trusts the client's count of hints
 already seen (same category as self-awarded evidence); a disabled button
 carries no separate reason text (a pre-existing pattern).
 
+## Integration review — Send Test
+
+**PASS WITH FINDINGS**, no blockers. Fixed in `17c5a08`, both code fixes proven
+by mutation:
+
+- **MEDIUM — 6to4 and Teredo passed the IPv6 allow-list.** Both sit inside
+  2000::/3 but tunnel to an IPv4 address that may be private. Refused now, and
+  addresses are expanded to eight hextets first, since `2001::1` (Teredo) has no
+  written second group to compare.
+- **LOW** — a body that stalled after the headers was reported as unreachable,
+  not as a timeout. **LOW** — a stale "stays a self-check" docstring.
+
+Verified by the reviewer: Node's fetch returns the real 302 under
+`redirect: "manual"` (tested against a local server, not assumed); the saved URL
+is re-guarded at send time; the Lab 03, 04, 07 and 08 payloads and checkpoints
+match their exported workflows field by field, including Lab 07's duplicate
+response; RLS gives no cross-learner path to a saved URL.
+
+Not verifiable offline: the values Gemini produces in Labs 09 and 10. Field
+names and guardrail logic match the workflows.
+
+## QA — Send Test pass
+
+**FAIL.** Send Test itself held: order, disabled states, hints, hostname-only,
+trust boundary, completability and accessibility all confirmed. The failure was
+older and more serious, and the earlier consolidated pass missed it:
+
+- **BLOCKER — any learner could award themselves `verified` and unlock any
+  lab.** `recordChunkEvidence` sat in a `"use server"` module imported by client
+  components, so it was a browser-callable endpoint. Naming a test or challenge
+  chunk wrote `verified` with no test run. Wider than reported: any progress
+  row marks a lab started, and started beats locked, so even an `acknowledged`
+  or position write on a locked lab opened its hands-on chunks.
+
+Fixed in `b6a0cdd` by removing reach, not validating input. Every progress write
+moved behind `server-only`; the two browser-callable actions can record only
+position and the self-reported tiers; `verified` is written only after a passing
+self-check or Send Test; every write refuses a lab the learner could not have
+opened. Proven by mutation (three controls), and the new action tests fail
+against the original file. The earlier claim that "the UI path cannot be used to
+fabricate evidence" was false until this commit.
+
+Still accepted: a determined learner can POST to PostgREST with their own JWT.
+Closing that needs a privileged write key AEP does not hold.
+
+**Retest: PASS WITH FINDINGS.** QA reproduced the original attack against the
+new code with no write, mutation-checked the lock independently, and enumerated
+every export of every `"use server"` module: none can write evidence or create a
+row for a locked lab. The legitimate journey was traced with no write refused.
+One MEDIUM remained, and it predated this program's fix: `revealNextHint`
+served challenge hints for a locked lab. Fixed in `9756359`; the new test fails
+with the check removed.
+
 ---
 
 ## Owner actions required
@@ -132,6 +223,40 @@ carries no separate reason text (a pre-existing pattern).
 2. **Confirm RLS isolation with a second signed-in learner** who must see none
    of the first learner's rows. This cannot be inferred from the policy text and
    is the one check that proves RLS works.
+3. **Exercise Send Test once against a real n8n.** Import and **activate** one
+   webhook lab (Lab 03 is simplest), save its *Production* URL in the lesson, and
+   press Send Test. No request has yet reached a real n8n instance.
+4. **One signed-in browser pass**, after 1–3. Nothing signed-in has been seen in
+   a browser. See the checklist below.
+
+## Owner's final browser pass — one pass only
+
+Desktop first, then the same flow at 375px width. Toggle light/dark once.
+
+1. **Sign in** with the invited email and 6-digit code → Home shows Continue
+   Learning at Lab 01 and a Kaz note. No horizontal scroll at 375px.
+2. **Labs** → Lab 01 is open; Lab 02 onwards shows the locked glyph, and opening
+   one shows its overview and prerequisite but no lesson; Capstone is locked.
+3. **Lab 01, keyboard only** — Tab to Next and walk the lesson. Focus lands on
+   each new chunk's heading. Guided Build shows why → actions → why we're doing
+   this. Predict needs written text before Reveal.
+4. **Lab 01 test** — paste deliberately wrong JSON, then correct output → first
+   failure explained, then Pass. Challenge: take one Kaz hint, then a second.
+5. **Recap** → Save to Notes, then the unlock line → Lab 02 is now open.
+   **Reload** — Lab 01 stays completed and Lab 02 resumes where you left it.
+6. **Notes** — the saved recap is there; type a general note, wait, reload → it
+   persisted.
+7. **Send Test, Lab 03** (after Labs 01–02, or with a second account seeded) —
+   save the *Production* URL of an activated workflow → only the hostname shows →
+   Send Test → Pass. Deactivate the workflow → Send Test → the "not active" hint.
+   Paste `https://localhost/x` as the URL → refused with a plain message.
+8. **Second learner** — sign in as another invited account → none of the first
+   learner's progress, notes or webhook appear.
+9. **Kaz page and Capstone** — honest copy, no chat box; Capstone opens only when
+   all ten labs are complete.
+10. **Sign out** → any app URL returns you to sign-in.
+
+Report any BLOCKER or HIGH in one list. Cosmetic items can batch into post-V1.
 
 ## Owner notes — README / workflow mismatches
 
@@ -150,7 +275,8 @@ Recorded, not fixed: lab content is outside this program's scope.
 
 ## Deferred — post-V1
 
-- Send Test against a learner webhook, with SSRF validation and URL storage
+- Send Test for challenges (paste-only today); connection pinning to close DNS
+  rebinding; a shared throttle store if AEP runs on many instances
 - Free-form Ask Kaz — blocked on a model credential AEP does not hold
 - Kaz RAG and memory; Tagalog and Taglish
 - Server-side `/admin` role enforcement and the invite UI (manual Supabase user
