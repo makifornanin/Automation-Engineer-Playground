@@ -146,9 +146,21 @@ export function SendTestPanel({
       <form action={testAction}>
         <input type="hidden" name="labSlug" value={labSlug} />
         <input type="hidden" name="chunkId" value={chunkId} />
-        <button type="submit" disabled={host === null || sending} className={PRIMARY_BUTTON}>
-          {sending ? "Sending…" : "Send Test"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={host === null || sending}
+            aria-describedby={host === null ? `${fieldId}-needs-webhook` : undefined}
+            className={PRIMARY_BUTTON}
+          >
+            {sending ? "Sending…" : "Send Test"}
+          </button>
+          {host === null ? (
+            <span id={`${fieldId}-needs-webhook`} className="text-sm text-ink-muted">
+              Save your webhook URL first.
+            </span>
+          ) : null}
+        </div>
       </form>
 
       <div role="status" className="flex flex-col gap-3">

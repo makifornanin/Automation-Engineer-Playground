@@ -85,14 +85,14 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
         code: {
           language: "javascript",
           code: [
-            "return [",
+          "return [",
             '  { json: { name: "Alex Rivera", lead_temperature: "Hot",',
             "            budget: 5000, contacted_before: false } },",
             '  { json: { name: "Jamie Lee",  lead_temperature: "Warm",',
             "            budget: 2500, contacted_before: false } },",
             '  { json: { name: "Taylor Kim", lead_temperature: "Cold",',
             "            budget: 800,  contacted_before: true } }",
-            "];",
+          "];",
           ].join("\n"),
         },
         expect: "Three separate items, not one item containing three leads.",
@@ -132,21 +132,23 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
         text: "Add an IF node after Sample Leads and rename it Check Priority Sales.",
       },
       {
-        text: "Add three conditions, and set the matching mode to ALL / AND.",
+        text: "Add three conditions, picking each operator under the right type — String, Number or Boolean — and leave the dropdown between the conditions on AND.",
         code: {
           language: "text",
           code: [
-            "lead_temperature  is equal to                 Hot",
-            "budget            is greater than or equal to 3000",
-            "contacted_before  is equal to                 false",
+            "lead_temperature  String   is equal to                  Hot",
+            "budget            Number   is greater than or equal to  3000",
+            "contacted_before  Boolean  is false",
+            "",
+            "A Boolean compared as a String fails with: Wrong type: 'false' is a boolean but was expecting a string",
           ].join("\n"),
         },
       },
       {
-        text: "From its TRUE output add an Edit Fields node named Priority Sales, setting route to Priority Sales and keeping the original lead fields.",
+        text: "From its true output add an Edit Fields node named Priority Sales. Set route to Priority Sales and switch Include Other Input Fields on, so the lead's own fields travel with it.",
       },
       {
-        text: "From FALSE add another IF named Check Warm Lead (temperature equals Warm), then Nurture on TRUE and Low Priority on FALSE, each setting route the same way.",
+        text: "From false add another IF named Check Warm Lead (lead_temperature is equal to Warm), then Nurture on true and Low Priority on false, each setting route the same way.",
         expect: "Alex to Priority Sales, Jamie to Nurture, Taylor to Low Priority.",
       },
     ],
@@ -186,7 +188,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
       },
     ],
     prompt:
-      "With ALL / AND set, how many of the three leads reach Priority Sales — and which ones?",
+      "With AND between the conditions, how many of the three leads reach Priority Sales — and which ones?",
     reveal: [
       {
         type: "prose",
@@ -226,7 +228,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
         type: "actions",
         items: [
           {
-            text: "Open Check Priority Sales and change the condition matching mode from ALL / AND to ANY / OR.",
+            text: "Open Check Priority Sales and change the dropdown between its conditions from AND to OR.",
           },
           {
             text: "Run the workflow again and look at the Priority Sales node.",
@@ -261,7 +263,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
             code: { language: "text", code: "FALSE OR FALSE OR TRUE  ->  TRUE" },
           },
           {
-            text: "Restore ALL / AND and run it again.",
+            text: "Set the dropdown back to AND and run it again.",
             expect: "One lead in Priority Sales.",
           },
         ],
@@ -299,7 +301,25 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
           "Nurture          Warm, but not qualifying above",
           "Low Priority     everything else",
         ].join("\n"),
-        caption: "Lead data is in labs/02-conditions-routing/challenge/challenge-input.json",
+      },
+      {
+        type: "prose",
+        text: "Replace the code in Sample Leads with these seven leads, add the Manual Review route, run the workflow, and paste the Manual Review node's output below.",
+      },
+      {
+        type: "code",
+        language: "javascript",
+        code: [
+          "return [",
+          "  { json: { name: \"Alex Rivera\", lead_temperature: \"Hot\", budget: 5000, contacted_before: false, country: \"AU\" } },",
+          "  { json: { name: \"Dana Reyes\", lead_temperature: \"Hot\", budget: 5000, contacted_before: false, country: \"Pilipins\" } },",
+          "  { json: { name: \"Jamie Lee\", lead_temperature: \"Warm\", budget: 4200, contacted_before: false, country: \"AU\" } },",
+          "  { json: { name: \"Jordan Patel\", lead_temperature: \"Warm\", budget: 4500, contacted_before: false, country: \"US\" } },",
+          "  { json: { name: \"Casey Wong\", lead_temperature: \"Warm\", budget: 2000, contacted_before: false, country: \"AU\" } },",
+          "  { json: { name: \"Taylor Kim\", lead_temperature: \"Warm\", budget: 1500, contacted_before: true, country: \"US\" } },",
+          "  { json: { name: \"Morgan Cruz\", lead_temperature: \"Cold\", budget: 6000, contacted_before: false, country: \"AU\" } }",
+          "];",
+        ].join("\n"),
       },
       {
         type: "callout",

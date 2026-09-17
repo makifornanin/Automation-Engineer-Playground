@@ -80,7 +80,7 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
         },
       },
       {
-        text: "Copy the Test URL, click Execute workflow, then send it this payload.",
+        text: "Copy the Test URL, click Execute workflow, then send it this payload with any HTTP client — curl works from a terminal: curl -X POST <Test URL> -H \"Content-Type: application/json\" -d '{\"user_id\": 5}'",
         code: {
           language: "json",
           code: ['{', '  "user_id": 5', '}'].join("\n"),
@@ -289,7 +289,7 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "Work through the ids in the challenge file. Your workflow must tell existing customers from missing ones without knowing any of them in advance.",
+        text: "Send user_id 2, then 7, then 999 to your Production URL. Your workflow must tell the two existing customers from the missing one without knowing any of them in advance.",
       },
       {
         type: "callout",
