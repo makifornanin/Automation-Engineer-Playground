@@ -2032,11 +2032,14 @@ the learner's own n8n; no request has reached a real n8n yet.
   MEDIUM (IPv6 6to4/Teredo) fixed. Regression tests for every BLOCKER, HIGH and MEDIUM fix were
   proven by mutation; QA did not re-run the final hint-lock fix. PM reconciliation: ready for the
   owner's final pass, **not** V1 complete
-* **not live verified** — the `aep_web_*` tables do not exist yet, so nothing persists and no lab
-  has actually completed; no request has reached a real n8n. Signed-out routes and `/sign-in` were
-  smoke-tested on the production build; no signed-in browser pass has been run
-* blocked on the owner — apply `database/aep_web_schema.sql`, confirm RLS isolation with a second
-  learner, exercise Send Test once against an activated workflow, then one browser pass
+* **live verified 2026-09-17 — autonomous E2E pass** (`docs/qa/AEP-V1-AUTONOMOUS-E2E-PASS.md`): a
+  learner completed Labs 01–10 in a real browser against real Supabase and a real n8n 2.25.7 with
+  Gemini; Send Test passed live in all six webhook labs; progress, unlocking, resume, Notes, hints,
+  sign-out, SSRF blocking and the evidence rules were exercised live; the Capstone unlocked. The pass
+  found and fixed twelve defects, most of them lesson builds too condensed to pass their own checks.
+  Final `npm run verify` exit 0: 618 tests across 49 files, 9 routes plus Proxy
+* **not live verified** — learner-to-learner isolation and the server refusing writes to a locked
+  lab: both need a second signed-in learner, and none signed in during the pass
 
 In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
 added by this program means implemented and structurally verified, **not** live verified. Earlier
@@ -2085,20 +2088,20 @@ AEP V1 is considered complete when:
 
 ## Learning Experience
 
-* [/] Home complete — for the fast-track scope: contextual Kaz note and completion percentage; no Ask Kaz entry (Vision §10). Not live verified since
-* [/] Labs journey complete — `locked` state and Capstone link added
-* [/] Focus Mode lesson engine complete — nine chunk kinds, all ten labs authored
-* [/] Learner progress persistence complete — implemented; **schema not yet applied**, so it has never run against a real table
-* [/] Sequential unlocking complete — structurally verified; blocked on the schema for live proof
-* [/] Notes complete — for the fast-track scope: autosave, general + per-lab, Save to Notes from the recap; no Notes panel inside lessons
+* [x] Home complete — for the fast-track scope: contextual Kaz note, completion percentage, and the Capstone once every lab is done; live verified in the E2E pass. No Ask Kaz entry (Vision §10)
+* [x] Labs journey complete — Current / Preview / Completed states and unlocks live verified across all ten labs
+* [x] Focus Mode lesson engine complete — nine chunk kinds, all ten labs walked live; resume, recap open-step list, keyboard navigation
+* [x] Learner progress persistence complete — schema applied; evidence, position and hint counts read back live under the learner's own RLS
+* [x] Sequential unlocking complete — live verified Lab 01 → Capstone, including a lab re-opened by a content change. Server refusal of locked-lab writes is unit tested, not live verified
+* [x] Notes complete — for the fast-track scope: autosave, reload persistence and Save to Notes live verified; no Notes panel inside lessons. Cross-learner isolation not live verified
 * [ ] Interactive lesson visuals complete
 
 ## Test & Diagnostics
 
-* [/] Inline Send Test complete — the six webhook labs (03, 04, 07, 08, 09, 10), with paste-the-response fallback; Manual Trigger labs and challenges stay paste-only. No request has reached a real n8n yet
-* [/] Expected-vs-actual complete — 20 cases across ten labs, via Send Test or paste
-* [/] Checkpoint diagnostics complete — stop-at-first-failure checkpoints, plus a hint per Send Test failure
-* [/] Per-lab webhook storage complete — `aep_web_lab_webhooks`, owner-scoped RLS; **schema not yet applied**
+* [x] Inline Send Test complete — live verified in all six webhook labs (03, 04, 07, 08, 09, 10) against real n8n executions, including failure diagnostics and private-address blocking; paste fallback for local n8n
+* [x] Expected-vs-actual complete — 20 cases passed live with real n8n output, via Send Test or paste
+* [x] Checkpoint diagnostics complete — first failure explained, live verified; a hint per Send Test failure
+* [x] Per-lab webhook storage complete — saved per lab and shown by hostname only, live verified
 * [ ] Optional n8n connection complete and secure
 * [/] Supabase in-lab guidance complete — SQL setup is a build step inside Labs 07, 08 and 10
 
