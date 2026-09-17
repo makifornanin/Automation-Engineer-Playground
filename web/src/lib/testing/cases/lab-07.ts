@@ -1,6 +1,6 @@
 import "server-only";
 
-import { expectField, type TestCase } from "./types";
+import { expectField, expectPresent, type TestCase } from "./types";
 
 /**
  * Lab 07 — Idempotency & Duplicate Protection.
@@ -44,7 +44,9 @@ export const LAB_07_CHALLENGE_CASE: TestCase = {
       "message",
       "Event processed successfully",
     ),
-    expectField("event", "It is the second unique event", "event_id", "evt_challenge_002"),
+    // Any id the learner chose: a fixed id can only ever be new once, so a
+    // learner who sent it before could never pass this again.
+    expectPresent("event", "It names the event it processed", "event_id"),
     expectField("status", "Its lifecycle reached processed", "status", "processed"),
   ],
 };

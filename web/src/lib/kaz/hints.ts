@@ -53,7 +53,7 @@ export const CHALLENGE_HINTS: Readonly<Record<string, readonly string[]>> = {
     "If a successful output still carries old failure details, look for where ...$json is copying earlier fields forward.",
   ],
   "07-idempotency-duplicate-protection": [
-    "Count the rows in lab07_business_actions for evt_challenge_001. If there are two, the duplicate was not recognised as one.",
+    "Count the rows in lab07_business_actions for your first challenge event. If there are two, the duplicate was not recognised as one.",
     "Look at processed_events after the first delivery. Was a row written at all? Without it there is nothing for the second delivery to find.",
     "Idempotency depends on a stable identity: the same event must produce the same key every time it arrives. Compare the key Extract Event Identity produced on both deliveries.",
     "Open Check Processed Event on the second delivery and read its output, not its input. Empty means the lookup found nothing — then work backwards: wrong key, wrong filter, or no row written the first time.",

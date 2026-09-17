@@ -89,7 +89,7 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
         },
       },
       {
-        text: "In n8n, create a Supabase credential if you do not already have one — setup is in docs/environment-setup.md.",
+        text: "In n8n, add a Supabase credential if you do not already have one: Host is your project URL, and the secret is the secret API key from your Supabase project's API settings. It stays inside n8n.",
         expect: "Both tables visible in the Supabase table editor.",
       },
     ],
@@ -117,7 +117,7 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
     content: [],
     actions: [
       {
-        text: "Add a Webhook node named Receive External Event on path aep-lab-07-event, responding through a Respond to Webhook node.",
+        text: "Add a Webhook node named Receive External Event: POST, path aep-lab-07-event, Respond: Using Respond to Webhook node.",
       },
       {
         text: "Add a Code node named Extract Event Identity that uses the provider's id when there is one, and builds a fallback when there is not.",
@@ -131,11 +131,21 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
         },
       },
       {
-        text: "Add a Supabase node named Check Processed Event that gets processed_events where event_id matches, with Always Output Data on.",
+        text: "Add a Supabase node named Check Processed Event: Operation Get, table processed_events, condition event_id equals {{ $json.event_id }}. In its Settings, turn on Always Output Data.",
       },
       {
-        text: "Add an IF named Already Seen? testing that the lookup returned a real row, and on TRUE a Respond to Webhook named Return Duplicate Ignored.",
-        code: { language: "javascript", code: "{{ Object.keys($json).length > 0 }}" },
+        text: "Add an IF named Already Seen? with the Boolean condition {{ Object.keys($json).length > 0 }} is true. On true, add a Respond to Webhook named Return Duplicate Ignored: Respond With JSON, Response Code 200, and this Response Body in Expression mode.",
+        code: {
+          language: "json",
+          code: [
+            "{",
+            "  \"success\": true,",
+            "  \"duplicate\": true,",
+            "  \"message\": \"Duplicate event ignored\",",
+            "  \"event_id\": \"{{ $('Extract Event Identity').item.json.event_id }}\"",
+            "}",
+          ].join("\n"),
+        },
       },
     ],
     whyWereDoingThis: [
@@ -189,17 +199,28 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
     content: [],
     actions: [
       {
-        text: "On FALSE add a Supabase node named Reserve Event that inserts the event_id into processed_events with status reserved, configured to continue on error.",
+        text: "On false, add a Supabase node named Reserve Event: Operation Create in processed_events, with event_id and event_type from Extract Event Identity and status reserved. In its Settings, set On Error to Continue.",
       },
       {
-        text: "Add an IF named Reservation Succeeded? that is true only when the insert returned no error.",
-        code: { language: "javascript", code: "{{ !$json.error }}" },
+        text: "Add an IF named Reservation Succeeded? with the Boolean condition {{ !$json.error }} is true, so it passes only when the insert returned no error.",
       },
       {
-        text: "On TRUE add Execute Business Action (insert into lab07_business_actions), then Mark Processed (update status to processed).",
+        text: "On true, add Execute Business Action (Create in lab07_business_actions: event_id, action_type create_lead, lead_id), then Mark Processed (Update processed_events where event_id matches: status processed, processed_at {{ $now }}).",
       },
       {
-        text: "Finish with a Respond to Webhook named Return Processed Success, and send the reservation's FALSE branch to Return Duplicate Ignored too.",
+        text: "Finish with a Respond to Webhook named Return Processed Success with this Response Body, and send the false branch of Reservation Succeeded? to Return Duplicate Ignored too.",
+        code: {
+          language: "json",
+          code: [
+            "{",
+            "  \"success\": true,",
+            "  \"duplicate\": false,",
+            "  \"message\": \"Event processed successfully\",",
+            "  \"event_id\": \"{{ $json.event_id }}\",",
+            "  \"status\": \"{{ $json.status }}\"",
+            "}",
+          ].join("\n"),
+        },
         expect: "A first delivery returns duplicate: false.",
       },
     ],
@@ -270,15 +291,15 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
             text: "Temporarily connect Extract Event Identity straight to Execute Business Action, bypassing both protection layers.",
           },
           {
-            text: "Send an event with event_id evt_break_001 twice.",
+            text: "Send an event with an event_id you have never used — for example evt_break_yourname_001 — twice.",
           },
           {
             text: "Count its business actions.",
             code: {
               language: "sql",
-              code: "select count(*) from lab07_business_actions where event_id = 'evt_break_001';",
+              code: "select count(*) from lab07_business_actions where event_id = 'evt_break_yourname_001';",
             },
-            expect: "2.",
+            expect: "2, from a single event.",
           },
         ],
       },
@@ -303,7 +324,7 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
             text: "Did both deliveries produce the same event_id? Compare Extract Event Identity's output on each.",
           },
           {
-            text: "Restore the protected path and send evt_break_002 twice.",
+            text: "Restore the protected path and send another new event_id twice.",
             expect: "One business action.",
           },
         ],
@@ -326,7 +347,18 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "The challenge input sends three deliveries: evt_challenge_001, evt_challenge_001 again, then evt_challenge_002. Predict each response before you send it.",
+        text: "Send three deliveries to your Production URL: a new event, the same event again, then a second new event. Use event ids you have never sent — evt_challenge_yourname_001 and _002 — because an id your workflow has already seen can never be new again, which is the whole point. Predict each response before you send it.",
+      },
+      {
+        type: "code",
+        language: "json",
+        code: [
+            "{",
+            "  \"event_id\": \"evt_challenge_yourname_001\",",
+            "  \"event_type\": \"lead.created\",",
+            "  \"data\": { \"lead_id\": \"lead_201\", \"name\": \"Casey Wong\", \"email\": \"casey@example.com\" }",
+            "}",
+        ].join("\n"),
       },
       {
         type: "prose",
@@ -340,9 +372,9 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
       },
     ],
     verification: [
-      "evt_challenge_001 is processed on its first delivery",
+      "the first event is processed on its first delivery",
       "its second delivery is ignored as a duplicate",
-      "evt_challenge_002 is processed normally afterwards",
+      "the second new event is processed normally afterwards",
       "each event has exactly one row in lab07_business_actions",
     ],
   },
