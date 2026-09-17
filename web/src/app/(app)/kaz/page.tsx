@@ -20,7 +20,9 @@ import { homeNote } from "@/lib/kaz/notes";
  */
 export default async function KazPage() {
   const progress = await getCourseProgress();
-  const { currentLab } = deriveCourseState(progress);
+  const { currentLab, capstone } = deriveCourseState(progress);
+  // Once every lab is complete, the next thing to continue is the Capstone.
+  const capstoneUnlocked = capstone.status !== "locked";
   const note = homeNote(progress.completedLabSlugs, currentLab.lab);
 
   return (
@@ -70,8 +72,12 @@ export default async function KazPage() {
 
       <div className="flex flex-wrap gap-6">
         <Link
-          href={labHref(currentLab.lab)}
-          aria-label={"Continue Lab " + currentLab.lab.number + " — " + currentLab.lab.title}
+          href={capstoneUnlocked ? "/capstone" : labHref(currentLab.lab)}
+          aria-label={
+            capstoneUnlocked
+              ? "Continue to the Capstone"
+              : "Continue Lab " + currentLab.lab.number + " — " + currentLab.lab.title
+          }
           className="text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
           Continue
