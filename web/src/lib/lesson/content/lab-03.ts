@@ -138,15 +138,35 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
         expect: "A real user record for id 5.",
       },
       {
-        text: "Turn on Include Response Headers and Status, and turn on Never Error.",
+        text: "Under Options, add Response and turn on Include Response Headers and Status and Never Error.",
         expect: "The output now carries body, headers and statusCode.",
       },
       {
-        text: "Add an IF node named Check API Success, testing statusCode equals 200.",
+        text: "Add an IF node named Check API Success with the Number condition {{ $json.statusCode }} is equal to 200. On true, add a Respond to Webhook node named Return API Success: Respond With JSON, Response Code 200, and this Response Body — switched to Expression, so the customer values are filled in.",
+        code: {
+          language: "json",
+          code: [
+            "{",
+            '  "success": true,',
+            '  "message": "External customer data found",',
+            '  "customer_name": "{{ $json.body.name }}",',
+            '  "customer_email": "{{ $json.body.email }}"',
+            "}",
+          ].join("\n"),
+        },
+        expect: "A response carrying the real customer name.",
       },
       {
-        text: "Add two Respond to Webhook nodes: Return API Success on TRUE with code 200, and Return API Not Found on FALSE with code 404. Use Expression fields for the customer values.",
-        expect: "A response carrying the real customer name.",
+        text: "On false, add Return API Not Found: Respond With JSON, Response Code 404, and this Response Body.",
+        code: {
+          language: "json",
+          code: [
+            "{",
+            '  "success": false,',
+            '  "message": "External customer data not found"',
+            "}",
+          ].join("\n"),
+        },
       },
     ],
     whyWereDoingThis: [
