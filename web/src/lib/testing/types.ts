@@ -70,7 +70,7 @@ const TEST_ERROR_MESSAGE: Record<TestErrorCode, string> = {
   empty: "Paste the output from your workflow first.",
   invalid_json:
     "That is not valid JSON. Copy the whole output, including the outer braces.",
-  too_large: "That output is larger than this check expects. Paste one item, not the whole run.",
+  too_large: "That output is larger than AEP accepts. Remove the big lists the lesson says you can leave out, keep the fields this check names, and paste again.",
   unknown_case: "This check is not available.",
   not_signed_in: "Your session has expired. Sign in again to record your progress.",
 };

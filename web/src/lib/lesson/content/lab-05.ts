@@ -117,11 +117,11 @@ export const LAB_05_CHUNKS: readonly LessonChunk[] = [
     content: [],
     actions: [
       {
-        text: "From Set Pagination Config add an HTTP Request named Fetch All Customer Pages with limit = 5, and turn on its pagination option updating a query parameter named skip.",
+        text: "From Set Pagination Config add an HTTP Request named Fetch All Customer Pages with the query parameter limit = 5. Under Options, add Pagination, set Pagination Mode to Update a Parameter in Each Request, and update the query parameter skip with this value.",
         code: { language: "javascript", code: "{{ $pageCount * 5 }}" },
       },
       {
-        text: "Set the stop condition so it ends once the last record has been reached.",
+        text: "Set Pagination Complete When to Other, and give it this Complete Expression so the loop ends once the last record has been reached.",
         code: {
           language: "javascript",
           code: "{{ $response.body.skip + $response.body.limit >= $response.body.total }}",
@@ -199,7 +199,7 @@ export const LAB_05_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "Run the workflow and paste the Combine Customer Records output below. The customers list is large — paste it all, or delete the customers array and keep pages_fetched and total_records.",
+        text: "Run the workflow and copy the Combine Customer Records output. The customers list is far too large to paste, so delete the customers array and paste what is left: pages_fetched and total_records.",
       },
       {
         type: "callout",
@@ -279,7 +279,7 @@ export const LAB_05_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "Change the page size from 5 to 7. Before you run it, predict how many requests it will take, what the first few skip values will be, and how many records you will end up with.",
+        text: "Change the page size from 5 to 7. Before you run it, predict how many requests it will take, what the first few skip values will be, and how many records you will end up with. Then run it and paste the Combine Customer Records output, without the customers array.",
       },
       {
         type: "callout",
