@@ -2038,8 +2038,12 @@ the learner's own n8n; no request has reached a real n8n yet.
   sign-out, SSRF blocking and the evidence rules were exercised live; the Capstone unlocked. The pass
   found and fixed twelve defects, most of them lesson builds too condensed to pass their own checks.
   Final `npm run verify` exit 0: 618 tests across 49 files, 9 routes plus Proxy
-* **not live verified** — learner-to-learner isolation and the server refusing writes to a locked
-  lab: both need a second signed-in learner, and none signed in during the pass
+* **live verified 2026-09-18 — two learners**: RLS isolation proven both directions with real
+  cross-account read, update, delete and insert attempts (all refused, victim data unchanged);
+  locked-lab refusal proven by replaying Server Actions from a fresh learner. That check found locked
+  labs could still run a self-check, save a webhook and send a Send Test request — fixed in `cfd8543`
+  and re-verified live. Final `npm run verify` exit 0: 621 tests across 49 files
+* **AEP V1 DONE** — every Definition of Done step exercised live
 
 In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
 added by this program means implemented and structurally verified, **not** live verified. Earlier
@@ -2092,8 +2096,8 @@ AEP V1 is considered complete when:
 * [x] Labs journey complete — Current / Preview / Completed states and unlocks live verified across all ten labs
 * [x] Focus Mode lesson engine complete — nine chunk kinds, all ten labs walked live; resume, recap open-step list, keyboard navigation
 * [x] Learner progress persistence complete — schema applied; evidence, position and hint counts read back live under the learner's own RLS
-* [x] Sequential unlocking complete — live verified Lab 01 → Capstone, including a lab re-opened by a content change. Server refusal of locked-lab writes is unit tested, not live verified
-* [x] Notes complete — for the fast-track scope: autosave, reload persistence and Save to Notes live verified; no Notes panel inside lessons. Cross-learner isolation not live verified
+* [x] Sequential unlocking complete — live verified Lab 01 → Capstone, including a lab re-opened by a content change; locked-lab writes, hints, self-checks, webhook saves and Send Test refused live
+* [x] Notes complete — for the fast-track scope: autosave, reload persistence, Save to Notes and cross-learner isolation live verified; no Notes panel inside lessons
 * [ ] Interactive lesson visuals complete
 
 ## Test & Diagnostics

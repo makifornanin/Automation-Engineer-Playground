@@ -70,13 +70,48 @@ fetch). Both succeeded on retry. Real learners will meet this.
   hints progressive and persisted; Kaz page honest about what she cannot do.
 - **Capstone:** unlocks after Lab 10; overview, requirements and proof list render.
 
-## Not live verified
+## Final checks — two learners (2026-09-18)
 
-- **Learner-to-learner isolation, and the server refusing writes to a locked
-  lab.** Both need a second signed-in learner. Window 2 was signed in with the
-  same account as learner 1 and then signed out; no second account has signed
-  in since. The RLS policies and the lock checks are unit tested and
-  mutation-proven, not live verified.
+A second invited learner signed in, confirmed as a different account by hashed
+user id (`user#2174b104`, learner 1 `user#45d6c2fe`). Learner 2 was fresh: Lab 01
+not started, Labs 02–10 locked, empty notes.
+
+### Isolation — live verified, both directions
+
+Real authenticated PostgREST requests with each learner's own session, aimed at
+the other learner's real user id (never printed):
+
+| Attempt | Result |
+|---|---|
+| Read progress, evidence, notes, webhooks filtered to the other learner | HTTP 200, 0 rows — all four tables, both directions |
+| Update the other learner's notes, evidence, webhook URLs | HTTP 200, 0 rows affected |
+| Delete the other learner's notes | HTTP 200, 0 rows |
+| Delete the other learner's progress | HTTP 403, 42501 |
+| Insert a note or `verified` evidence as the other learner | HTTP 403, 42501 |
+| Victim's data, hashed before and after | Unchanged — learner 1: 10 progress, 75 evidence, 2 notes, 6 webhook rows; learner 2: 1 note |
+
+In the UI, learner 2's Home, Labs and Notes showed none of learner 1's progress
+or notes; learner 2's note saved, survived reload, and never appeared in learner
+1's Notes.
+
+### Locked-lab refusal — live verified, after a fix
+
+Captured Server Actions replayed from learner 2's browser against locked labs:
+
+| Action | First run | After `cfd8543` |
+|---|---|---|
+| Open `/labs/03` | Preview, "Complete Lab 02 first", no lesson | same |
+| `recordChunkEvidence` (Lab 03 build) | no row | no row |
+| `setCurrentChunk` (Lab 03) | no row; lab stays locked | same |
+| `revealNextHint` (Lab 03 challenge) | `null`, no hint text | same |
+| `runSelfCheck` (Lab 05, correct output) | **evaluated, "Pass"** (no evidence) | `locked` |
+| `saveLabWebhook` (Lab 03) | **URL saved** | `locked`, nothing saved |
+| `sendTest` (Lab 03) | **request delivered to n8n** | `locked`, nothing sent |
+
+Learner 2's progress, evidence and webhook rows were 0 before and after the
+final run; the webhook row the first run created was deleted with learner 2's
+own session. A learner with the labs unlocked still passed a self-check and
+reached n8n with Send Test after the fix.
 
 ## Defects found and fixed in this pass
 
@@ -93,6 +128,7 @@ fetch). Both succeeded on retry. Real learners will meet this.
 | MEDIUM | n8n 2 replaced Active with Publish; Send Test copy said Activate | `69d6cc5` |
 | MEDIUM | Home and Kaz Continue pointed a finished learner back at Lab 10 | `dbc2134` `a67ae61` |
 | MEDIUM | Debug It printed answers under its questions | `69d6cc5` |
+| HIGH | A locked lab's self-check still ran, its webhook could be saved, and Send Test sent a real request | `cfd8543` |
 | LOW | Disabled Send Test had no reason; paste panel had no Expected line; JSON view non-breaking spaces rejected; empty-body hint misleading | `66fa94f` `69d6cc5` `3196c4e` |
 
 ## Owner notes — lab workflow files (not modified)
@@ -114,4 +150,15 @@ fetch). Both succeeded on retry. Real learners will meet this.
 - Supabase lab tables: rows with `aep_e2e` / `AEP-E2E` ids, and Send Test's
   fixed sample ids (`evt_504`, `evt_dlq_001`, `req_ai_001`,
   `req_guard_restricted_001`).
-- AEP: learner 1's progress, notes and saved webhooks.
+- AEP: learner 1's progress, notes and saved webhooks; learner 2's one test
+  note (`AEP-E2E learner 2 private note`).
+
+## Final verification
+
+`npm run verify` at `cfd8543`: exit 0 — lint clean, typecheck clean, 621 tests
+across 49 files, production build 9 routes plus Proxy.
+
+## Result
+
+**AEP V1 DONE: YES.** Every Definition of Done step has been exercised live by a
+learner, including isolation between learners and locked-lab refusal.
