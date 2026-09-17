@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { recordVerifiedEvidence } from "@/lib/course/progress-writes";
+import { hasHandsOnAccess, recordVerifiedEvidence } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import type { TestChunk } from "@/lib/lesson/types";
 import { getSession } from "@/lib/session/get-session";
@@ -74,6 +74,10 @@ export async function saveLabWebhook(
     return { status: "error", message: WEBHOOK_URL_MESSAGE.not_applicable };
   }
 
+  if (!(await hasHandsOnAccess(labSlug))) {
+    return { status: "error", message: WEBHOOK_URL_MESSAGE.locked };
+  }
+
   const check = validateLearnerWebhookUrl(raw);
   if (!check.ok) {
     return { status: "error", message: WEBHOOK_URL_MESSAGE[check.reason] };
@@ -122,6 +126,12 @@ export async function sendTest(
   const testCase = chunk ? getTestCase(chunk.testCaseId) : null;
   if (!chunk || !testCase || testCase.labSlug !== labSlug) {
     return buildSendTestError("unknown_case");
+  }
+
+  // Checked before any URL is read or any request leaves AEP: a locked lab
+  // sends nothing, rather than sending and then declining to record the pass.
+  if (!(await hasHandsOnAccess(labSlug))) {
+    return buildSendTestError("locked");
   }
 
   const saved = await getLabWebhookUrl(labSlug);

@@ -1,6 +1,6 @@
 "use server";
 
-import { recordVerifiedEvidence } from "@/lib/course/progress-writes";
+import { hasHandsOnAccess, recordVerifiedEvidence } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { getTestCase } from "./cases";
 import { evaluateCheckpoints, normaliseSubmittedOutput } from "./evaluate";
@@ -80,6 +80,13 @@ export async function runSelfCheck(
 
   if (!testCase || testCase.labSlug !== labSlug) {
     return buildTestError("unknown_case");
+  }
+
+  // A locked lab's tests are hands-on content. Refusing to write evidence is
+  // not enough: the check must not run, or a learner is told "Pass" for a lab
+  // they cannot open.
+  if (!(await hasHandsOnAccess(labSlug))) {
+    return buildTestError("locked");
   }
 
   let parsed: JsonValue;

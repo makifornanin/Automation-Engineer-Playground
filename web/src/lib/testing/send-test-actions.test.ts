@@ -6,8 +6,9 @@ const getSession = vi.hoisted(() => vi.fn());
 const getLabWebhookUrl = vi.hoisted(() => vi.fn());
 const storeLabWebhookUrl = vi.hoisted(() => vi.fn());
 const deliverPayload = vi.hoisted(() => vi.fn());
+const hasHandsOnAccess = vi.hoisted(() => vi.fn(async () => true));
 
-vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence }));
+vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence, hasHandsOnAccess }));
 vi.mock("@/lib/session/get-session", () => ({ getSession }));
 vi.mock("./webhook-store", () => ({ getLabWebhookUrl, storeLabWebhookUrl }));
 vi.mock("./send-test", () => ({ deliverPayload }));
@@ -49,7 +50,36 @@ beforeEach(() => {
     user: { id: "learner-1", displayName: "L", role: "student" },
   });
   getLabWebhookUrl.mockResolvedValue(SAVED);
+  hasHandsOnAccess.mockResolvedValue(true);
   deliverPayload.mockResolvedValue(answer(LAB_03_CORRECT));
+});
+
+describe("locked labs", () => {
+  /*
+   * Found live in the E2E pass: replayed from a fresh learner's browser, Send
+   * Test for locked Lab 03 delivered a real request to n8n, and a webhook URL
+   * was saved for it. Nothing may leave AEP for a lab the learner cannot open.
+   */
+  it("sends nothing for a locked lab", async () => {
+    hasHandsOnAccess.mockResolvedValue(false);
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "success-test" }));
+
+    expect(state.status === "error" && state.code).toBe("locked");
+    expect(getLabWebhookUrl).not.toHaveBeenCalled();
+    expect(deliverPayload).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
+  });
+
+  it("saves no webhook for a locked lab", async () => {
+    hasHandsOnAccess.mockResolvedValue(false);
+    const state = await saveLabWebhook(
+      IDLE_WEBHOOK_SAVE_STATE,
+      form({ labSlug: LAB_03, webhookUrl: SAVED }),
+    );
+
+    expect(state.status).toBe("error");
+    expect(storeLabWebhookUrl).not.toHaveBeenCalled();
+  });
 });
 
 describe("sendTest", () => {

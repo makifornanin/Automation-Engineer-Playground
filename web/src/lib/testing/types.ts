@@ -51,7 +51,8 @@ export type TestErrorCode =
   | "invalid_json"
   | "too_large"
   | "unknown_case"
-  | "not_signed_in";
+  | "not_signed_in"
+  | "locked";
 
 export type TestState =
   | { status: "idle" }
@@ -73,6 +74,7 @@ const TEST_ERROR_MESSAGE: Record<TestErrorCode, string> = {
   too_large: "That output is larger than AEP accepts. Remove the big lists the lesson says you can leave out, keep the fields this check names, and paste again.",
   unknown_case: "This check is not available.",
   not_signed_in: "Your session has expired. Sign in again to record your progress.",
+  locked: "This lab is still locked. Finish the lab before it, and its tests open.",
 };
 
 export function buildTestError(code: TestErrorCode): TestState {
@@ -93,7 +95,8 @@ export type SendTestErrorCode =
   | "webhook_not_active"
   | "workflow_error"
   | "bad_response"
-  | "unknown_case";
+  | "unknown_case"
+  | "locked";
 
 /**
  * What the learner may inspect behind "Show technical details". Never the
@@ -146,6 +149,7 @@ const SEND_TEST_MESSAGE: Record<SendTestErrorCode, string> = {
   bad_response:
     "Your workflow answered, but not with JSON. An empty answer usually means a node failed before Respond to Webhook ran - open the latest execution in n8n to see which one.",
   unknown_case: "This test is not available.",
+  locked: "This lab is still locked. Finish the lab before it, and its tests open.",
 };
 
 export function buildSendTestError(
@@ -176,6 +180,7 @@ export const WEBHOOK_URL_MESSAGE: Record<string, string> = {
   not_public_hostname:
     "AEP can only reach a public address. localhost and local network names are not reachable from AEP.",
   not_applicable: "This lab does not use a webhook.",
+  locked: "This lab is still locked. Finish the lab before it, and its tests open.",
   not_signed_in: "Your session has expired. Sign in again.",
   store_unavailable:
     "AEP cannot save your webhook right now. You can still paste your workflow's response to check it.",

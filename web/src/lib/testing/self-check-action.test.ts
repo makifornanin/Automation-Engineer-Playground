@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const hasHandsOnAccess = vi.hoisted(() => vi.fn(async () => true));
 
-vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence }));
+vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence, hasHandsOnAccess }));
 
 import { runSelfCheck } from "./self-check-action";
 import { IDLE_TEST_STATE } from "./types";
@@ -25,9 +26,23 @@ function submit(fields: Record<string, string>) {
 
 beforeEach(() => {
   recordVerifiedEvidence.mockClear();
+  hasHandsOnAccess.mockResolvedValue(true);
 });
 
 describe("runSelfCheck", () => {
+  /*
+   * Found live in the E2E pass: replayed from a fresh learner's browser, a
+   * correct paste for locked Lab 05 came back "Pass". No evidence was written,
+   * but a locked lab's test must not run at all.
+   */
+  it("refuses to check a lab the learner has not unlocked", async () => {
+    hasHandsOnAccess.mockResolvedValue(false);
+    const state = await submit({ labSlug: LAB_01, chunkId: "success-test", output: EASY_CORRECT });
+
+    expect(state.status === "error" && state.code).toBe("locked");
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
+  });
+
   /*
    * Found in the live E2E pass: text copied from n8n's JSON view can be
    * indented with non-breaking spaces, which JSON.parse rejects.
