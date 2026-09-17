@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const recordChunkEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => {}));
 
-vi.mock("@/lib/course/progress-actions", () => ({ recordChunkEvidence }));
+vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence }));
 
 import { runSelfCheck } from "./self-check-action";
 import { IDLE_TEST_STATE } from "./types";
@@ -24,7 +24,7 @@ function submit(fields: Record<string, string>) {
 }
 
 beforeEach(() => {
-  recordChunkEvidence.mockClear();
+  recordVerifiedEvidence.mockClear();
 });
 
 describe("runSelfCheck", () => {
@@ -33,7 +33,7 @@ describe("runSelfCheck", () => {
 
     expect(state.status).toBe("complete");
     expect(state.status === "complete" && state.result.passed).toBe(true);
-    expect(recordChunkEvidence).toHaveBeenCalledWith(LAB_01, "success-test");
+    expect(recordVerifiedEvidence).toHaveBeenCalledWith(LAB_01, "success-test");
   });
 
   /*
@@ -46,7 +46,7 @@ describe("runSelfCheck", () => {
     const state = await submit({ labSlug: LAB_01, chunkId: "challenge", output: EASY_CORRECT });
 
     expect(state.status === "complete" && state.result.passed).toBe(false);
-    expect(recordChunkEvidence).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
   });
 
   /* A forged case id field is simply not read any more. */
@@ -59,14 +59,14 @@ describe("runSelfCheck", () => {
     });
 
     expect(state.status === "complete" && state.result.passed).toBe(false);
-    expect(recordChunkEvidence).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
   });
 
   it("refuses a chunk that is not a test or a challenge", async () => {
     const state = await submit({ labSlug: LAB_01, chunkId: "problem", output: EASY_CORRECT });
 
     expect(state.status === "error" && state.code).toBe("unknown_case");
-    expect(recordChunkEvidence).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
   });
 
   it("refuses a chunk from a different lab", async () => {
@@ -87,7 +87,7 @@ describe("runSelfCheck", () => {
     });
 
     expect(state.status === "complete" && state.result.passed).toBe(false);
-    expect(recordChunkEvidence).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
   });
 
   it("explains empty and malformed submissions", async () => {

@@ -8,7 +8,7 @@ import {
   visibleChunks,
 } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
-import { startLab } from "@/lib/course/progress-actions";
+import { startLab } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { getLabWebhookHost } from "@/lib/testing/webhook-store";
 

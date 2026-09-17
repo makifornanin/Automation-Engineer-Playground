@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Delivery } from "./send-test";
 
-const recordChunkEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => {}));
 const getSession = vi.hoisted(() => vi.fn());
 const getLabWebhookUrl = vi.hoisted(() => vi.fn());
 const storeLabWebhookUrl = vi.hoisted(() => vi.fn());
 const deliverPayload = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/course/progress-actions", () => ({ recordChunkEvidence }));
+vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence }));
 vi.mock("@/lib/session/get-session", () => ({ getSession }));
 vi.mock("./webhook-store", () => ({ getLabWebhookUrl, storeLabWebhookUrl }));
 vi.mock("./send-test", () => ({ deliverPayload }));
@@ -40,7 +40,7 @@ const LAB_03_CORRECT = {
 
 beforeEach(() => {
   resetSendThrottle();
-  recordChunkEvidence.mockClear();
+  recordVerifiedEvidence.mockClear();
   deliverPayload.mockReset();
   getLabWebhookUrl.mockReset();
   storeLabWebhookUrl.mockReset();
@@ -61,7 +61,7 @@ describe("sendTest", () => {
     const [url, payload] = deliverPayload.mock.calls[0] as [URL, unknown];
     expect(url.toString()).toBe(SAVED);
     expect(payload).toMatchObject({ user_id: 5 });
-    expect(recordChunkEvidence).toHaveBeenCalledWith(LAB_03, "success-test");
+    expect(recordVerifiedEvidence).toHaveBeenCalledWith(LAB_03, "success-test");
   });
 
   /*
@@ -94,7 +94,7 @@ describe("sendTest", () => {
 
     expect(state.status === "complete" && state.result.passed).toBe(false);
     expect(state.status === "complete" && state.result.firstFailure?.id).toBe("name");
-    expect(recordChunkEvidence).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
   });
 
   it("asks for a webhook when none is saved", async () => {

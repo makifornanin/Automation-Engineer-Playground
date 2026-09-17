@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { recordChunkEvidence } from "@/lib/course/progress-actions";
+import { recordVerifiedEvidence } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import type { TestChunk } from "@/lib/lesson/types";
 import { getSession } from "@/lib/session/get-session";
@@ -179,7 +179,7 @@ export async function sendTest(
   );
 
   if (result.passed) {
-    await recordChunkEvidence(labSlug, chunkId);
+    await recordVerifiedEvidence(labSlug, chunkId);
   }
 
   return { status: "complete", result, technical };
