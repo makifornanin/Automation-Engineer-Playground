@@ -59,7 +59,7 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
     content: [],
     actions: [
       {
-        text: "Add a Webhook named Receive Customer Inquiry on path aep-lab-09-ai-classification, responding through a Respond to Webhook node.",
+        text: "Add a Webhook named Receive Customer Inquiry: POST, path aep-lab-09-ai-classification, Respond: Using Respond to Webhook node.",
       },
       {
         text: "Add an Edit Fields node named Prepare AI Input carrying the message and the allowed lists — and nothing else from the request.",
@@ -74,7 +74,38 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
         },
       },
       {
-        text: "Add a Basic LLM Chain named Gemini Classifier whose prompt asks for exactly three fields, chosen only from those lists.",
+        text: "Add a Basic LLM Chain named Gemini Classifier. Set Source for Prompt to Define below, and give it this prompt: exactly three fields, chosen only from those lists.",
+        code: {
+          language: "text",
+          code: [
+            "You are a business inquiry classifier.",
+            "",
+            "Classify this customer message:",
+            "",
+            "{{ $json.message }}",
+            "",
+            "Allowed classifications:",
+            "{{ $json.allowed_classifications }}",
+            "",
+            "Allowed recommended actions:",
+            "{{ $json.allowed_actions }}",
+            "",
+            "Return ONLY a JSON object with exactly these fields:",
+            "",
+            "{",
+            "  \"classification\": \"sales | support | billing | other\",",
+            "  \"confidence\": 0.00,",
+            "  \"recommended_action\": \"send_to_sales | create_support_ticket | send_to_billing | manual_review\"",
+            "}",
+            "",
+            "Rules:",
+            "- confidence must be a number from 0 to 1",
+            "- choose only from the allowed classifications",
+            "- choose only from the allowed actions",
+            "- do not add explanations",
+            "- do not add markdown",
+          ].join("\n"),
+        },
       },
       {
         text: "Attach a Google Gemini Chat Model node with your Gemini credential, then run it on the sales sample and open the classifier's output.",
@@ -113,7 +144,7 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
     content: [],
     actions: [
       {
-        text: "In Gemini Classifier turn on Require Specific Output Format, and attach a Structured Output Parser.",
+        text: "In Gemini Classifier turn on Require Specific Output Format, and attach a Structured Output Parser with Schema Type set to define it using a JSON schema.",
       },
       {
         text: "Give the parser a schema that fixes the fields, the allowed values and the confidence range.",
@@ -173,15 +204,74 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
     actions: [
       {
         text: "Add a Code node named Validate AI Output that checks every field against the allowed lists and the range, and adds valid: true or false.",
+        code: {
+          language: "javascript",
+          code: [
+            "const output = $json.output;",
+            "",
+            "const validClassifications = ['sales', 'support', 'billing', 'other'];",
+            "const validActions = [",
+            "  'send_to_sales',",
+            "  'create_support_ticket',",
+            "  'send_to_billing',",
+            "  'manual_review'",
+            "];",
+            "",
+            "const isValid =",
+            "  output &&",
+            "  validClassifications.includes(output.classification) &&",
+            "  typeof output.confidence === 'number' &&",
+            "  output.confidence >= 0 &&",
+            "  output.confidence <= 1 &&",
+            "  validActions.includes(output.recommended_action);",
+            "",
+            "return {",
+            "  json: {",
+            "    ...output,",
+            "    valid: isValid",
+            "  }",
+            "};",
+          ].join("\n"),
+        },
       },
       {
-        text: "Add an IF named AI Output Valid? on valid, and on TRUE a Switch named Route by Classification with four outputs.",
+        text: "Add an IF named AI Output Valid? with the Boolean condition {{ $json.valid }} is true. On true, add a Switch named Route by Classification in Rules mode with four routing rules.",
+        code: {
+          language: "text",
+          code: [
+            "Rule 1  {{ $json.classification }}  String  is equal to  sales    -> Sales Route",
+            "Rule 2  {{ $json.classification }}  String  is equal to  support  -> Support Route",
+            "Rule 3  {{ $json.classification }}  String  is equal to  billing  -> Billing Route",
+            "Rule 4  {{ $json.classification }}  String  is equal to  other    -> Manual Review Route",
+          ].join("\n"),
+        },
       },
       {
-        text: "Give each output an Edit Fields node setting success true, the three classification fields, and route: sales_team, support_team, billing_team or manual_review.",
+        text: "Give each output an Edit Fields node — Sales Route, Support Route, Billing Route, Manual Review Route — with these fields, each setting its own route.",
+        code: {
+          language: "text",
+          code: [
+            "success             Boolean  true",
+            "classification      String   {{ $json.classification }}",
+            "confidence          Number   {{ $json.confidence }}",
+            "recommended_action  String   {{ $json.recommended_action }}",
+            "route               String   sales_team | support_team | billing_team | manual_review",
+          ].join("\n"),
+        },
       },
       {
-        text: "On FALSE add Build Safe Fallback, then connect all five into one Respond to Webhook named Return Classification Result.",
+        text: "On false, add an Edit Fields node named Build Safe Fallback with these fields. Connect all five into one Respond to Webhook named Return Classification Result, responding with the first incoming item and code 200.",
+        code: {
+          language: "text",
+          code: [
+            "success             Boolean  false",
+            "classification      String   other",
+            "confidence          Number   0",
+            "recommended_action  String   manual_review",
+            "route               String   manual_review",
+            "reason              String   invalid_ai_output",
+          ].join("\n"),
+        },
         expect: "Every path ends at a single exit.",
       },
     ],
@@ -260,7 +350,7 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
             },
           },
           {
-            text: "Connect it into Validate AI Output and run from the simulator node.",
+            text: "Put a Manual Trigger in front of it and connect it into Validate AI Output. Execute the workflow from that Manual Trigger, then open Build Safe Fallback.",
             expect: "The FALSE branch, and the safe fallback.",
           },
         ],
@@ -316,17 +406,26 @@ export const LAB_09_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "Send the three challenge inquiries, then write a fourth message of your own that should land on manual_review through the other classification. Record the classification, route and confidence for each.",
+        text: "Send these three inquiries to your Production URL, then write a fourth message of your own that should land on manual_review through the other classification. Record the classification, route and confidence for each.",
+      },
+      {
+        type: "code",
+        language: "json",
+        code: [
+          "{\"request_id\": \"req_ai_challenge_001\", \"message\": \"Can someone explain your plans and help me choose which one to buy?\"}",
+          "{\"request_id\": \"req_ai_challenge_002\", \"message\": \"My dashboard keeps showing an error whenever I upload a file.\"}",
+          "{\"request_id\": \"req_ai_challenge_003\", \"message\": \"My invoice amount doesn't match what I expected.\"}",
+        ].join("\n"),
       },
       {
         type: "prose",
-        text: "Then trigger the invalid-output path once and paste that fallback response below.",
+        text: "Then run the invalid-output path once, from the simulator's Manual Trigger, and paste Build Safe Fallback's output below. Return Classification Result stops that manual run on purpose: nothing called a webhook, so there is nobody to answer.",
       },
       {
         type: "callout",
         tone: "note",
         title: "Predict before you open the answers",
-        text: "One challenge message mentions money. Decide whether that makes it billing, and what the customer actually wants done, before you look at challenge/expected-result.json.",
+        text: "One challenge message mentions money. Decide whether that makes it billing, and what the customer actually wants done, before you send it.",
       },
     ],
     verification: [

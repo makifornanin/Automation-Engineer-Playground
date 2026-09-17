@@ -144,7 +144,7 @@ const SEND_TEST_MESSAGE: Record<SendTestErrorCode, string> = {
   workflow_error:
     "Your workflow was reached but failed. Open the latest execution in n8n to see which node errored.",
   bad_response:
-    "Your workflow answered, but not with JSON. Check that the Respond to Webhook node returns JSON.",
+    "Your workflow answered, but not with JSON. An empty answer usually means a node failed before Respond to Webhook ran - open the latest execution in n8n to see which one.",
   unknown_case: "This test is not available.",
 };
 
