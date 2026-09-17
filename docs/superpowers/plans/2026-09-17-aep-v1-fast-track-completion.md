@@ -33,7 +33,8 @@ against its fail-safe fallback.
 | Capstone page, Save to Notes from the recap, visible unlock | unit tested | `1a04e6c` |
 | Lab-agnostic self-check copy; stale copy removed | unit tested | `615a75a` |
 | Send Test — Labs 03, 04, 07, 08, 09, 10 call the learner's own webhook; SSRF controls; paste fallback | unit tested, **not live verified** | `cd85c3a` → `17c5a08` |
-| Progress writes behind `server-only`; `verified` and the lock unreachable from a browser | unit tested, mutation-proven | `b6a0cdd` |
+| Progress writes behind `server-only`; `verified` and the lock unreachable through AEP's own endpoints | unit tested, mutation-proven | `b6a0cdd` → `9756359` |
+| Kaz Break It note no longer claims a pass; error boundary for signed-in pages | unit tested | `51f3a94` |
 
 All ten labs walk: problem → concept → guided build → predict → test →
 break it → debug it → challenge → recap.
@@ -66,14 +67,23 @@ and an in-memory throttle that is per warm instance on serverless.
 **Lab 07 sends the same event twice and judges the second answer.** Only a
 repeat proves duplicate protection.
 
-**Answers never reach the browser.** Expected values, checkpoint predicates and
-hint text live in `server-only` modules. Proven against build output, not
+**Answer keys never reach the browser.** Expected values, checkpoint predicates
+and hint text live in `server-only` modules. Proven against build output, not
 assumed: a grep of `.next/static` finds three positive-control literals from
-client components and zero of six server-only strings, while those same answers
-exist in `.next/server`.
+client components and zero of the server-only strings, while those same answers
+exist in `.next/server`. By design (Vision §23, expected vs actual), each
+attempt does return the expected value of its *first failing* checkpoint,
+challenges included. That reveals the target output one field at a time, never
+the workflow that produces it.
 
-**Evidence is derived, never accepted — and `verified` is never reachable from a
-browser.** Server actions name a lab and a chunk; the server derives the
+**Completion is recomputed from evidence against current lesson content.**
+Nothing a learner does un-completes a lab, so "completed stays" holds for
+learners. An owner content change that adds a milestone *would* re-open that
+lab for everyone who finished it; that is deliberate, and `completed_at` is
+never written. Revisit if lab content is edited after learners start.
+
+**Evidence is derived, never accepted — and no AEP endpoint lets a browser write
+`verified`.** Server actions name a lab and a chunk; the server derives the
 evidence value from the chunk's kind. No action takes an evidence value, an
 expected output or a checkpoint from the client. Every export of a `"use
 server"` file is a browser-callable endpoint, so progress writers live behind
@@ -110,8 +120,8 @@ would record nothing real.
 
 ## Verification — last full run
 
-**Final `npm run verify` at `9756359`: exit 0.** Lint 0 problems, typecheck
-clean, **606 tests across 48 files**, production build **9 routes plus Proxy**
+**Final `npm run verify` at `51f3a94`: exit 0.** Lint 0 problems, typecheck
+clean, **609 tests across 49 files**, production build **9 routes plus Proxy**
 (`/capstone` added by this program; Send Test added no route).
 
 Client bundle, grepped in `.next/static` against the same build: zero hits for
@@ -120,7 +130,7 @@ the evidence table name and the server-only writer names. All of them are
 present in `.next/server`, and three client-component literals are present in
 `.next/static` as positive controls.
 
-Signed-out smoke test against `next start` on that build: every app route,
+Signed-out smoke test against `next start` on the `9756359` build: every app route,
 including `/capstone`, `/admin` and a lab page, and a POST to a lab page, answers
 307 to `/sign-in`. `/sign-in` itself answers 200, and the server logged no
 errors. `/sign-in` screenshotted at 1280px and a true 375px (Playwright's
@@ -216,6 +226,30 @@ with the check removed.
 
 ---
 
+## Project Manager reconciliation — final
+
+**Ready for the owner's final pass. V1 is not complete.** Every Definition of
+Done step exists in code, and `npm run verify` is green. What remains needs the
+owner: the schema, a second learner, a real n8n, a signed-in session.
+
+- **Estimate:** about 90% built and verified offline; about 25% live verified,
+  all of it predating this program; **about 65% overall**, weighting live
+  evidence at 40%. Live evidence gets real weight because the first QA pass
+  found "no lab could ever complete" while 455 tests were green.
+- **Partial by design:** Kaz (no Ask Kaz panel; no model credential), Capstone
+  (no connection to workflows or recorded completion; no exports), §11 browser
+  QA (signed-out only).
+- **Found by PM, fixed after reconciliation:** Kaz's Break It note said "Your
+  workflow passed" although Next works on a test chunk without a pass — Kaz
+  inventing a result. The copy now claims nothing, and a test forbids result
+  words. §11's error state had no boundary: signed-in pages now have one, with
+  a retry and a way Home. No `loading.tsx` was added. Navigation waits for the
+  server, which is acceptable at current read sizes.
+- **Corrected in ROADMAP and here:** overstated Send Test, mutation-proof,
+  orb, Home and Notes wording; stale Phase 12 checkboxes; the checklist legend.
+- The Architect's output is not reproduced in this log; its decisions are
+  folded into *Decisions* above.
+
 ## Owner actions required
 
 1. **Apply `database/aep_web_schema.sql`** in the Supabase SQL Editor. It is
@@ -277,7 +311,10 @@ Recorded, not fixed: lab content is outside this program's scope.
 
 - Send Test for challenges (paste-only today); connection pinning to close DNS
   rebinding; a shared throttle store if AEP runs on many instances
-- Free-form Ask Kaz — blocked on a model credential AEP does not hold
+- Free-form Ask Kaz — blocked on a model credential AEP does not hold; the orb
+  opens no panel and does not float in lessons
+- Notes panel inside lessons; the expandable section roadmap; loading states
+- n8n API connection and execution ID in diagnostics
 - Kaz RAG and memory; Tagalog and Taglish
 - Server-side `/admin` role enforcement and the invite UI (manual Supabase user
   creation is accepted for V1)

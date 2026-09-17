@@ -1424,17 +1424,17 @@ Support learning chunks for:
 
 * [/] Problem — owner-confirmed 2026-09-16, **Lab 01 only**. This is content existing, not a
   supported chunk *kind*: the renderer has no chunk type, so prose is all `LessonChunk` can
-  currently express
-* [/] Concept — owner-confirmed 2026-09-16, same annotation
+  currently express. **Superseded 2026-09-17:** `problem` is now a kind, authored in all ten labs
+* [/] Concept — owner-confirmed 2026-09-16, same annotation; now a kind in all ten labs
 * [/] Guided Build — all ten labs, 2–4 actions per build chunk enforced by test. Unit tested, not live
 * [/] Predict — all ten labs; learner writes a prediction before the reveal, which records `predicted` evidence
-* [ ] Test
+* [/] Test — all ten labs: Send Test in the six webhook labs, paste-the-output elsewhere
 * [/] Understand Result — **mapped, not a separate kind:** the result region of a `test` chunk (Vision §17: steps need not map one-to-one to screens)
 * [/] Break It — all ten labs
 * [/] Debug It — all ten labs
-* [ ] Challenge
+* [/] Challenge — all ten labs; verified server-side; progressive Kaz hints behind the lab lock
 * [ ] Make It Your Own — **mapped, not a separate kind:** authored inside each lab's challenge. Not independently built
-* [ ] Recap
+* [/] Recap — all ten labs; Save to Notes and the bridge to the next lab
 
 Rules:
 
@@ -1442,16 +1442,18 @@ Rules:
   carrying 2–4 actions proves the rule against the content it was written to govern; two prose
   chunks are a weak test of it
 * [/] roughly 2–4 related actions per Build chunk — enforced by test across all ten labs
-* [/] avoid one click per sentence — holds for the only two chunks that exist
-* [ ] autosave progress — deliberately not built; chunk position is component state, so leaving
-  the lab and returning resets to Step 1. Trivial at two chunks; **persistence becomes required
-  before Lab 01 exceeds roughly four**
+* [/] avoid one click per sentence — holds across all ten labs' authored chunks
+* [/] autosave progress — **superseded 2026-09-17:** position and evidence persist server-side and
+  a lab resumes where the learner left it. Not live verified: the schema is not yet applied
 * [ ] expandable compact section roadmap — not built
-* [ ] revisit completed sections — **not satisfied by Back.** Back is within-session stepping;
-  this means revisiting across the lab, which needs persistence
+* [/] revisit completed sections — completed labs stay open with hands-on work, and position
+  persists across visits. Not live verified
 
 **Step 4 — Focus Mode. Lab 01's two prose chunks only. NOT a completed renderer.** Plan:
 `docs/superpowers/plans/2026-09-16-aep-phase-12-step-4-lab-01-focus-mode.md`.
+
+**Superseded 2026-09-17** by the fast-track program: Focus Mode now renders nine chunk kinds across
+all ten labs. The record below is kept as history; current status is at the end of this file.
 
 * **live verified 2026-09-16, owner-driven in an authenticated browser** — Home's Continue opens
   Lab 01 Focus Mode; Step 1 shows "The problem" with "Step 1 of 2" visible and Back disabled;
@@ -2018,23 +2020,27 @@ Do not claim that AEP is used by an academy until it is actually adopted or acti
 
 The full learner journey now exists in code: Home → Labs → a lesson walking problem, concept, guided
 build, predict, test, break it, debug it, challenge and recap in **all ten labs** → progress and
-sequential unlocking → Notes → Kaz V1 → Capstone. The six webhook labs test through a real Send
-Test to the learner's own n8n.
+sequential unlocking → Notes → Kaz V1 → Capstone. The six webhook labs are wired for Send Test to
+the learner's own n8n; no request has reached a real n8n yet.
 
-* structurally verified and unit tested — final `npm run verify` exit 0: lint 0, typecheck clean,
-  606 tests across 48 files, production build 9 routes plus Proxy
+* structurally verified and unit tested — final `npm run verify` exit 0 at `51f3a94`: lint 0, typecheck clean,
+  609 tests across 49 files, production build 9 routes plus Proxy
 * QA — consolidated pass FAIL (no lab could ever complete; self-check case binding trusted the
   client), fixed, retest PASS. Send Test pass FAIL (a browser-callable action could award `verified`
   evidence and unlock any lab), fixed behind `server-only`, retest PASS WITH FINDINGS; its MEDIUM
   (challenge hints ignored the lock) fixed. Integration review of Send Test PASS WITH FINDINGS; its
-  MEDIUM (IPv6 6to4/Teredo) fixed. All regression tests mutation-proven
+  MEDIUM (IPv6 6to4/Teredo) fixed. Regression tests for every BLOCKER, HIGH and MEDIUM fix were
+  proven by mutation; QA did not re-run the final hint-lock fix. PM reconciliation: ready for the
+  owner's final pass, **not** V1 complete
 * **not live verified** — the `aep_web_*` tables do not exist yet, so nothing persists and no lab
   has actually completed; no request has reached a real n8n. Signed-out routes and `/sign-in` were
   smoke-tested on the production build; no signed-in browser pass has been run
 * blocked on the owner — apply `database/aep_web_schema.sql`, confirm RLS isolation with a second
   learner, exercise Send Test once against an activated workflow, then one browser pass
 
-In the checklist below, `[/]` means implemented and structurally verified, **not** live verified.
+In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
+added by this program means implemented and structurally verified, **not** live verified. Earlier
+`[/]` marks on the labs and the Capstone keep their original meaning and live-test evidence.
 
 ---
 
@@ -2079,12 +2085,12 @@ AEP V1 is considered complete when:
 
 ## Learning Experience
 
-* [/] Home complete — contextual Kaz note and completion percentage added; not live verified since
+* [/] Home complete — for the fast-track scope: contextual Kaz note and completion percentage; no Ask Kaz entry (Vision §10). Not live verified since
 * [/] Labs journey complete — `locked` state and Capstone link added
 * [/] Focus Mode lesson engine complete — nine chunk kinds, all ten labs authored
 * [/] Learner progress persistence complete — implemented; **schema not yet applied**, so it has never run against a real table
 * [/] Sequential unlocking complete — structurally verified; blocked on the schema for live proof
-* [/] Notes complete — autosave, general + per-lab, Save to Notes from the recap
+* [/] Notes complete — for the fast-track scope: autosave, general + per-lab, Save to Notes from the recap; no Notes panel inside lessons
 * [ ] Interactive lesson visuals complete
 
 ## Test & Diagnostics
@@ -2104,7 +2110,7 @@ AEP V1 is considered complete when:
 * [ ] Teaching modes complete
 * [/] Challenge guardrails complete — progressive server-side hints, one per request; no model involved
 * [ ] English/Tagalog/Taglish complete
-* [/] Alien-orb website experience complete — orb states (intensity only), timing rules; no Ask Kaz chat
+* [ ] Alien-orb website experience complete — **partial:** orb states (intensity only) and timing rules; the orb opens no Ask Kaz panel and does not float in lessons (Kaz §11)
 
 ## Completion & Sharing
 
