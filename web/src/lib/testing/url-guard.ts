@@ -134,14 +134,37 @@ function isBlockedIPv4(value: number): boolean {
 }
 
 /**
+ * Expands an IPv6 address into its eight hextets, or null if it is not one
+ * written purely in hex. Compressed forms have to be expanded before any
+ * prefix check: `2001::1` is Teredo, but its second group is not written.
+ */
+function parseIPv6Hextets(address: string): number[] | null {
+  const halves = address.split("::");
+  if (halves.length > 2) return null;
+
+  const toGroups = (half: string) => (half === "" ? [] : half.split(":"));
+  const head = toGroups(halves[0] ?? "");
+  const tail = halves.length === 2 ? toGroups(halves[1] ?? "") : [];
+
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 2 ? missing < 1 : missing !== 0) return null;
+
+  const groups = [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill("0"), ...tail];
+  if (!groups.every((group) => /^[0-9a-f]{1,4}$/.test(group))) return null;
+  return groups.map((group) => Number.parseInt(group, 16));
+}
+
+/**
  * Whether a resolved address is off limits.
  *
  * IPv6 is handled by allow-list rather than deny-list: only global unicast
- * (2000::/3) is permitted, minus the documentation prefix. Enumerating every
- * special IPv6 range is how deny-lists get bypassed; there are few legitimate
- * reasons for a learner's public n8n to answer anywhere else. IPv4-mapped IPv6
- * is unwrapped and judged as the IPv4 it carries, and any other mapped form is
- * refused.
+ * (2000::/3) is permitted, minus the documentation prefix and the 6to4
+ * (2002::/16) and Teredo (2001::/32) transition prefixes, which sit inside
+ * global unicast but tunnel to an IPv4 address that may be private.
+ * Enumerating every special IPv6 range is how deny-lists get bypassed; there
+ * are few legitimate reasons for a learner's public n8n to answer anywhere
+ * else. IPv4-mapped IPv6 is unwrapped and judged as the IPv4 it carries, and
+ * any other form with an embedded dotted IPv4 is refused.
  *
  * Anything unparseable is blocked. Failing closed is the only safe default for
  * an address about to receive a request.
@@ -152,22 +175,20 @@ export function isBlockedAddress(address: string): boolean {
   const v4 = parseIPv4(trimmed);
   if (v4 !== null) return isBlockedIPv4(v4);
 
-  if (!trimmed.includes(":")) return true;
-
   if (trimmed.startsWith("::ffff:")) {
     const mapped = parseIPv4(trimmed.slice("::ffff:".length));
     return mapped === null ? true : isBlockedIPv4(mapped);
   }
 
-  if (trimmed.startsWith(":")) return true; // ::, ::1 and other zero-prefixed forms
+  const hextets = parseIPv6Hextets(trimmed);
+  if (hextets === null) return true;
+  const [first = 0, second = 0] = hextets;
 
-  const firstHextet = Number.parseInt(trimmed.split(":")[0] ?? "", 16);
-  if (!Number.isFinite(firstHextet)) return true;
-
-  const isGlobalUnicast = firstHextet >= 0x2000 && firstHextet <= 0x3fff;
+  const isGlobalUnicast = first >= 0x2000 && first <= 0x3fff;
   if (!isGlobalUnicast) return true;
 
-  const secondHextet = Number.parseInt(trimmed.split(":")[1] ?? "", 16);
-  const isDocumentation = firstHextet === 0x2001 && secondHextet === 0x0db8;
-  return isDocumentation;
+  const isDocumentation = first === 0x2001 && second === 0x0db8;
+  const isTeredo = first === 0x2001 && second === 0x0000;
+  const is6to4 = first === 0x2002;
+  return isDocumentation || isTeredo || is6to4;
 }

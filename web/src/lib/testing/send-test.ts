@@ -148,10 +148,12 @@ export async function deliverPayload(
     return { ok: false, failure: "redirected", durationMs: elapsed() };
   }
 
+  // The timeout covers the body too: a workflow can send headers and then stall.
   try {
     const { text, truncated } = await readCapped(response);
     return { ok: true, status: response.status, text, truncated, durationMs: elapsed() };
-  } catch {
-    return { ok: false, failure: "unreachable", durationMs: elapsed() };
+  } catch (error) {
+    const timedOut = isTimeout(error) || isTimeout(causeOf(error));
+    return { ok: false, failure: timedOut ? "timeout" : "unreachable", durationMs: elapsed() };
   }
 }

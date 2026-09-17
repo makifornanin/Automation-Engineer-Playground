@@ -98,6 +98,26 @@ describe("deliverPayload — network controls", () => {
     expect(result.ok ? null : result.failure).toBe("timeout");
   });
 
+  /*
+   * The timeout also fires while the body is streaming. A workflow that sends
+   * headers and then stalls is slow, not unreachable, and the hint must say so.
+   */
+  it("reports a response that stalls mid-body as a timeout", async () => {
+    const stalled = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"success":'));
+        controller.error(new DOMException("timed out", "TimeoutError"));
+      },
+    });
+    const result = await deliverPayload(
+      URL_OK,
+      PAYLOAD,
+      deps({ fetch: async () => new Response(stalled, { status: 200 }) }),
+    );
+
+    expect(result.ok ? null : result.failure).toBe("timeout");
+  });
+
   it("stops reading a response past the size cap", async () => {
     const huge = "x".repeat(MAX_RESPONSE_BYTES * 3);
     const result = await deliverPayload(

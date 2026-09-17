@@ -5,10 +5,9 @@ import { expectField, expectPresent, type TestCase } from "./types";
 /**
  * Lab 03 — APIs & Webhooks.
  *
- * The first lab whose workflow AEP could genuinely call, since it starts with
- * a Webhook node. It stays a self-check for now: Send Test needs the learner's
- * webhook URL stored and validated, which is its own piece of work. The
- * evidence is the same either way — the response their workflow produced.
+ * The first lab whose workflow AEP calls, since it starts with a Webhook node.
+ * The success case runs through Send Test; a learner whose n8n AEP cannot
+ * reach pastes the response instead, and the evidence is the same either way.
  *
  * user_id 5 on jsonplaceholder is Chelsey Dietrich, which the lab README
  * records as the value a correctly configured Expression field returns. That

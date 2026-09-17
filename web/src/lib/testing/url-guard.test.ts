@@ -86,12 +86,31 @@ describe("isBlockedAddress", () => {
     "::ffff:127.0.0.1",
     "::ffff:10.0.0.1",
     "2001:db8::1",
+    "2001:0db8:0000::1",
+    // Transition prefixes sit inside 2000::/3 but tunnel to an IPv4 address,
+    // which may be private: 6to4 embeds it (2002:0a00:0001:: is 10.0.0.1),
+    // Teredo carries it obfuscated.
+    "2002:a00:1::1",
+    "2002:7f00:1::",
+    "2001:0:4136:e378::1",
+    "2001::1",
+    "64:ff9b::a00:1",
+    "2606:4700::1.2.3.4",
     "not-an-address",
   ])("blocks %s", (address) => {
     expect(isBlockedAddress(address)).toBe(true);
   });
 
-  it.each(["8.8.8.8", "104.16.0.1", "172.32.0.1", "2606:4700::1111", "::ffff:8.8.8.8"])(
+  it.each([
+    "8.8.8.8",
+    "104.16.0.1",
+    "172.32.0.1",
+    "2606:4700::1111",
+    "2606:4700:4700::1111",
+    "2001:4860:4860::8888",
+    "2a00:1450:4001:80b::200e",
+    "::ffff:8.8.8.8",
+  ])(
     "allows %s",
     (address) => {
       expect(isBlockedAddress(address)).toBe(false);
