@@ -470,6 +470,38 @@ describe("<FocusMode /> - the end of a lab", () => {
    * In Debug It the actions are questions and `expect` is the answer. Printed
    * directly under the question, "work out why" became "read why".
    */
+  /*
+   * A step that configures two nodes needs two values to copy. Each block is
+   * captioned with its node, so the learner pastes the right code in the
+   * right place.
+   */
+  it("renders every captioned code block a build step carries", () => {
+    const BUILD: LessonChunk = {
+      kind: "guided-build",
+      id: "build",
+      title: "Build two nodes",
+      content: [],
+      whyThisMatters: [{ type: "prose", text: "Why." }],
+      actions: [
+        {
+          text: "Add two Code nodes.",
+          code: [
+            { caption: "First Node", language: "javascript", code: "return 1;" },
+            { caption: "Second Node", language: "javascript", code: "return 2;" },
+          ],
+        },
+        { text: "Run it." },
+      ],
+      whyWereDoingThis: [{ type: "prose", text: "Because." }],
+    };
+    render(<FocusMode chunks={[BUILD]} labSlug={LAB} />);
+
+    expect(screen.getByText("return 1;")).toBeInTheDocument();
+    expect(screen.getByText("return 2;")).toBeInTheDocument();
+    expect(screen.getByText("First Node")).toBeInTheDocument();
+    expect(screen.getByText("Second Node")).toBeInTheDocument();
+  });
+
   it("keeps a debug step's answers behind a disclosure", () => {
     const DEBUG: LessonChunk = {
       kind: "debug",

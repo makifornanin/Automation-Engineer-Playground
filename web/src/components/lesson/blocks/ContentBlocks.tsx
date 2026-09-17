@@ -3,6 +3,7 @@ import {
   type CalloutTone,
   type ContentBlock,
   type LessonAction,
+  type LessonCode,
 } from "@/lib/lesson/types";
 
 const CALLOUT_CLASS: Record<CalloutTone, string> = {
@@ -52,7 +53,11 @@ export function ActionList({
       {items.map((action, index) => (
         <li key={index} className="flex flex-col gap-2 pl-1">
           <p className="max-w-prose text-ink-soft">{action.text}</p>
-          {action.code ? <CodeBlock code={action.code.code} /> : null}
+          {(action.code === undefined ? [] : Array.isArray(action.code) ? action.code : [action.code]).map(
+            (block: LessonCode, blockIndex: number) => (
+              <CodeBlock key={blockIndex} code={block.code} caption={block.caption} />
+            ),
+          )}
           {action.expect && variant === "questions" ? (
             <details className="text-sm">
               <summary className="w-fit cursor-pointer font-medium text-accent">

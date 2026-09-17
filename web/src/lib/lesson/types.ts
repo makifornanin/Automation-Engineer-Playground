@@ -32,9 +32,20 @@ export type CalloutTone = "note" | "warning" | "gotcha";
  * is what they should see afterwards, which is what turns an instruction into
  * something checkable.
  */
+/** A value the learner copies. `caption` names it when one step carries several. */
+export interface LessonCode {
+  language: CodeLanguage;
+  code: string;
+  caption?: string;
+}
+
 export interface LessonAction {
   text: string;
-  code?: { language: CodeLanguage; code: string };
+  /**
+   * One block, or several when a single step configures more than one node —
+   * each then captioned with the node it belongs to.
+   */
+  code?: LessonCode | readonly LessonCode[];
   expect?: string;
 }
 
