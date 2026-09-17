@@ -26,14 +26,17 @@ export interface KazNote {
  * Kaz §6 names entering Break It, entering Debug It and completing a Challenge
  * as good moments — but in the teaching arc those three are ADJACENT, and Kaz
  * §7 says she should not appear in consecutive learning chunks. So she speaks
- * at Break It, where the learner has just passed a test and is in a good state
- * for her playful side; stays quiet through Debug, which needs focus; and is
- * present at the Challenge through hints the learner asks for. Guided Build is
- * silent by design (Kaz §6: "stay quiet unless the learner asks").
+ * at Break It, a good moment for her playful side; stays quiet through Debug,
+ * which needs focus; and is present at the Challenge through hints the learner
+ * asks for. Guided Build is silent by design (Kaz §6: "stay quiet unless the
+ * learner asks").
+ *
+ * These notes cannot see test evidence, and Next works on a test chunk without
+ * a pass, so no note may claim a result. Kaz must not invent test outcomes.
  */
 const SPEAKS_AT: Partial<Record<LessonChunkKind, KazNote>> = {
   "break-it": {
-    text: "Your workflow passed. I was ready with a dramatic speech for nothing. So — let's go and break it on purpose.",
+    text: "My favourite part. We break it on purpose — then you'll know exactly what that failure looks like before it ever surprises you for real.",
     state: "amused",
   },
 };

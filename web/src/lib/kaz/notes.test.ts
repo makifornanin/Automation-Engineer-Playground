@@ -33,6 +33,16 @@ describe("chunkNote — when Kaz speaks in a lesson", () => {
     const note = chunkNote("break-it", "test");
     expect(note?.text).not.toMatch(/stupid|wrong again|obviously|failed you/i);
   });
+
+  /*
+   * Kaz must not invent test results; AEP's evidence is authoritative. Next
+   * works on a test chunk without a pass, and this note cannot see evidence,
+   * so it must not claim an outcome either way.
+   */
+  it("never claims a test result it has not seen", () => {
+    const note = chunkNote("break-it", "test");
+    expect(note?.text).not.toMatch(/\b(pass|passed|passing|fail|failed|green|worked|succeeded)\b/i);
+  });
 });
 
 describe("homeNote — motivation from real progress", () => {
