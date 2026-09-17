@@ -28,6 +28,17 @@ beforeEach(() => {
 });
 
 describe("runSelfCheck", () => {
+  /*
+   * Found in the live E2E pass: text copied from n8n's JSON view can be
+   * indented with non-breaking spaces, which JSON.parse rejects.
+   */
+  it("accepts output indented with non-breaking spaces, as n8n's JSON view can give it", async () => {
+    const indented = JSON.stringify(JSON.parse(EASY_CORRECT), null, 2).replace(/ {2}/g, "\u00a0\u00a0");
+    const state = await submit({ labSlug: LAB_01, chunkId: "success-test", output: indented });
+
+    expect(state.status === "complete" && state.result.passed).toBe(true);
+  });
+
   it("passes a correct answer for the chunk's own case and records evidence", async () => {
     const state = await submit({ labSlug: LAB_01, chunkId: "success-test", output: EASY_CORRECT });
 

@@ -192,6 +192,7 @@ export const LAB_06_CHUNKS: readonly LessonChunk[] = [
     mode: "self-check",
     testCaseId: "lab-06-eventual-success",
     caseName: "A request that fails twice recovers on its own without anyone resubmitting it",
+    expected: "success is true with a final 200, after three attempts and two retries.",
     content: [
       {
         type: "prose",

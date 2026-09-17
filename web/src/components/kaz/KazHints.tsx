@@ -8,6 +8,8 @@ export interface KazHintsProps {
   labSlug: string;
   chunkId: string;
   hintCount: number;
+  /** Hints already given to this learner, restored from their saved count. */
+  initialRevealed?: readonly RevealedHint[];
 }
 
 /**
@@ -22,8 +24,8 @@ export interface KazHintsProps {
  * move, not a failure, and Kaz §3 is explicit that she should never make a
  * learner feel stupid for being stuck.
  */
-export function KazHints({ labSlug, chunkId, hintCount }: KazHintsProps) {
-  const [revealed, setRevealed] = useState<readonly RevealedHint[]>([]);
+export function KazHints({ labSlug, chunkId, hintCount, initialRevealed = [] }: KazHintsProps) {
+  const [revealed, setRevealed] = useState<readonly RevealedHint[]>(initialRevealed);
   const [pending, setPending] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -59,7 +61,7 @@ export function KazHints({ labSlug, chunkId, hintCount }: KazHintsProps) {
         <KazOrb className="size-8" />
         <p className="text-sm text-ink-soft">
           {revealed.length === 0
-            ? "Try it first — predicting is the part that teaches. I will be here if you get stuck."
+            ? "Try it first — working it out yourself is the part that teaches. I will be here if you get stuck."
             : "One at a time. See if that is enough before you ask for the next."}
         </p>
       </div>

@@ -24,9 +24,12 @@ import { ContentBlocks } from "../blocks/ContentBlocks";
 export function PredictChunk({
   chunk,
   labSlug,
+  onRecorded,
 }: {
   chunk: PredictChunkData;
   labSlug: string;
+  /** Called once the prediction's evidence has been written. */
+  onRecorded?: () => void;
 }) {
   const [prediction, setPrediction] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -39,7 +42,9 @@ export function PredictChunk({
     setRevealed(true);
     // Fire and forget, like every other position/evidence write in the
     // stepper: a failed write must never block the learner seeing the answer.
-    void recordChunkEvidence(labSlug, chunk.id).catch(() => {});
+    void recordChunkEvidence(labSlug, chunk.id)
+      .then(() => onRecorded?.())
+      .catch(() => {});
   }
 
   return (

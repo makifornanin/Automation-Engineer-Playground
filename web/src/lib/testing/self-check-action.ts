@@ -33,6 +33,17 @@ import {
  * Every expected value and predicate lives in the server-only case registry,
  * so the browser receives a verdict and nothing it could work backwards from.
  */
+/**
+ * Output copied from n8n's JSON view can carry non-breaking spaces as
+ * indentation, and JSON.parse rejects them. They are never meaningful inside a
+ * learner's pasted JSON structure, so they become plain spaces rather than a
+ * confusing "that is not JSON" for output that looks exactly like JSON. A
+ * zero-width character or byte-order mark is dropped for the same reason.
+ */
+function withPlainSpaces(output: string): string {
+  return output.replace(/\u00a0/g, " ").replace(/[\u200b\ufeff]/g, "");
+}
+
 export async function runSelfCheck(
   _prevState: TestState,
   formData: FormData,
@@ -73,7 +84,7 @@ export async function runSelfCheck(
 
   let parsed: JsonValue;
   try {
-    parsed = JSON.parse(output) as JsonValue;
+    parsed = JSON.parse(withPlainSpaces(output)) as JsonValue;
   } catch {
     return buildTestError("invalid_json");
   }

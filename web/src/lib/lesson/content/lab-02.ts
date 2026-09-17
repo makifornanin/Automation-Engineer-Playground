@@ -205,6 +205,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
     mode: "self-check",
     testCaseId: "lab-02-priority-sales",
     caseName: "Only the genuinely hot, high-budget, uncontacted lead reaches Priority Sales",
+    expected: "Exactly one lead in Priority Sales — the hot, high-budget one nobody has contacted yet — tagged with its route.",
     content: [
       {
         type: "prose",

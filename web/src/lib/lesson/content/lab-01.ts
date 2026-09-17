@@ -97,7 +97,7 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
         text: "Add an Edit Fields (Set) node after it and rename it to Sample Lead Input.",
       },
       {
-        text: "Give it this JSON, exactly as written — the stray spaces and capitals are the point.",
+        text: "Set its Mode to JSON, then replace the example with this JSON, exactly as written — the stray spaces and capitals are the point.",
         code: {
           language: "json",
           code: `{
@@ -175,19 +175,19 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
         expect: "alex@example.com",
       },
       {
-        text: "Add company and lead_source, then turn Include Other Input Fields OFF.",
+        text: "Add company and lead_source. Leave Include Other Input Fields switched off — it starts off, and it has to stay that way.",
         code: {
           language: "javascript",
           code: `{{ $json.company }}
 {{ $json.source }}`,
         },
-        expect: "The output has exactly four fields and no first_name or email_address.",
+        expect: "Four fields listed under Fields to Set: name, email, company and lead_source.",
       },
     ],
     whyWereDoingThis: [
       {
         type: "prose",
-        text: "Turning off Include Other Input Fields is the step people skip. Leave it on and the original first_name, last_name, email_address and source travel onward beside the clean ones — the CRM receives fields it never asked for, and the next person to read this data cannot tell which email is the real one.",
+        text: "Include Other Input Fields is the switch people flip on just in case. Turn it on and the original first_name, last_name, email_address and source travel onward beside the clean ones — the CRM receives fields it never asked for, and the next person to read this data cannot tell which email is the real one.",
       },
       {
         type: "callout",
@@ -224,11 +224,11 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
       },
       {
         type: "prose",
-        text: "The form sent an email of \" ALEX@EXAMPLE.COM \", with a leading space, a trailing space, and every letter capitalised.",
+        text: "Sample Lead Input sends five fields. Transform for CRM sets four, with Include Other Input Fields off.",
       },
     ],
     prompt:
-      "What exactly will the email field contain — and how many fields will the final output have?",
+      "When you run the whole workflow, how many fields will Transform for CRM output — and will first_name and email_address still be in it?",
     reveal: [
       {
         type: "code",
@@ -254,6 +254,7 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
     mode: "self-check",
     testCaseId: "lab-01-transform-for-crm",
     caseName: "A Facebook lead arrives and the CRM gets exactly what it expects",
+    expected: "Exactly four fields — name, email, company and lead_source — with the email trimmed and lowercased.",
     content: [
       {
         type: "prose",
@@ -369,7 +370,12 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
   "interests": ["Automation", "CRM", "AI"],
   "tags":      ["Hot Lead", "Facebook", "Automation"]
 }`,
-        caption: "Also in labs/01-data-mapping-transformation/challenge/challenge-input.json",
+      },
+      {
+        type: "callout",
+        tone: "note",
+        title: "The CRM expects exactly these fields",
+        text: "full_name, email, company_name, job_title, lead_source, campaign_name, interests, location and tags.",
       },
       {
         type: "callout",
@@ -379,13 +385,13 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
       },
     ],
     verification: [
-      "first and last name are combined, with the original casing left alone",
-      "the email is trimmed and lowercased",
-      "nested company, marketing and location values are pulled up to the top level",
-      "interests becomes one comma-separated string",
-      "location becomes City, Country",
-      "tags becomes one pipe-separated string",
-      "only CRM-ready fields remain",
+      "full_name is the trimmed first and last name joined by a space, with the original casing left alone",
+      "email is trimmed and lowercased",
+      "company_name (trimmed), job_title, lead_source and campaign_name are pulled up from the nested objects",
+      "interests is one string joined with a comma and a space",
+      "location is City, Country",
+      "tags is one string joined with a space, a pipe and a space",
+      "only those nine fields remain",
     ],
   },
   {
@@ -407,7 +413,7 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
       },
       {
         type: "prose",
-        text: "The engineering habit that transfers: a green execution is not a correct one. This workflow ran perfectly while producing an undefined email, and only the output told you the truth.",
+        text: "The engineering habit that transfers: a green execution is not a correct one. This workflow ran perfectly while producing an email of null, and only the output told you the truth.",
       },
     ],
     bridge: [

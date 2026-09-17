@@ -19,6 +19,12 @@ vi.mock("@/lib/course/progress-actions", () => ({
 }));
 
 vi.mock("@/lib/notes/notes-actions", () => ({ saveToNotes: vi.fn(async () => null) }));
+const refresh = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useRouter: () => ({ refresh }),
+}));
+
 
 const LAB = "01-data-mapping-transformation";
 
@@ -377,12 +383,107 @@ describe("<FocusMode /> - the end of a lab", () => {
       <FocusMode
         chunks={[RECAP]}
         labSlug={LAB}
-        completion={{ complete: false, next: null }}
+        completion={{
+          complete: false,
+          next: null,
+          openSteps: [{ id: "challenge", title: "Challenge", evidence: "verified" }],
+        }}
       />,
     );
 
     expect(screen.queryByText(/Lab complete/)).not.toBeInTheDocument();
-    expect(screen.getByText(/completes once its build steps, test and challenge/)).toBeInTheDocument();
+    expect(screen.getByText("One step left before this lab is complete:")).toBeInTheDocument();
+  });
+
+  /*
+   * The owner reached a recap that said "anything still open is waiting back
+   * through the steps" with Next disabled, and no way to tell what was open.
+   * The recap now names each open step and goes straight to it.
+   */
+  it("names each open step on the recap and goes straight to it", async () => {
+    const user = userEvent.setup();
+    const BUILD: LessonChunk = {
+      kind: "guided-build",
+      id: "build",
+      title: "Build the workflow",
+      content: [],
+      whyThisMatters: [{ type: "prose", text: "Why." }],
+      actions: [{ text: "Do one thing." }, { text: "Do another." }],
+      whyWereDoingThis: [{ type: "prose", text: "Because." }],
+    };
+    render(
+      <FocusMode
+        chunks={[BUILD, RECAP]}
+        labSlug={LAB}
+        initialChunkId={RECAP.id}
+        completion={{
+          complete: false,
+          next: null,
+          openSteps: [{ id: "build", title: "Build the workflow", evidence: "acknowledged" }],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("— mark it done")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Build the workflow" }));
+
+    expect(screen.getByRole("heading", { level: 2, name: "Build the workflow" })).toHaveFocus();
+    expect(setCurrentChunk).toHaveBeenCalledWith(LAB, "build");
+  });
+
+  /*
+   * Evidence writes are fire-and-forget, so without this the recap would still
+   * list a step the learner finished a moment ago.
+   */
+  it("drops a step from the open list as soon as it is done, then refreshes", async () => {
+    const user = userEvent.setup();
+    refresh.mockClear();
+    const BUILD: LessonChunk = {
+      kind: "guided-build",
+      id: "build",
+      title: "Build the workflow",
+      content: [],
+      whyThisMatters: [{ type: "prose", text: "Why." }],
+      actions: [{ text: "Do one thing." }, { text: "Do another." }],
+      whyWereDoingThis: [{ type: "prose", text: "Because." }],
+    };
+    render(
+      <FocusMode
+        chunks={[BUILD, RECAP]}
+        labSlug={LAB}
+        completion={{
+          complete: false,
+          next: null,
+          openSteps: [{ id: "build", title: "Build the workflow", evidence: "acknowledged" }],
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^Done — next/ }));
+
+    expect(screen.queryByRole("button", { name: "Build the workflow" })).not.toBeInTheDocument();
+    expect(recordChunkEvidence).toHaveBeenCalledWith(LAB, "build");
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
+  /*
+   * In Debug It the actions are questions and `expect` is the answer. Printed
+   * directly under the question, "work out why" became "read why".
+   */
+  it("keeps a debug step's answers behind a disclosure", () => {
+    const DEBUG: LessonChunk = {
+      kind: "debug",
+      id: "debug-it",
+      title: "Work out why",
+      content: [
+        { type: "actions", items: [{ text: "What failed?", expect: "The email transformation." }] },
+      ],
+    };
+    render(<FocusMode chunks={[DEBUG]} labSlug={LAB} />);
+
+    expect(screen.queryByText(/You should see/)).not.toBeInTheDocument();
+    expect(screen.getByText("Check your answer").closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText("The email transformation.").closest("details")).not.toBeNull();
   });
 
   it("offers to save the recap to the learner's notes", () => {

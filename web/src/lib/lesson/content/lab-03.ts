@@ -95,7 +95,7 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
     whyWereDoingThis: [
       {
         type: "prose",
-        text: "The Test URL only listens after you press Execute, and only for one request. The Production URL always listens but only while the workflow is Active. Mixing them up is the single most common reason a lab appears to do nothing.",
+        text: "The Test URL only listens after you press Execute, and only for one request. The Production URL always listens, but only once the workflow is published — older n8n versions call this Active. Mixing them up is the single most common reason a lab appears to do nothing.",
       },
       {
         type: "callout",
@@ -217,7 +217,7 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
     content: [
       {
         type: "prose",
-        text: "Activate your workflow, save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers.",
+        text: "Publish your workflow in n8n (older versions call this switching it to Active), save its Production URL below, then send the test. AEP posts this lab's sample request to your own n8n and checks what your workflow answers.",
       },
     ],
   },

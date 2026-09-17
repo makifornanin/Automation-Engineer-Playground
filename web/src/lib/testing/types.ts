@@ -140,7 +140,7 @@ const SEND_TEST_MESSAGE: Record<SendTestErrorCode, string> = {
   redirected:
     "Your webhook answered with a redirect, which AEP does not follow. Use the exact webhook URL n8n shows.",
   webhook_not_active:
-    "n8n says this webhook is not registered. Activate the workflow and use its Production URL - the Test URL only listens for one request after you click Execute.",
+    "n8n says this webhook is not registered. Publish the workflow (older n8n: switch it to Active) and use its Production URL - the Test URL only listens for one request after you click Execute.",
   workflow_error:
     "Your workflow was reached but failed. Open the latest execution in n8n to see which node errored.",
   bad_response:

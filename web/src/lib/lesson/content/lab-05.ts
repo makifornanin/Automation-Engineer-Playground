@@ -195,6 +195,7 @@ export const LAB_05_CHUNKS: readonly LessonChunk[] = [
     mode: "self-check",
     testCaseId: "lab-05-all-pages",
     caseName: "Every page of the customer API is fetched and combined, not just the first",
+    expected: "pages_fetched and total_records show every page was fetched and combined, not only the first.",
     content: [
       {
         type: "prose",

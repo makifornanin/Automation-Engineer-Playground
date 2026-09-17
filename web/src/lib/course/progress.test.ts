@@ -9,6 +9,7 @@ import {
   isLabComplete,
   isLessonReadable,
   labCompletionPercent,
+  openMilestones,
   requiredMilestones,
   visibleChunks,
   type CourseProgress,
@@ -102,6 +103,45 @@ describe("deriveCourseState", () => {
 
     expect(state.labs.every(({ status }) => status === "completed")).toBe(true);
     expect(state.capstone.status).not.toBe("locked");
+  });
+});
+
+describe("openMilestones", () => {
+  const LESSON: readonly LessonChunk[] = [
+    { kind: "problem", id: "problem", title: "Problem", content: [] },
+    {
+      kind: "guided-build",
+      id: "build",
+      title: "Build",
+      content: [],
+      whyThisMatters: [],
+      actions: [{ text: "a" }, { text: "b" }],
+      whyWereDoingThis: [],
+    },
+    { kind: "predict", id: "predict", title: "Predict", content: [], prompt: "?", reveal: [] },
+    {
+      kind: "test",
+      id: "test",
+      title: "Test",
+      content: [],
+      testCaseId: "case",
+      caseName: "Case",
+      mode: "self-check",
+    },
+  ];
+
+  /* The recap names exactly these, in lesson order, so a learner can go straight to them. */
+  it("lists only the milestones not yet earned, in lesson order", () => {
+    expect(openMilestones(LESSON, { predict: "predicted" })).toEqual([
+      { chunkId: "build", evidence: "acknowledged" },
+      { chunkId: "test", evidence: "verified" },
+    ]);
+  });
+
+  it("is empty once every milestone is earned", () => {
+    expect(
+      openMilestones(LESSON, { build: "acknowledged", predict: "predicted", test: "verified" }),
+    ).toEqual([]);
   });
 });
 

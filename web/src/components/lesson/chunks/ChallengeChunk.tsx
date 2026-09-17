@@ -1,4 +1,5 @@
 import { KazHints } from "@/components/kaz/KazHints";
+import type { RevealedHint } from "@/lib/kaz/hint-actions";
 import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
 import type { ChallengeChunk as ChallengeChunkData } from "@/lib/lesson/types";
 import { ContentBlocks } from "../blocks/ContentBlocks";
@@ -19,9 +20,12 @@ import { ContentBlocks } from "../blocks/ContentBlocks";
 export function ChallengeChunk({
   chunk,
   labSlug,
+  revealedHints = [],
 }: {
   chunk: ChallengeChunkData;
   labSlug: string;
+  /** Hints this learner already asked for, so a reload does not take them back. */
+  revealedHints?: readonly RevealedHint[];
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -50,7 +54,12 @@ export function ChallengeChunk({
         />
       ) : null}
 
-      <KazHints labSlug={labSlug} chunkId={chunk.id} hintCount={chunk.hintCount} />
+      <KazHints
+        labSlug={labSlug}
+        chunkId={chunk.id}
+        hintCount={chunk.hintCount}
+        initialRevealed={revealedHints}
+      />
     </div>
   );
 }

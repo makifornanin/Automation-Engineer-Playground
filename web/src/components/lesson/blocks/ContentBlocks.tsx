@@ -28,18 +28,40 @@ export function CodeBlock({ code, caption }: { code: string; caption?: string })
 }
 
 /**
+ * How an action's `expect` reads. In a build step it is an observation the
+ * learner checks against n8n. In Debug It the actions are questions and
+ * `expect` is the answer, so it waits behind a disclosure: an answer printed
+ * directly under its question turns "work out why" into "read why".
+ */
+export type ActionVariant = "steps" | "questions";
+
+/**
  * The ordered steps of a chunk. `expect` gets its own line because "what you
  * should see" is the part that turns an instruction into something the learner
  * can check for themselves.
  */
-export function ActionList({ items }: { items: readonly LessonAction[] }) {
+export function ActionList({
+  items,
+  variant = "steps",
+}: {
+  items: readonly LessonAction[];
+  variant?: ActionVariant;
+}) {
   return (
     <ol className="flex list-decimal flex-col gap-4 pl-5 marker:text-ink-muted">
       {items.map((action, index) => (
         <li key={index} className="flex flex-col gap-2 pl-1">
           <p className="max-w-prose text-ink-soft">{action.text}</p>
           {action.code ? <CodeBlock code={action.code.code} /> : null}
-          {action.expect ? (
+          {action.expect && variant === "questions" ? (
+            <details className="text-sm">
+              <summary className="w-fit cursor-pointer font-medium text-accent">
+                Check your answer
+              </summary>
+              <p className="mt-1 text-ink-muted">{action.expect}</p>
+            </details>
+          ) : null}
+          {action.expect && variant === "steps" ? (
             <p className="text-sm text-ink-muted">
               <span className="font-medium text-ink">You should see: </span>
               {action.expect}
@@ -51,7 +73,7 @@ export function ActionList({ items }: { items: readonly LessonAction[] }) {
   );
 }
 
-function Block({ block }: { block: ContentBlock }) {
+function Block({ block, actionVariant }: { block: ContentBlock; actionVariant: ActionVariant }) {
   switch (block.type) {
     case "prose":
       return <p className="max-w-prose text-ink-soft">{block.text}</p>;
@@ -86,7 +108,7 @@ function Block({ block }: { block: ContentBlock }) {
       );
 
     case "actions":
-      return <ActionList items={block.items} />;
+      return <ActionList items={block.items} variant={actionVariant} />;
 
     default:
       return assertNeverBlock(block);
@@ -98,7 +120,13 @@ function Block({ block }: { block: ContentBlock }) {
  * a `ContentBlock` member without a renderer arm is a compile error at
  * `assertNeverBlock`, not a silently missing paragraph.
  */
-export function ContentBlocks({ blocks }: { blocks: readonly ContentBlock[] }) {
+export function ContentBlocks({
+  blocks,
+  actionVariant = "steps",
+}: {
+  blocks: readonly ContentBlock[];
+  actionVariant?: ActionVariant;
+}) {
   if (blocks.length === 0) {
     return null;
   }
@@ -106,7 +134,7 @@ export function ContentBlocks({ blocks }: { blocks: readonly ContentBlock[] }) {
   return (
     <div className="flex flex-col gap-3">
       {blocks.map((block, index) => (
-        <Block key={index} block={block} />
+        <Block key={index} block={block} actionVariant={actionVariant} />
       ))}
     </div>
   );

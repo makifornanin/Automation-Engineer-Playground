@@ -22,6 +22,8 @@ export interface LabProgress {
   completedAt: string | null;
   /** chunk id -> the evidence that chunk has earned. */
   evidence: Readonly<Record<string, MilestoneEvidence>>;
+  /** challenge chunk id -> how many Kaz hints the learner has already seen. */
+  hintsUsed?: Readonly<Record<string, number>>;
 }
 
 export interface CourseProgress {
@@ -97,6 +99,18 @@ export function requiredMilestones(
       chunkId: chunk.id,
       evidence: EVIDENCING_KINDS[chunk.kind as keyof typeof EVIDENCING_KINDS],
     }));
+}
+
+/**
+ * The milestones still open, in lesson order. This is what the recap names
+ * when a lab is not yet complete, so a learner never has to page back through
+ * every step to find the one they skipped.
+ */
+export function openMilestones(
+  chunks: readonly LessonChunk[],
+  earned: Readonly<Record<string, MilestoneEvidence>>,
+): readonly { chunkId: string; evidence: MilestoneEvidence }[] {
+  return requiredMilestones(chunks).filter(({ chunkId, evidence }) => earned[chunkId] !== evidence);
 }
 
 /**

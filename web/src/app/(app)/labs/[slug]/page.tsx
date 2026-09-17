@@ -5,10 +5,12 @@ import {
   deriveCourseState,
   isLabComplete,
   isLessonReadable,
+  openMilestones,
   visibleChunks,
 } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
 import { startLab } from "@/lib/course/progress-writes";
+import { getChallengeHints } from "@/lib/kaz/hints";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { getLabWebhookHost } from "@/lib/testing/webhook-store";
 
@@ -81,12 +83,35 @@ export default async function LabPage({ params }: LabPageProps) {
   // Completion is decided here, from earned evidence against the lab's full
   // content — never by the client. Lab 10's "next" is the Capstone.
   const nextLab = LABS[index + 1] ?? null;
+  const earned = progress.labs[lab.slug]?.evidence ?? {};
   const completion = {
-    complete: allChunks ? isLabComplete(allChunks, progress.labs[lab.slug]?.evidence ?? {}) : false,
+    complete: allChunks ? isLabComplete(allChunks, earned) : false,
     next: nextLab
       ? { label: "Lab " + nextLab.number + " — " + nextLab.title, href: labHref(nextLab) }
       : { label: "The Capstone", href: "/capstone" },
+    // What the recap names when the lab is not complete: each unfinished step,
+    // limited to the chunks this learner can actually open.
+    openSteps: (chunks ? openMilestones(chunks, earned) : []).flatMap(({ chunkId, evidence }) => {
+      const open = chunks?.find((entry) => entry.id === chunkId);
+      return open ? [{ id: open.id, title: open.title, evidence }] : [];
+    }),
   };
+
+  // Hints a learner has already asked for stay revealed after a reload. They
+  // were earned one request at a time; losing them would make the learner ask
+  // again and restart the count Kaz keys hint strength off.
+  const hintsUsed = progress.labs[lab.slug]?.hintsUsed ?? {};
+  const allHints = getChallengeHints(lab.slug);
+  const revealedHints = Object.fromEntries(
+    (chunks ?? [])
+      .filter((entry) => entry.kind === "challenge")
+      .map((entry) => [
+        entry.id,
+        allHints
+          .slice(0, Math.min(hintsUsed[entry.id] ?? 0, allHints.length))
+          .map((text, hintIndex) => ({ index: hintIndex, total: allHints.length, text })),
+      ]),
+  );
 
   /*
    * Same vocabulary the Labs rows use — Completed / Current / Preview — rather
@@ -118,6 +143,7 @@ export default async function LabPage({ params }: LabPageProps) {
           labSlug={lab.slug}
           completion={completion}
           webhookHost={webhookHost}
+          revealedHints={revealedHints}
         />
       ) : (
         <p className="text-ink-soft">This lesson is not available yet.</p>

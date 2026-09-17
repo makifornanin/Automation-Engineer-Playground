@@ -115,7 +115,7 @@ export function SendTestPanel({
             className="rounded-card border border-line bg-surface px-3 py-2 font-mono text-sm text-ink outline-none focus-visible:border-accent"
           />
           <p className="max-w-prose text-sm text-ink-muted">
-            Activate the workflow first. AEP saves this URL for this lab only and needs a public
+            Publish the workflow in n8n first. AEP saves this URL for this lab only and needs a public
             https address.
           </p>
           <div className="flex flex-wrap items-center gap-4">

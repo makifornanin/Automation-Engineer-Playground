@@ -35,7 +35,12 @@ export function TestChunk({
           webhookHost={webhookHost}
         />
       ) : (
-        <SelfCheckPanel labSlug={labSlug} chunkId={chunk.id} caseName={chunk.caseName} />
+        <SelfCheckPanel
+          labSlug={labSlug}
+          chunkId={chunk.id}
+          caseName={chunk.caseName}
+          expected={chunk.expected}
+        />
       )}
     </div>
   );

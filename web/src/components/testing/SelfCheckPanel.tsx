@@ -14,6 +14,8 @@ export interface SelfCheckPanelProps {
    * when this panel is a fallback inside Send Test, which already shows it.
    */
   caseName?: string;
+  /** The outcome that counts as a pass, in plain words. */
+  expected?: string;
   title?: string;
 }
 
@@ -36,6 +38,7 @@ export function SelfCheckPanel({
   labSlug,
   chunkId,
   caseName,
+  expected,
   title = "Test it",
 }: SelfCheckPanelProps) {
   const [state, action, pending] = useActionState(runSelfCheck, IDLE_TEST_STATE);
@@ -56,6 +59,12 @@ export function SelfCheckPanel({
       <div className="flex flex-col gap-1">
         <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">{title}</h3>
         {caseName ? <p className="max-w-prose text-ink-soft">{caseName}</p> : null}
+        {expected ? (
+          <p className="max-w-prose text-sm text-ink-muted">
+            <span className="font-medium text-ink">Expected: </span>
+            {expected}
+          </p>
+        ) : null}
       </div>
 
       <form action={action} className="flex flex-col gap-3">
@@ -65,6 +74,9 @@ export function SelfCheckPanel({
         <label htmlFor={fieldId} className="text-sm font-medium text-ink">
           Paste the output your workflow produced
         </label>
+        <p className="max-w-prose text-sm text-ink-muted">
+          In n8n, open the node, switch its output view to JSON and copy all of it.
+        </p>
         <textarea
           id={fieldId}
           name="output"

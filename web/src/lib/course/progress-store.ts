@@ -56,6 +56,7 @@ interface ChunkStateRow {
   lab_slug: string;
   chunk_id: string;
   evidence: MilestoneEvidence | null;
+  hints_used?: number | null;
 }
 
 /**
@@ -81,7 +82,7 @@ export const getCourseProgress = cache(async function getCourseProgress(): Promi
 
     const [progressResult, chunkResult] = await Promise.all([
       supabase.from(PROGRESS_TABLE).select("lab_slug, current_chunk_id, completed_at"),
-      supabase.from(CHUNK_STATE_TABLE).select("lab_slug, chunk_id, evidence"),
+      supabase.from(CHUNK_STATE_TABLE).select("lab_slug, chunk_id, evidence, hints_used"),
     ]);
 
     if (progressResult.error || chunkResult.error) {
@@ -121,6 +122,13 @@ export function assembleProgress(
   }
 
   for (const row of chunkRows) {
+    // Hints are recorded on the lab's own row only. A hint-only row must never
+    // create a lab entry: any entry marks a lab started, and started beats
+    // locked.
+    const started = labs[row.lab_slug];
+    if (started && row.hints_used) {
+      started.hintsUsed = { ...started.hintsUsed, [row.chunk_id]: row.hints_used };
+    }
     if (!row.evidence) continue;
     const lab = (labs[row.lab_slug] ??= { ...EMPTY_LAB_PROGRESS, evidence: {} });
     lab.evidence = { ...lab.evidence, [row.chunk_id]: row.evidence };

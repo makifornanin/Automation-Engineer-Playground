@@ -30,6 +30,26 @@ describe("<KazHints />", () => {
     expect(revealNextHint).not.toHaveBeenCalled();
   });
 
+  /*
+   * Found in the live E2E pass: a reload took back every hint the learner had
+   * already asked for, and asking again restarted at hint 1.
+   */
+  it("keeps the hints a learner already asked for, and continues from there", async () => {
+    const user = userEvent.setup();
+    render(
+      <KazHints
+        labSlug={LAB}
+        chunkId="challenge"
+        hintCount={2}
+        initialRevealed={[{ index: 0, total: 2, text: "Hint text number 1" }]}
+      />,
+    );
+
+    expect(screen.getByText("Hint text number 1")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Ask Kaz for the next hint" }));
+    expect(revealNextHint).toHaveBeenLastCalledWith(LAB, "challenge", 1);
+  });
+
   it("reveals hints one at a time, in order", async () => {
     const user = userEvent.setup();
     render(<KazHints labSlug={LAB} chunkId="challenge" hintCount={2} />);

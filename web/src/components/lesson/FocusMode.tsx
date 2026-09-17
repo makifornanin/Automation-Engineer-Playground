@@ -1,11 +1,17 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
 import Link from "next/link";
 import { KazOrb } from "@/components/kaz/KazOrb";
 import { SaveToNotesButton } from "@/components/notes/SaveToNotesButton";
-import { EVIDENCING_KINDS, isEvidencingKind } from "@/lib/course/progress";
+import {
+  EVIDENCING_KINDS,
+  isEvidencingKind,
+  type MilestoneEvidence,
+} from "@/lib/course/progress";
+import type { RevealedHint } from "@/lib/kaz/hint-actions";
 import { chunkNote } from "@/lib/kaz/notes";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
 import { ContentBlocks } from "./blocks/ContentBlocks";
@@ -22,6 +28,14 @@ import { TestChunk } from "./chunks/TestChunk";
 export interface LabCompletion {
   complete: boolean;
   next: { label: string; href: string } | null;
+  /** Required steps not yet earned, in lesson order. Empty when complete. */
+  openSteps?: readonly OpenStep[];
+}
+
+export interface OpenStep {
+  id: string;
+  title: string;
+  evidence: MilestoneEvidence;
 }
 
 export interface FocusModeProps {
@@ -32,7 +46,16 @@ export interface FocusModeProps {
   completion?: LabCompletion;
   /** Hostname of this lab's saved webhook, for Send Test. Null when none. */
   webhookHost?: string | null;
+  /** Challenge chunk id -> hints this learner has already been given. */
+  revealedHints?: Readonly<Record<string, readonly RevealedHint[]>>;
 }
+
+/** What finishing each kind of open step takes, in the learner's words. */
+const OPEN_STEP_ACTION: Record<MilestoneEvidence, string> = {
+  acknowledged: "mark it done",
+  predicted: "write your prediction",
+  verified: "pass the check",
+};
 
 /** The recap's prose, as plain text for the notebook. */
 function recapText(chunk: LessonChunk): string {
@@ -46,17 +69,49 @@ function recapText(chunk: LessonChunk): string {
  * Tells the learner, at the end of the lab, whether they have actually
  * finished it. Completion follows evidence (Vision §3), so a learner who read
  * to the end without passing the checks is told plainly what is still open
- * rather than congratulated for scrolling.
+ * rather than congratulated for scrolling. Each open step is named, with a way
+ * straight to it, so nobody pages back through ten chunks to find the one they
+ * skipped.
  */
-function RecapCompletion({ completion }: { completion?: LabCompletion }) {
+function RecapCompletion({
+  completion,
+  openSteps,
+  onGoTo,
+}: {
+  completion?: LabCompletion;
+  openSteps: readonly OpenStep[];
+  onGoTo: (chunkId: string) => void;
+}) {
   if (!completion) return null;
 
   if (!completion.complete) {
+    if (openSteps.length === 0) {
+      // Every step is done on this screen; the server is catching up.
+      return <p className="text-sm text-ink-muted">Saving your progress…</p>;
+    }
+
     return (
-      <p className="max-w-prose text-sm text-ink-muted">
-        This lab completes once its build steps, test and challenge are done. Anything still
-        open is waiting for you back through the steps.
-      </p>
+      <section className="flex flex-col gap-2">
+        <p className="font-medium text-ink">
+          {openSteps.length === 1
+            ? "One step left before this lab is complete:"
+            : openSteps.length + " steps left before this lab is complete:"}
+        </p>
+        <ul className="flex flex-col gap-2">
+          {openSteps.map((open) => (
+            <li key={open.id} className="flex flex-wrap items-baseline gap-x-2">
+              <button
+                type="button"
+                onClick={() => onGoTo(open.id)}
+                className="text-left text-sm font-medium text-accent underline-offset-4 hover:underline"
+              >
+                {open.title}
+              </button>
+              <span className="text-sm text-ink-muted">— {OPEN_STEP_ACTION[open.evidence]}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     );
   }
 
@@ -97,7 +152,10 @@ function isAcknowledgeable(chunk: LessonChunk): boolean {
 function BaseChunk({ chunk }: { chunk: LessonChunk }) {
   return (
     <div className="flex flex-col gap-4">
-      <ContentBlocks blocks={chunk.content} />
+      <ContentBlocks
+        blocks={chunk.content}
+        actionVariant={chunk.kind === "debug" ? "questions" : "steps"}
+      />
       {chunk.teaches ? <TeachingNotes notes={chunk.teaches} /> : null}
     </div>
   );
@@ -107,12 +165,20 @@ function ChunkBody({
   chunk,
   labSlug,
   completion,
+  openSteps,
   webhookHost,
+  revealedHints,
+  onGoTo,
+  onPredicted,
 }: {
   chunk: LessonChunk;
   labSlug: string;
   completion?: LabCompletion;
+  openSteps: readonly OpenStep[];
   webhookHost: string | null;
+  revealedHints?: Readonly<Record<string, readonly RevealedHint[]>>;
+  onGoTo: (chunkId: string) => void;
+  onPredicted: (chunkId: string) => void;
 }) {
   switch (chunk.kind) {
     case "problem":
@@ -125,7 +191,7 @@ function ChunkBody({
       return (
         <div className="flex flex-col gap-4">
           <BaseChunk chunk={chunk} />
-          <RecapCompletion completion={completion} />
+          <RecapCompletion completion={completion} openSteps={openSteps} onGoTo={onGoTo} />
           <SaveToNotesButton
             labSlug={labSlug}
             text={recapText(chunk)}
@@ -146,13 +212,21 @@ function ChunkBody({
       return <GuidedBuildChunk chunk={chunk} />;
 
     case "predict":
-      return <PredictChunk chunk={chunk} labSlug={labSlug} />;
+      return (
+        <PredictChunk chunk={chunk} labSlug={labSlug} onRecorded={() => onPredicted(chunk.id)} />
+      );
 
     case "test":
       return <TestChunk chunk={chunk} labSlug={labSlug} webhookHost={webhookHost} />;
 
     case "challenge":
-      return <ChallengeChunk chunk={chunk} labSlug={labSlug} />;
+      return (
+        <ChallengeChunk
+          chunk={chunk}
+          labSlug={labSlug}
+          revealedHints={revealedHints?.[chunk.id] ?? []}
+        />
+      );
 
     default:
       return assertNeverBlock(chunk);
@@ -183,7 +257,9 @@ export function FocusMode({
   initialChunkId = null,
   completion,
   webhookHost = null,
+  revealedHints,
 }: FocusModeProps) {
+  const router = useRouter();
   // Resume where the learner left off. An unknown id — content reordered since
   // they were last here — falls back to the start rather than to nothing.
   const resumeIndex = Math.max(
@@ -199,6 +275,12 @@ export function FocusMode({
   const headingId = useId();
   const stepId = useId();
 
+  // Steps recorded on this screen since the server last rendered. Writes are
+  // fire-and-forget, so the recap would otherwise list a step the learner has
+  // just finished until the next navigation.
+  const [recordedHere, setRecordedHere] = useState<ReadonlySet<string>>(() => new Set());
+  const openSteps = (completion?.openSteps ?? []).filter((open) => !recordedHere.has(open.id));
+
   const chunk = chunks[index];
   const isFirst = index === 0;
   const isLast = index === chunks.length - 1;
@@ -211,9 +293,8 @@ export function FocusMode({
     headingRef.current?.focus();
   }, [index]);
 
-  function step(delta: number) {
+  function goToIndex(next: number) {
     hasStepped.current = true;
-    const next = Math.min(Math.max(index + delta, 0), chunks.length - 1);
     setIndex(next);
 
     /*
@@ -226,8 +307,30 @@ export function FocusMode({
     void setCurrentChunk(labSlug, chunks[next].id).catch(() => {});
   }
 
+  function step(delta: number) {
+    goToIndex(Math.min(Math.max(index + delta, 0), chunks.length - 1));
+  }
+
+  function goTo(chunkId: string) {
+    const target = chunks.findIndex((entry) => entry.id === chunkId);
+    if (target >= 0) goToIndex(target);
+  }
+
+  /*
+   * A step that was open until now can complete the lab, so once its write has
+   * landed the server re-derives completion. Steps already earned change
+   * nothing and cost no refresh.
+   */
+  function noteRecorded(chunkId: string, write: Promise<void>) {
+    const wasOpen = (completion?.openSteps ?? []).some((open) => open.id === chunkId);
+    setRecordedHere((current) => new Set(current).add(chunkId));
+    if (wasOpen) {
+      void write.then(() => router.refresh()).catch(() => {});
+    }
+  }
+
   function finishAndAdvance() {
-    void recordChunkEvidence(labSlug, chunk.id).catch(() => {});
+    noteRecorded(chunk.id, recordChunkEvidence(labSlug, chunk.id));
     step(1);
   }
 
@@ -266,7 +369,11 @@ export function FocusMode({
         chunk={chunk}
         labSlug={labSlug}
         completion={completion}
+        openSteps={openSteps}
         webhookHost={webhookHost}
+        revealedHints={revealedHints}
+        onGoTo={goTo}
+        onPredicted={(chunkId) => noteRecorded(chunkId, Promise.resolve())}
       />
 
       <div className="flex flex-wrap gap-4 pt-2">

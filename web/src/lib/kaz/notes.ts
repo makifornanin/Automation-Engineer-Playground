@@ -36,7 +36,7 @@ export interface KazNote {
  */
 const SPEAKS_AT: Partial<Record<LessonChunkKind, KazNote>> = {
   "break-it": {
-    text: "My favourite part. We break it on purpose — then you'll know exactly what that failure looks like before it ever surprises you for real.",
+    text: "My favourite part. Watch closely — what you are about to cause is exactly what will surprise you for real one day.",
     state: "amused",
   },
 };
