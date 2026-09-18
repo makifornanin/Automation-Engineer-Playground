@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 export type InviteLanding = "accepted" | "failed" | "none";
 
@@ -21,7 +21,38 @@ function hasAuthFragment(hash: string): boolean {
   return ["access_token", "refresh_token", "error", "error_code"].some((key) => params.has(key));
 }
 
-const noSubscription = () => () => {};
+/**
+ * Where the landing is remembered between the effect that finds it and the
+ * render that shows it.
+ *
+ * The fragment cannot be read during render: the server never sees it, so
+ * rendering from it would be a hydration mismatch. It cannot simply be read
+ * after mount either, because the effect below removes it from the URL —
+ * whichever ran second would find nothing. So the effect records what it found
+ * on this history entry before cleaning the URL, then tells React to read
+ * again.
+ *
+ * The history entry, rather than a module variable, is what makes this belong
+ * to this visit: React's development Strict Mode mounts twice and must still
+ * show the message, while arriving at /sign-in again later must not.
+ *
+ * Existing state is spread through, because the App Router keeps its own keys
+ * there and replacing it wholesale would break navigation.
+ */
+const STATE_KEY = "aepInviteLanding";
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function recordedLanding(): InviteLanding {
+  const recorded = (window.history.state as Record<string, unknown> | null)?.[STATE_KEY];
+  return recorded === "accepted" || recorded === "failed" ? recorded : "none";
+}
 
 const MESSAGE: Record<Exclude<InviteLanding, "none">, string> = {
   accepted: "Invite accepted. Enter your email below and we will send your code.",
@@ -35,20 +66,23 @@ const MESSAGE: Record<Exclude<InviteLanding, "none">, string> = {
  * so it does not sit in history, and the learner is told what to do next.
  */
 export function InviteLinkNotice() {
-  const hash = useSyncExternalStore(noSubscription, () => window.location.hash, () => "");
-  const [landing, setLanding] = useState<InviteLanding>("none");
-
-  // Kept once seen: clearing the fragment below must not hide the message.
-  const parsed = readInviteLanding(hash);
-  if (parsed !== "none" && parsed !== landing) {
-    setLanding(parsed);
-  }
+  const landing = useSyncExternalStore(
+    subscribe,
+    recordedLanding,
+    () => "none" as InviteLanding,
+  );
 
   useEffect(() => {
-    if (hasAuthFragment(window.location.hash)) {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-  }, [hash]);
+    const current = window.location.hash;
+    if (!hasAuthFragment(current)) return;
+
+    window.history.replaceState(
+      { ...window.history.state, [STATE_KEY]: readInviteLanding(current) },
+      "",
+      window.location.pathname + window.location.search,
+    );
+    for (const listener of [...listeners]) listener();
+  }, []);
 
   if (landing === "none") return null;
   return (

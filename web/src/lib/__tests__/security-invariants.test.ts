@@ -90,11 +90,16 @@ describe("security invariants", () => {
     expect(adminClient.startsWith('import "server-only";')).toBe(true);
   });
 
-  it("never names a public secret or embeds a secret key anywhere under web/", () => {
+  it("never names a public secret or embeds a secret key in a file that ships", () => {
+    // `.env*.local` is the one place a real key belongs: git-ignored, never
+    // bundled, and the only file `admin-client.ts` reads it from. Everything
+    // else under web/ — source, `.env.example`, docs, build config — must
+    // carry neither a public-secret variable name nor a key.
+    const isLocalEnvFile = (file: string) => /(^|[\\/])\.env(\..+)?\.local$/.test(file);
     const offenders = findOffenders(
       WEB_DIR,
       (text) => /NEXT_PUBLIC_[A-Z_]*SECRET/.test(text) || /sb_secret_[A-Za-z0-9]/.test(text),
-    );
+    ).filter((file) => !isLocalEnvFile(file));
     expect(offenders).toEqual([]);
   });
 

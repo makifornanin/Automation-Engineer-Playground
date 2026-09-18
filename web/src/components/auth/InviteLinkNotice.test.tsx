@@ -23,6 +23,22 @@ describe("readInviteLanding", () => {
 
 describe("<InviteLinkNotice />", () => {
   /*
+   * Found live: the component read the fragment through a store while its own
+   * effect was removing it from the URL, so on a real landing the tokens were
+   * stripped but the learner was told nothing. The effect now captures the
+   * fragment before clearing it, whichever order the two run in.
+   */
+  it("still shows the message when the fragment is read after the URL is cleaned", () => {
+    window.history.replaceState(null, "", "/sign-in#access_token=x&refresh_token=y&type=invite");
+
+    const { rerender } = render(<InviteLinkNotice />);
+    rerender(<InviteLinkNotice />);
+
+    expect(window.location.hash).toBe("");
+    expect(screen.getByRole("status")).toHaveTextContent(/Invite accepted/);
+  });
+
+  /*
    * An accepted invite puts a live session in the URL. AEP does not use it,
    * and it must not stay in the address bar or the history entry.
    */
