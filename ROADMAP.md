@@ -1671,12 +1671,19 @@ Prepare sources:
 
 Build:
 
-* [ ] source chunking
-* [ ] embeddings
-* [ ] Supabase vector storage
-* [ ] source metadata
-* [ ] retrieval test set
-* [ ] re-index/update process when repo content changes
+* [x] source chunking — the lesson registry already chunks every lab, and Kaz V2
+  retrieves by lab and chunk (`web/src/lib/kaz/context.ts`)
+* [~] embeddings — **superseded 2026-09-18 (Kaz V2)**: retrieval is deterministic
+  from the repository, so there is nothing to embed. See the amendment in
+  `docs/AEP-KAZ-DESIGN.md` §13
+* [~] Supabase vector storage — superseded with the line above
+* [x] source metadata — every retrieved slice names its lab and step, and Kaz
+  cites them as "Lab 07 · Debug It"
+* [x] retrieval test set — `web/src/lib/kaz/context.test.ts` pins what each help
+  level may retrieve, including the challenge override
+* [x] re-index/update process when repo content changes — none needed: the
+  canonical workflows and lesson chunks are read from the repository at request
+  time, so a content change is live immediately
 
 ## Step 2 — n8n Kaz Workflow
 

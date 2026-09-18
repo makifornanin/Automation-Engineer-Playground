@@ -29,18 +29,20 @@ const HISTORY: KazMessage[] = [
 
 function renderPanel(overrides: Partial<React.ComponentProps<typeof KazPanel>> = {}) {
   const onClose = vi.fn();
+  const onTurn = vi.fn();
   render(
     <KazPanel
       labSlug="03-apis-webhooks"
       chunkId="debug-it"
       contextLabel="Lab 03 · Debug It"
-      initialMessages={HISTORY}
+      messages={HISTORY}
+      onTurn={onTurn}
       visibility={{ status: "linked", host: "n8n.example.com" }}
       onClose={onClose}
       {...overrides}
     />,
   );
-  return { onClose };
+  return { onClose, onTurn };
 }
 
 beforeEach(() => {
@@ -58,7 +60,7 @@ describe("<KazPanel />", () => {
 
   it("sends the lab, the chunk and the question, and shows the answer", async () => {
     const user = userEvent.setup();
-    renderPanel();
+    const { onTurn } = renderPanel();
 
     await user.type(screen.getByLabelText("Ask Kaz"), "why did my test fail?");
     await user.click(screen.getByRole("button", { name: "Send" }));
@@ -68,7 +70,8 @@ describe("<KazPanel />", () => {
     expect(formData.get("labSlug")).toBe("03-apis-webhooks");
     expect(formData.get("chunkId")).toBe("debug-it");
     expect(formData.get("message")).toBe("why did my test fail?");
-    expect(await screen.findByText("Start with the webhook.")).toBeInTheDocument();
+    // The launcher owns the thread, so the panel hands the finished turn up.
+    await waitFor(() => expect(onTurn).toHaveBeenCalledTimes(1));
   });
 
   /* Honest about her own eyes: the panel never implies she can see more. */

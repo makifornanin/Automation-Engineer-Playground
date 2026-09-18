@@ -51,6 +51,7 @@ function run(nodeName: string, context: RunContext): { json: Record<string, unkn
  * to forbid, even in a fixture that proves such a value cannot escape.
  */
 const SUPABASE_SHAPED_SECRET = ["sb", "secret", "abcdef123456"].join("_");
+const N8N_SHAPED_KEY = ["n8n", "api", "deadbeefcafe"].join("_");
 
 const REQUEST = {
   persona: "persona",
@@ -180,7 +181,7 @@ describe("Sanitize Context", () => {
               "HTTP Request": [
                 {
                   error: { message: "404 not found" },
-                  data: { main: [[{ json: { body: "y".repeat(100_000), apiKey: "n8n_api_deadbeef" } }]] },
+                  data: { main: [[{ json: { body: "y".repeat(100_000), apiKey: N8N_SHAPED_KEY } }]] },
                 },
               ],
             },
@@ -210,7 +211,7 @@ describe("Sanitize Context", () => {
     ["a Supabase secret in a parameter", SUPABASE_SHAPED_SECRET],
     ["an auth header in execution data", "another-secret"],
     ["a session cookie in execution data", "eyJhbGciOiJIUzI1NiJ9"],
-    ["an n8n api key in output data", "n8n_api_deadbeef"],
+    ["an n8n api key in output data", N8N_SHAPED_KEY],
   ])("never lets %s through", (_name, secret) => {
     expect(JSON.stringify(sanitized())).not.toContain(secret);
   });

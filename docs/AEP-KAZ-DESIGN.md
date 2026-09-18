@@ -432,9 +432,18 @@ The website may send context such as:
 
 ## 13. Knowledge Base
 
+**Amended 2026-09-18 (Kaz V2).** Retrieval is deterministic, not semantic: the
+corpus is ten labs and a Capstone, and the learner's position already names the
+relevant slice — the current chunk, its lab, what they have proved, and the
+canonical workflow for that lab. Embeddings and a vector store would be
+infrastructure answering a question the route already answers, so V2 ships
+without them. The preference below is retained rather than deleted; revisit it
+if Kaz ever needs to answer across material the learner's position cannot
+point at. See `docs/superpowers/specs/2026-09-18-kaz-v2-design.md`.
+
 Do not require a custom-trained model for the MVP.
 
-Preferred approach:
+Preferred approach (superseded for V2):
 
 **AEP Git Repository / Course Content → chunk/index → embeddings → Supabase vector knowledge base → Kaz retrieval**
 

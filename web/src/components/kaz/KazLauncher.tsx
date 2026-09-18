@@ -35,6 +35,13 @@ export function KazLauncher({
 }: KazLauncherProps) {
   const [open, setOpen] = useState(false);
   /*
+   * The thread lives here, not in the panel: the launcher stays mounted while
+   * the panel comes and goes, so closing Kaz and opening her again keeps the
+   * conversation on screen instead of falling back to what the page was
+   * rendered with.
+   */
+  const [messages, setMessages] = useState<readonly KazMessage[]>(initialMessages);
+  /*
    * The count is stored with the step it belongs to rather than reset when the
    * step changes: struggling with Break It says nothing about the challenge
    * after it, and a count keyed by chunk needs no effect to clear it.
@@ -60,7 +67,8 @@ export function KazLauncher({
         labSlug={labSlug}
         chunkId={chunkId}
         contextLabel={contextLabel}
-        initialMessages={initialMessages}
+        messages={messages}
+        onTurn={(question, answer) => setMessages((current) => [...current, question, answer])}
         visibility={visibility}
         onClose={() => setOpen(false)}
       />

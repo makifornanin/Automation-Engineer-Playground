@@ -17,7 +17,9 @@ export interface KazPanelProps {
   chunkId: string;
   /** "Lab 04 · Debug It" — enough context to know which Kaz you are talking to. */
   contextLabel: string;
-  initialMessages: readonly KazMessage[];
+  messages: readonly KazMessage[];
+  /** Appends a finished turn to the thread the launcher holds. */
+  onTurn: (question: KazMessage, answer: KazMessage) => void;
   visibility: KazWorkflowVisibility;
   onClose: () => void;
 }
@@ -37,11 +39,11 @@ export function KazPanel({
   labSlug,
   chunkId,
   contextLabel,
-  initialMessages,
+  messages,
+  onTurn,
   visibility,
   onClose,
 }: KazPanelProps) {
-  const [messages, setMessages] = useState<readonly KazMessage[]>(initialMessages);
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const fieldId = useId();
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,7 +56,7 @@ export function KazPanel({
     const next = await askKaz(previous, formData);
     setPendingQuestion(null);
     if (next.status === "answered") {
-      setMessages((current) => [...current, next.question, next.answer]);
+      onTurn(next.question, next.answer);
       formRef.current?.reset();
     }
     return next;

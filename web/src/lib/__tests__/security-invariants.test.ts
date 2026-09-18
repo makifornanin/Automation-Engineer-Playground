@@ -98,7 +98,11 @@ describe("security invariants", () => {
     const isLocalEnvFile = (file: string) => /(^|[\\/])\.env(\..+)?\.local$/.test(file);
     const offenders = findOffenders(
       WEB_DIR,
-      (text) => /NEXT_PUBLIC_[A-Z_]*SECRET/.test(text) || /sb_secret_[A-Za-z0-9]/.test(text),
+      (text) =>
+        /NEXT_PUBLIC_[A-Z_]*SECRET/.test(text) ||
+        /sb_secret_[A-Za-z0-9]/.test(text) ||
+        // n8n API keys have their own prefix, and Kaz's Gateway uses one.
+        /n8n_api_[A-Za-z0-9]/.test(text),
     ).filter((file) => !isLocalEnvFile(file));
     expect(offenders).toEqual([]);
   });

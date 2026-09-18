@@ -37,6 +37,32 @@ describe("<KazLauncher />", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  /*
+   * Found live: the thread used to live in the panel, so closing Kaz and
+   * opening her again showed only what the page was rendered with — the
+   * conversation you had just had disappeared until a refresh.
+   */
+  it("keeps the conversation when the panel is closed and opened again", async () => {
+    const user = userEvent.setup();
+    render(
+      <KazLauncher
+        labSlug="03-apis-webhooks"
+        chunkId="debug-it"
+        contextLabel="Lab 03 · Debug It"
+        initialMessages={[{ id: "1", role: "kaz", content: "Earlier answer.", createdAt: "then" }]}
+        visibility={{ status: "not_linked" }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Ask Kaz/ }));
+    expect(screen.getByText("Earlier answer.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: /Ask Kaz/ }));
+
+    expect(screen.getByText("Earlier answer.")).toBeInTheDocument();
+  });
+
   it("opens the panel on click", async () => {
     const user = userEvent.setup();
     renderLauncher();

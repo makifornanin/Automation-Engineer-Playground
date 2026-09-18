@@ -528,6 +528,13 @@ Avoid distracting constant motion.
 
 ## 12. Navigation — Floating Glass Dock
 
+**Amended 2026-09-18 (Kaz V2).** Kaz is no longer one of the dock's items. She
+is a companion inside the lesson: a floating orb that opens a side panel about
+the step on screen, so she always knows which lab, which chunk and which test
+the learner is looking at. A dock item would lead to a second, context-free Kaz
+competing with the panel. `/kaz` redirects into the journey. The dock therefore
+carries Home, Labs, Notes, Settings and — for an admin — Admin.
+
 Desktop navigation uses a compact floating dock rather than a traditional full-height rectangular sidebar.
 
 Default state:
