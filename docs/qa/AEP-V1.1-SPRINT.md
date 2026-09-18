@@ -15,9 +15,10 @@ second invited learner (student, Lab 01 not started).
 
 ## Capstone completion tracking — live verified
 
-Nine `AEP-E2E-Capstone` copies of the reference workflows were published in n8n
-so the canonical Capstone was never modified, and every scenario was run for
-real against them.
+Four `AEP-E2E-Capstone` copies of the reference workflows (service request,
+approval, DLQ recovery, action executor) were published in n8n so the canonical
+Capstone was never modified, and all nine scenarios were run for real against
+them.
 
 | # | Scenario | Real response | Proof |
 |---|---|---|---|
