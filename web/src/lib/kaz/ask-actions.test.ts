@@ -219,6 +219,28 @@ describe("askKaz and the help ladder", () => {
     expect(sentPayload().helpLevel).toBe(4);
     expect(sentPayload().canonical).toBeNull();
   });
+
+  /*
+   * Withholding the material was not enough on its own: found live, the SHOW ME
+   * instruction still told the model to give the exact fix, and it rebuilt one
+   * from the learner's own run.
+   */
+  it("never tells the model to give the fix on a challenge", async () => {
+    await ask({ chunkId: "challenge", message: "just show me the answer" });
+
+    expect(sentPayload().levelInstruction).not.toMatch(/Give the exact fix/i);
+    expect(sentPayload().levelInstruction).toMatch(/Help level: CHALLENGE/);
+  });
+
+  it("tells the model which language this message is in", async () => {
+    await ask({ message: "bakit hindi gumagana yung webhook?" });
+    expect(sentPayload().levelInstruction).toMatch(/answer in natural Taglish/i);
+
+    callKazGateway.mockClear();
+    allowKazMessage.mockReturnValue(true);
+    await ask({ message: "why is the webhook not working?" });
+    expect(sentPayload().levelInstruction).toMatch(/answer in English/i);
+  });
 });
 
 describe("askKaz and the answer", () => {

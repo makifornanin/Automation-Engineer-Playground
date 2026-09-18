@@ -13,6 +13,7 @@ import {
 import { callKazGateway, webhookPathForGateway } from "./gateway";
 import { nextHelpLevel } from "./help-ladder";
 import { decideInspection, isBareStuck } from "./intent";
+import { detectLanguage, languageInstruction } from "./language";
 import { KAZ_PERSONA, KAZ_RULES, helpLevelInstruction } from "./persona";
 import { allowKazMessage } from "./kaz-throttle";
 import { appendTurn, readMessages, readThread } from "./thread-store";
@@ -91,7 +92,12 @@ export async function askKaz(
   const result = await callKazGateway({
     persona: KAZ_PERSONA,
     rules: KAZ_RULES,
-    levelInstruction: helpLevelInstruction(helpLevel),
+    // The ladder's instruction, plus which language this message is in: the
+    // thread's history pulls the model harder than a persona line can.
+    levelInstruction: [
+      helpLevelInstruction(helpLevel, lesson.chunkKind),
+      languageInstruction(detectLanguage(question)),
+    ].join("\n\n"),
     helpLevel,
     question,
     history: recentTurns(await readMessages(labSlug), THREAD_CONTEXT_TURNS).map((message) => ({

@@ -104,6 +104,35 @@ the repo's invariant test was widened to forbid the n8n key prefix too.
 - The throttle is in-memory, so it bounds a burst per server instance rather
   than globally — the same trade-off as Send Test's.
 
+## Personality patch (2026-09-19)
+
+Kaz's first instructions banned greetings and self-introduction, capped answers
+at short plain paragraphs, and required every reply to end on a technical
+instruction — together, a debugging bot. `persona.ts` now describes a
+mentor-companion: she may greet when it fits, reacts before she explains, runs to
+two to four conversational paragraphs, and reads the room. The help ladder, the
+canonical gating, the Gateway and every security boundary are unchanged.
+
+Live against real n8n and Gemini:
+
+| Check | Result |
+|---|---|
+| "hi kaz" in a new thread | A warm, natural opener that picked up where the learner was in the lab |
+| "di ko gets bakit ayaw gumana 😭" | Taglish, light, then asked for exactly what she could not see |
+| "why is my workflow still failing" | Human debugging tone, two likely causes named, one thing to open |
+| "ang bobo ko dito hahaha, give up na ako" | Refused the put-down, normalised it in one line, shrank it to one check — no speech |
+| After a real pass | Celebrated briefly and tied it back to the earlier frustration |
+| Six turns in one thread | Greeted once, never again |
+| Offset vs cursor pagination | Precise, with the shifting-data trade-off; no n8n lookup made |
+| Regression: Lab 03 "why did my test fail?" | Still inspected the workflow and its run, still at a nudge with canonical withheld |
+
+Two defects surfaced by the live check and fixed:
+
+| Severity | Bug | Fix |
+|---|---|---|
+| HIGH | On a Challenge the canonical workflow was withheld, but at SHOW ME the model was still told to "give the exact fix", so it rebuilt one from the learner's own run | A challenge chunk gets its own instruction at every level: no fix, point at one thing, point at the hint button. Re-checked live: a warm refusal and one pointer |
+| MEDIUM | After Taglish turns she kept answering English questions in Taglish | AEP now decides the language of each message and says so in the prompt. Re-checked live in the Taglish-heavy Lab 03 thread: English question, English answer; Taglish question, Taglish answer |
+
 ## Test data left in place
 
 Kaz threads for learner 1 (Lab 03, Lab 04, Capstone) and learner 2 (Lab 01),
