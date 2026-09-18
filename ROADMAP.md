@@ -935,11 +935,10 @@ the other three wait on Phase 11 Step 2.
 
 ## Step 2 — Invite-Only Authentication
 
-* [/] Owner/Admin can invite learner by email — built in V1.1 (`inviteUserByEmail` behind the
-  Admin page and a server-checked action). Not live verified: `SUPABASE_SECRET_KEY` is not set
-  where the app can read it, so no invite has been sent
-* [/] Invite creates student access safely — no role or metadata is passed, so a new account
-  defaults to `student`. Unit tested; the live invite is blocked on the same missing key
+* [x] Owner/Admin can invite learner by email — **live verified 2026-09-18**: invited from the
+  Admin page, listed as invited, resent, accepted, and the learner signed in with a code
+* [x] Invite creates student access safely — no role or metadata is passed; the new account
+  carried no role and resolved as `student`
 * [x] Learner verifies email — live verified 2026-09-14, owner-driven in a real browser
 * [x] Passwordless session is created — live verified 2026-09-14
 * [x] Active session restores on return — live verified 2026-09-14 (survived a hard refresh)
@@ -988,16 +987,18 @@ Rules:
 
 ## Step 4 — Minimal Admin Section
 
-Built in V1.1 (2026-09-18). Every item below is implemented and unit tested; the four that
-call Supabase are **blocked from live verification** because `SUPABASE_SECRET_KEY` is not set
-where the app can read it — see `docs/qa/AEP-V1.1-SPRINT.md`.
+Built in V1.1 and **live verified 2026-09-18** with a real invited learner — see
+`docs/qa/AEP-V1.1-SPRINT.md`.
 
-* [/] Invite student
-* [/] View invited/active/revoked users — status derived from the ban and the email confirmation
-* [/] Resend invite — Supabase re-sends only to an unconfirmed account and rotates the link, so
-  resend is offered only before acceptance (verified in the Auth source, not assumed)
-* [/] Revoke access — a ban, never a delete; restore lifts it. A ban does not end a token already
-  issued, which the page states on screen
+* [x] Invite student — including the refusal when the address already has access
+* [x] View invited/active/revoked users — all three states observed on one real account
+* [x] Resend invite — Supabase re-sends only to an unconfirmed account and rotates the link, so
+  resend is offered only before acceptance (verified in the Auth source, then live)
+* [x] Revoke access — a ban, never a delete; the learner was signed out of every protected page
+  on their next request and could not sign back in; their note and progress row survived; restore
+  returned both access and data. A ban does not end a token already issued — measured live
+  (Auth answered `403 user_banned`, the database API still served that learner's own row), and
+  the page says so on screen
 * [x] No student progress monitoring — the list shows access status only
 
 ## Step 5 — Learner Preferences & State
@@ -1302,17 +1303,17 @@ Phase 10 wording had become false. No Aim Point since has touched `admin/page.ts
 
 ## Phase Complete When
 
-* [/] Invite flow works — built; blocked on the missing secret key for a live send
+* [x] Invite flow works — live verified 2026-09-18, invite through to a signed-in learner
 * [x] Passwordless login/session flow works — live verified 2026-09-14, and again through V1
 * [x] Admin authorization is server-enforced — live verified 2026-09-18 at the page and at the
   Server Action, with mutation tests proving each check fails closed on its own
 * [x] Direct navigation to `/admin` as a student is rejected server-side — live verified
   2026-09-18 with a real student request (404) and a real anonymous request (redirect to sign-in)
 * [/] Learner preferences persist — progress, notes and webhooks do; theme and language do not
-* [/] No admin/service secret is present in client bundles or logs — the production build carries
-  no `SUPABASE_SECRET_KEY` name and no `sb_secret_` prefix in any browser bundle, and no key value
-  appears anywhere in the build or in git. The value scan cannot be conclusive until a key is
-  configured
+* [x] No admin/service secret is present in client bundles or logs — scanned against a real
+  configured key: its value appears in none of the 35 browser bundles, none of the 336 build
+  files and none of the 316 git-tracked files, and no browser bundle carries the variable name or
+  an `sb_secret_` prefix
 
 ---
 
@@ -2073,6 +2074,10 @@ the learner's own n8n; no request has reached a real n8n yet.
   evidence write). Admin role enforcement is live verified; Admin's Supabase operations are
   blocked on `SUPABASE_SECRET_KEY` not being set. `npm run verify` exit 0: 727 tests across 60
   files. Evidence: `docs/qa/AEP-V1.1-SPRINT.md`
+* **AEP V1.1 DONE (2026-09-18)** — Admin's full lifecycle is now live verified too, with a real
+  invited learner: invite, resend, accept, sign in, revoke, refusal, restore, and no data lost.
+  Final `npm run verify` exit 0: 728 tests across 60 files, and the secret-key scan is conclusive
+  against a configured key
 
 In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
 added by this program means implemented and structurally verified, **not** live verified. Earlier
@@ -2117,9 +2122,8 @@ AEP V1 is considered complete when:
 * [ ] Light/Dark themes complete
 * [ ] Floating dock complete
 * [ ] Invite-only passwordless access complete
-* [/] Admin invite/access section complete — the section, its role enforcement and its actions
-  are built and live-verified for authorization; inviting, listing and revoking against Supabase
-  await the secret key
+* [x] Admin invite/access section complete — live verified end to end 2026-09-18: invite,
+  resend, accept, sign in, revoke, refuse, restore, with no learner data lost
 
 ## Learning Experience
 

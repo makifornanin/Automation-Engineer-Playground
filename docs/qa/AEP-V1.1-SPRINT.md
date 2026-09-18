@@ -57,30 +57,70 @@ them.
 | `sendTest` for Lab 07's challenge (paste-only) | `unknown_case`; nothing sent |
 | `recordChunkEvidence` replayed for Lab 03's challenge | no write; `recorded_at` unchanged |
 
-## Admin — partly live verified
+## Admin — live verified
+
+Authorization, first:
 
 | Check | Result |
 |---|---|
-| Owner sees the Admin item; learner 2 does not | Live verified |
-| Learner 2 opens `/admin` directly | 404, no admin content |
-| Owner opens `/admin` | Renders; learner list says the server has no secret key |
-| Learner 2 replays the invite Server Action | "Only an admin can do this." |
-| Invite, list, resend, revoke against real Supabase | **Not tested — blocked** |
+| Owner sees the Admin item; a student does not | Only the owner's dock shows it |
+| A student opens `/admin` directly | 404, no admin content |
+| A student replays the invite Server Action | "Only an admin can do this." |
+| The owner's own row | Shown as ADMIN with no revoke control |
 
-**Blocked:** `SUPABASE_SECRET_KEY` is not set anywhere the app can read it —
-not in `web/.env.local` (last saved 2026-09-13), and not in the process, user
-or machine environment. Checked by name only; no value was read or printed.
-Until it is set and the dev server restarted, the live invite → accept →
-status → revoke path cannot be run.
+Then the whole learner lifecycle, with a real invited address (a plus-address
+of the owner's own mailbox):
 
-## Secret exposure — scanned
+| Step | Result |
+|---|---|
+| Invite from the Admin page | "Invite sent." — Supabase records `invited_at`, unconfirmed |
+| Listed status | "Invited — not accepted yet · Never signed in" |
+| Resend invite | "Invite sent again. The earlier link no longer works." |
+| Accept the invite link | Account confirmed; the landing strips the session from the URL and says "Invite accepted" |
+| Listed status after accepting | "Active", ordered after the other active learners |
+| Sign in with a 6-digit code | Signed in as that learner; wrote a note and opened Lab 01 |
+| Invite the same address again | "That email already has access. They can sign in with a code." |
+| Revoke | "Access revoked. Their progress and notes are kept."; status "Revoked"; only Restore is offered |
+| The revoked learner's next request | Every protected page redirects to `/sign-in` |
+| The revoked learner requests a code and verifies it | Refused; they stay signed out |
+| Their data while revoked | 1 note and 1 progress row, unchanged — nothing deleted |
+| Restore | "Access restored."; status "Active" |
+| After restore | The learner reaches `/notes` again and their note reads exactly as written |
 
-`npm run verify` build output: **0** of 35 browser bundle files contain
-`SUPABASE_SECRET_KEY` or an `sb_secret_` prefix; 0 of 336 build files and 0 of
-293 git-tracked files contain a key value. The value scan is vacuous while no
-key is configured — the name and prefix scans are not. `security-invariants`
-also pins the name to `admin-client.ts` (plus its test), `auth.admin.*` to
-`lib/admin/`, and bans any `NEXT_PUBLIC_*SECRET*`.
+### The revoke residual, measured rather than asserted
+
+With the learner revoked, the same access token they already held was sent to
+three places at once:
+
+| Destination | Response |
+|---|---|
+| AEP (a protected page) | Redirected to `/sign-in` |
+| Supabase Auth `/user` | `403 user_banned` |
+| Supabase database API | `200` — their own note row |
+
+That is exactly what the Admin page tells an admin: revoking closes AEP
+immediately and blocks signing in, and a token already issued keeps reading
+that learner's own rows until it expires.
+
+**Where the key was:** it had been saved to the repository-root `.env`, which
+Next — running in `web/` — never reads. It was copied into `web/.env.local`
+(git-ignored) without its value being read into the transcript, and the dev
+server picked it up.
+
+## Secret exposure — scanned, with a real key configured
+
+Against the production build, searching for the configured key's actual value:
+
+| Scanned | Key name | `sb_secret_` prefix | The key value |
+|---|---|---|---|
+| 35 browser bundle files | 0 | 0 | 0 |
+| 336 build output files | — | — | 0 |
+| 316 git-tracked files | — | 0 | 0 |
+
+`security-invariants` also pins the name to `admin-client.ts` (plus its test),
+`auth.admin.*` to `lib/admin/`, and bans any `NEXT_PUBLIC_*SECRET*` in any file
+that ships. The one place the key may appear is `web/.env.local`, which is
+git-ignored and never bundled.
 
 ## Reviews
 
@@ -102,10 +142,13 @@ also pins the name to `admin-client.ts` (plus its test), `auth.admin.*` to
 | MEDIUM | Revoke's confirm step unmounted the focused button, dropping a keyboard user to the page body | Focus moves to Confirm revoke, and back on Cancel; mutation-proven test |
 | LOW | `listLearners` had no test, and reported "truncated" at exactly 200 accounts | Uses Supabase's own next-page signal; five tests added |
 | LOW | `InviteLearnerForm` had no test | Added |
+| MEDIUM | The invite landing stripped the session from the URL but showed the learner nothing: it read the fragment through a store while its own effect was removing it, and on a real navigation the read lost the race | The landing is recorded on the history entry before the URL is cleaned; all three landings (accepted, expired, ordinary) verified live, plus a regression test |
+| LOW | The same code replaced `history.state` wholesale, which the App Router also uses | Existing state is preserved |
+| LOW | The secret-key scan failed once a real key existed, because it searched `web/.env.local` — the one file the key belongs in | Scoped to files that ship; `.env*.local` excluded, everything else still scanned |
 
 ## Verification
 
-`npm run verify`: exit 0 — lint clean, typecheck clean, **727 tests across 60
+`npm run verify`: exit 0 — lint clean, typecheck clean, **728 tests across 60
 files**, production build 10 routes plus Proxy.
 
 ## Test data left in place
@@ -116,3 +159,10 @@ files**, production build 10 routes plus Proxy.
   were never modified and remain unpublished.
 - Capstone tables: rows with `aep_e2e_cap_` request ids.
 - AEP: learner 1's nine Capstone proofs and re-recorded Lab 03/04 challenges.
+- Supabase: one invited test learner (a plus-address of the owner's mailbox)
+  with one note and one progress row, left with access restored. Remove it
+  whenever you like — revoking is enough to close access without losing data.
+
+## Result
+
+**AEP V1.1 DONE: YES.** All three features are live verified end to end.
