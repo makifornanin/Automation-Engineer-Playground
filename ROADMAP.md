@@ -661,7 +661,10 @@ Coverage notes that remain non-blocking:
 
 * [ ] deterministic low-confidence branch live test
 * [ ] malformed-AI-output fallback live test
-* [ ] cleanup old Capstone test rows before a public demo
+* [ ] cleanup old Capstone test rows before a public demo — now also `aep_e2e_cap_` rows from the
+  V1.1 pass, and the `AEP-E2E-Capstone` workflow copies
+* [x] learner-facing Capstone completion — nine proofs, one per scenario, checked against the
+  learner's own pasted responses (V1.1, live verified 2026-09-18). AEP does not run the agent
 
 Capstone export/package/README closeout remains before Phase 9 is marked fully complete. Website work may proceed because the automation runtime itself is already live-verified.
 
@@ -932,8 +935,11 @@ the other three wait on Phase 11 Step 2.
 
 ## Step 2 — Invite-Only Authentication
 
-* [ ] Owner/Admin can invite learner by email
-* [ ] Invite creates student access safely
+* [/] Owner/Admin can invite learner by email — built in V1.1 (`inviteUserByEmail` behind the
+  Admin page and a server-checked action). Not live verified: `SUPABASE_SECRET_KEY` is not set
+  where the app can read it, so no invite has been sent
+* [/] Invite creates student access safely — no role or metadata is passed, so a new account
+  defaults to `student`. Unit tested; the live invite is blocked on the same missing key
 * [x] Learner verifies email — live verified 2026-09-14, owner-driven in a real browser
 * [x] Passwordless session is created — live verified 2026-09-14
 * [x] Active session restores on return — live verified 2026-09-14 (survived a hard refresh)
@@ -964,24 +970,35 @@ amendment in `docs/AEP-WEBSITE-VISION.md`. The capability is unchanged; the mech
 
 Two roles only:
 
-* [ ] `student`
-* [ ] `admin`
+* [x] `student`
+* [x] `admin`
 
 Rules:
 
-* [ ] invited users default to student
-* [ ] admin role cannot be granted from client input
-* [ ] server enforces admin actions
-* [ ] `/admin` is protected server-side; direct URL navigation as a student is rejected before any admin content renders (the Phase 10 route is unprotected by design)
-* [ ] owner sees the same learner experience plus Admin navigation
+* [x] invited users default to student — nothing is passed to the invite, and role is read from
+  `app_metadata.role` only
+* [x] admin role cannot be granted from client input — unit tested across the escalation vectors;
+  no promotion UI exists, by design
+* [x] server enforces admin actions — **live verified 2026-09-18**: a student replaying the
+  captured invite Server Action got "Only an admin can do this."
+* [x] `/admin` is protected server-side — **live verified 2026-09-18**: a signed-in student
+  navigating directly got a 404 with no admin content; the owner got the real page
+* [x] owner sees the same learner experience plus Admin navigation — **live verified
+  2026-09-18**: the Admin item renders for the owner and not for the student
 
 ## Step 4 — Minimal Admin Section
 
-* [ ] Invite student
-* [ ] View invited/active/revoked users
-* [ ] Resend invite
-* [ ] Revoke access
-* [ ] No student progress monitoring
+Built in V1.1 (2026-09-18). Every item below is implemented and unit tested; the four that
+call Supabase are **blocked from live verification** because `SUPABASE_SECRET_KEY` is not set
+where the app can read it — see `docs/qa/AEP-V1.1-SPRINT.md`.
+
+* [/] Invite student
+* [/] View invited/active/revoked users — status derived from the ban and the email confirmation
+* [/] Resend invite — Supabase re-sends only to an unconfirmed account and rotates the link, so
+  resend is offered only before acceptance (verified in the Auth source, not assumed)
+* [/] Revoke access — a ban, never a delete; restore lifts it. A ban does not end a token already
+  issued, which the page states on screen
+* [x] No student progress monitoring — the list shows access status only
 
 ## Step 5 — Learner Preferences & State
 
@@ -1285,12 +1302,17 @@ Phase 10 wording had become false. No Aim Point since has touched `admin/page.ts
 
 ## Phase Complete When
 
-* [ ] Invite flow works
-* [ ] Passwordless login/session flow works
-* [ ] Admin authorization is server-enforced
-* [ ] Direct navigation to `/admin` as a student is rejected server-side, verified by an actual unauthenticated and an actual student request
-* [ ] Learner preferences persist
-* [ ] No admin/service secret is present in client bundles or logs
+* [/] Invite flow works — built; blocked on the missing secret key for a live send
+* [x] Passwordless login/session flow works — live verified 2026-09-14, and again through V1
+* [x] Admin authorization is server-enforced — live verified 2026-09-18 at the page and at the
+  Server Action, with mutation tests proving each check fails closed on its own
+* [x] Direct navigation to `/admin` as a student is rejected server-side — live verified
+  2026-09-18 with a real student request (404) and a real anonymous request (redirect to sign-in)
+* [/] Learner preferences persist — progress, notes and webhooks do; theme and language do not
+* [/] No admin/service secret is present in client bundles or logs — the production build carries
+  no `SUPABASE_SECRET_KEY` name and no `sb_secret_` prefix in any browser bundle, and no key value
+  appears anywhere in the build or in git. The value scan cannot be conclusive until a key is
+  configured
 
 ---
 
@@ -2044,6 +2066,13 @@ the learner's own n8n; no request has reached a real n8n yet.
   labs could still run a self-check, save a webhook and send a Send Test request — fixed in `cfd8543`
   and re-verified live. Final `npm run verify` exit 0: 621 tests across 49 files
 * **AEP V1 DONE** — every Definition of Done step exercised live
+* **V1.1 (2026-09-18)** — Admin, Capstone completion tracking and Send Test for the Lab 03/04
+  challenges. Capstone completion and challenge Send Test are **live verified** end to end
+  (nine real scenarios against a published copy of the Capstone agent; real n8n executions for
+  both challenges; refusals proven for a locked learner, a paste-only challenge and a replayed
+  evidence write). Admin role enforcement is live verified; Admin's Supabase operations are
+  blocked on `SUPABASE_SECRET_KEY` not being set. `npm run verify` exit 0: 727 tests across 60
+  files. Evidence: `docs/qa/AEP-V1.1-SPRINT.md`
 
 In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
 added by this program means implemented and structurally verified, **not** live verified. Earlier
@@ -2088,7 +2117,9 @@ AEP V1 is considered complete when:
 * [ ] Light/Dark themes complete
 * [ ] Floating dock complete
 * [ ] Invite-only passwordless access complete
-* [ ] Admin invite/access section complete
+* [/] Admin invite/access section complete — the section, its role enforcement and its actions
+  are built and live-verified for authorization; inviting, listing and revoking against Supabase
+  await the secret key
 
 ## Learning Experience
 
