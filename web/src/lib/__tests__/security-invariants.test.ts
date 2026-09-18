@@ -58,6 +58,10 @@ function findOffenders(root: string, matches: (text: string) => boolean): string
     .map((file) => path.relative(WEB_DIR, file));
 }
 
+function toPosix(file: string): string {
+  return file.split(path.sep).join("/");
+}
+
 describe("security invariants", () => {
   it("never calls Supabase's own auth.getSession() anywhere under web/src", () => {
     // getUser() revalidates against the Auth server; getSession() only
@@ -67,9 +71,51 @@ describe("security invariants", () => {
   });
 
   it("never references a service_role / SUPABASE_SERVICE_ROLE identifier under web/src", () => {
-    // No service-role client exists in this Aim Point. Nothing here needs it.
+    // Admin work uses the scoped secret key (admin-client.ts), never the
+    // legacy service-role JWT.
     const offenders = findOffenders(SRC_DIR, (text) => /service_role/i.test(text));
     expect(offenders).toEqual([]);
+  });
+
+  it("reads SUPABASE_SECRET_KEY in admin-client.ts only, which is server-only", () => {
+    // The secret key bypasses row-level security. One reader, behind
+    // `server-only`, is what keeps it out of every browser bundle.
+    const readers = findOffenders(SRC_DIR, (text) => text.includes("SUPABASE_SECRET_KEY"));
+    expect(readers.map(toPosix).sort()).toEqual([
+      "src/lib/supabase/admin-client.test.ts",
+      "src/lib/supabase/admin-client.ts",
+    ]);
+
+    const adminClient = fs.readFileSync(path.join(SRC_DIR, "lib", "supabase", "admin-client.ts"), "utf8");
+    expect(adminClient.startsWith('import "server-only";')).toBe(true);
+  });
+
+  it("never names a public secret or embeds a secret key anywhere under web/", () => {
+    const offenders = findOffenders(
+      WEB_DIR,
+      (text) => /NEXT_PUBLIC_[A-Z_]*SECRET/.test(text) || /sb_secret_[A-Za-z0-9]/.test(text),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("uses the admin client only from lib/admin, and never from client code", () => {
+    const importers = findOffenders(SRC_DIR, (text) => text.includes("@/lib/supabase/admin-client"))
+      .map(toPosix)
+      .filter((file) => !file.endsWith(".test.ts"));
+    expect(importers.every((file) => file.startsWith("src/lib/admin/"))).toBe(true);
+
+    const clientImporters = findOffenders(
+      SRC_DIR,
+      (text) => /^["']use client["']/.test(text) && /supabase\/admin-client|auth\.admin/.test(text),
+    );
+    expect(clientImporters).toEqual([]);
+  });
+
+  it("calls Supabase Auth Admin APIs only under lib/admin", () => {
+    const callers = findOffenders(SRC_DIR, (text) => text.includes("auth.admin."))
+      .map(toPosix)
+      .filter((file) => !file.endsWith(".test.ts"));
+    expect(callers.every((file) => file.startsWith("src/lib/admin/"))).toBe(true);
   });
 
   it("never references the deleted AEP_PLACEHOLDER_ROLE placeholder anywhere under web/", () => {

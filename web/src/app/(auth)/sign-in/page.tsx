@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { InviteLinkNotice } from "@/components/auth/InviteLinkNotice";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { getSession } from "@/lib/session/get-session";
@@ -25,6 +26,10 @@ export default async function SignInPage() {
         <p className="mt-3 text-ink-soft">
           Enter your invited email address. We will send you a 6-digit code.
         </p>
+        <p className="mt-2 text-sm text-ink-muted">
+          New here? Accept the invite in your email first.
+        </p>
+        <InviteLinkNotice />
         <div className="mt-6">
           <SignInForm />
         </div>

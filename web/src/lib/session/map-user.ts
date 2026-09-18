@@ -23,6 +23,22 @@ export function toSessionUser(user: User): SessionUser {
   };
 }
 
+/**
+ * True while an admin's revoke is in force (`banned_until` in the future).
+ *
+ * Supabase's Auth server already refuses a banned user at `getUser()`, so
+ * this rarely decides anything. It is here so a revoke still holds if that
+ * behaviour ever changes, and it fails closed: a `banned_until` that cannot be
+ * read as a date counts as revoked.
+ */
+export function isRevoked(user: Pick<User, "banned_until">, now: Date): boolean {
+  const bannedUntil = user.banned_until;
+  if (!bannedUntil) return false;
+  const until = Date.parse(bannedUntil);
+  if (Number.isNaN(until)) return true;
+  return until > now.getTime();
+}
+
 function resolveRole(rawRole: unknown): UserRole {
   return isUserRole(rawRole) ? rawRole : "student";
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
-import { toSessionUser } from "./map-user";
+import { isRevoked, toSessionUser } from "./map-user";
 import type { Session } from "./types";
 
 /**
@@ -31,7 +31,7 @@ export async function resolveSession(): Promise<Session> {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user || isRevoked(user, new Date())) {
       return { status: "anonymous" };
     }
 

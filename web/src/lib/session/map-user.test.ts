@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { toSessionUser } from "./map-user";
+import { isRevoked, toSessionUser } from "./map-user";
 
 /** Minimal valid Supabase `User`, overridable per test. */
 function buildUser(overrides: Partial<User> = {}): User {
@@ -114,5 +114,25 @@ describe("toSessionUser", () => {
       email: "ada@example.com",
     });
     expect(toSessionUser(user).displayName).toBe("ada");
+  });
+});
+
+describe("isRevoked", () => {
+  const now = new Date("2026-09-18T12:00:00.000Z");
+
+  it("is true while banned_until is in the future", () => {
+    expect(isRevoked({ banned_until: "2126-01-01T00:00:00.000Z" }, now)).toBe(true);
+  });
+
+  it("is false once banned_until has passed", () => {
+    expect(isRevoked({ banned_until: "2026-09-01T00:00:00.000Z" }, now)).toBe(false);
+  });
+
+  it("is false when there is no ban", () => {
+    expect(isRevoked({}, now)).toBe(false);
+  });
+
+  it("fails closed: a banned_until that is not a date counts as revoked", () => {
+    expect(isRevoked({ banned_until: "not-a-date" }, now)).toBe(true);
   });
 });

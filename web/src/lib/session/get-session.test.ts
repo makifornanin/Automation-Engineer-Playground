@@ -72,6 +72,21 @@ describe("resolveSession", () => {
     });
   });
 
+  /*
+   * Supabase's Auth server already refuses a banned user at getUser(). This
+   * proves a revoke still holds if a user object ever comes back anyway.
+   */
+  it("is anonymous for a user whose access has been revoked", async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: buildUser({ banned_until: "2126-01-01T00:00:00.000Z" }) },
+      error: null,
+    });
+
+    const session = await resolveSession();
+
+    expect(session).toEqual({ status: "anonymous" });
+  });
+
   it("is anonymous when createSupabaseServerClient rejects", async () => {
     mockCreateSupabaseServerClient.mockRejectedValue(new Error("network down"));
 
