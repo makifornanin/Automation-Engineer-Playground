@@ -110,6 +110,8 @@ files**, production build 10 routes plus Proxy.
 ## Test data left in place
 
 - n8n: `AEP-E2E-Capstone` copies (service request, approval, DLQ recovery,
-  action executor) and the republished `AEP-E2E-Lab 03/04` workflows.
+  action executor) and the `AEP-E2E-Lab 03/04` workflows. All six were
+  unpublished at the end of the pass; the four reference Capstone workflows
+  were never modified and remain unpublished.
 - Capstone tables: rows with `aep_e2e_cap_` request ids.
 - AEP: learner 1's nine Capstone proofs and re-recorded Lab 03/04 challenges.
