@@ -1,0 +1,452 @@
+{
+  "name": "AEP Kaz Gateway",
+  "nodes": [
+    {
+      "id": "f185ba54-118e-43a5-b326-bd217249c88c",
+      "name": "Receive Kaz Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -960,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aep-kaz-gateway",
+        "responseMode": "responseNode",
+        "authentication": "headerAuth",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "C1Dekhm7XKyQkHkh",
+          "name": "AEP Kaz Gateway Auth"
+        }
+      }
+    },
+    {
+      "id": "01f03fa6-a585-4cba-91f5-032a0b877576",
+      "name": "Read Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -740,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Everything Kaz is allowed to think with arrives here from the AEP server.\n// This node trusts nothing about its size: AEP caps its own context, and this\n// caps it again, because the Gateway is what stands in front of the model.\nconst body = $json.body ?? {};\nconst text = (value, max) => (typeof value === 'string' ? value.slice(0, max) : '');\nconst inspect = body.inspect ?? {};\n\nconst question = text(body.question, 2000).trim();\nif (!question) {\n  throw new Error('kaz: empty question');\n}\n\nreturn {\n  json: {\n    persona: text(body.persona, 4000),\n    rules: text(body.rules, 4000),\n    levelInstruction: text(body.levelInstruction, 1000),\n    helpLevel: Number(body.helpLevel) || 1,\n    question,\n    history: Array.isArray(body.history)\n      ? body.history.slice(-16).map((m) => ({\n          role: m && m.role === 'kaz' ? 'kaz' : 'learner',\n          content: text(m && m.content, 1200),\n        }))\n      : [],\n    lesson: body.lesson ?? {},\n    progress: body.progress ?? {},\n    canonical: body.canonical ?? null,\n    wantWorkflow: inspect.workflow === true,\n    wantExecution: inspect.execution === true,\n    webhookPath: text(inspect.webhookPath, 200),\n  },\n};"
+      }
+    },
+    {
+      "id": "47f41d14-cc08-49b2-9f14-1cb26bf01c8d",
+      "name": "Inspect n8n?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -520,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "kaz-inspect",
+              "leftValue": "={{ ($json.wantWorkflow || $json.wantExecution) && $json.webhookPath !== '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a48df32e-d4f3-48a0-ac1f-43ec8a05b27b",
+      "name": "List Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -300,
+        180
+      ],
+      "parameters": {
+        "url": "https://handcraft-tubeless-bonded.ngrok-free.dev/api/v1/workflows",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "250"
+            },
+            {
+              "name": "excludePinnedData",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "ZLOzYKxJ5dlOhVbF",
+          "name": "AEP Kaz n8n API (read-only)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "dec79a34-53e4-489b-9b59-bdd62256efd3",
+      "name": "Find Learner Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        180
+      ],
+      "parameters": {
+        "jsCode": "// Resolve the learner's saved webhook PATH to exactly one workflow.\n//\n// AEP never sends a workflow id, and never sends the URL itself - only the\n// path, and only after checking the saved URL's host is this n8n. Matching\n// happens here because only n8n can see what paths exist.\n//\n// Fail closed on anything but a single match. This instance holds copies of\n// lab workflows (AEP-E2E-...), so an ambiguous path must mean \"I can't inspect\n// that\", never a guess at which copy the learner meant.\nconst req = $('Read Request').item.json;\nconst payload = $input.first().json;\nconst workflows = Array.isArray(payload.data) ? payload.data : [];\n\nconst matches = workflows.filter(\n  (wf) =>\n    Array.isArray(wf.nodes) &&\n    wf.nodes.some(\n      (node) =>\n        node.type === 'n8n-nodes-base.webhook' &&\n        String((node.parameters || {}).path || '') === req.webhookPath,\n    ),\n);\n\nif (matches.length !== 1) {\n  return { json: { resolved: false, reason: matches.length === 0 ? 'no_match' : 'ambiguous' } };\n}\n\nconst wf = matches[0];\nreturn {\n  json: {\n    resolved: true,\n    workflowId: wf.id,\n    workflowName: wf.name,\n    active: wf.active === true,\n    nodes: wf.nodes,\n  },\n};"
+      }
+    },
+    {
+      "id": "95bb957a-264d-48f7-8598-f743112a4382",
+      "name": "Need the run?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        140,
+        180
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "kaz-run",
+              "leftValue": "={{ $json.resolved === true && $('Read Request').item.json.wantExecution }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "1bb6ba01-ef53-47f7-af98-0c834b276a90",
+      "name": "Latest Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        80
+      ],
+      "parameters": {
+        "url": "https://handcraft-tubeless-bonded.ngrok-free.dev/api/v1/executions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "workflowId",
+              "value": "={{ $json.workflowId }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            },
+            {
+              "name": "includeData",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "ZLOzYKxJ5dlOhVbF",
+          "name": "AEP Kaz n8n API (read-only)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "d5bce7da-d2d3-42f7-b436-436dcbbd5dbd",
+      "name": "Sanitize Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Everything that reaches Gemini passes through here first.\n//\n// Credentials are dropped whole rather than redacted field by field, every key\n// that looks like a secret is replaced, and sizes are capped. What survives is\n// the configuration and data needed to explain a failure - node names, types,\n// parameters, the last outputs - and nothing else.\nconst req = $('Read Request').item.json;\n\nconst SECRET_KEY = /(key|token|secret|password|passwd|credential|authorization|auth|cookie|bearer|session)/i;\n\nfunction clean(value, depth) {\n  const level = depth || 0;\n  if (level > 5) return '[nested]';\n  if (typeof value === 'string') return value.length > 800 ? value.slice(0, 800) + '…' : value;\n  if (Array.isArray(value)) return value.slice(0, 20).map((entry) => clean(entry, level + 1));\n  if (value && typeof value === 'object') {\n    // n8n stores headers and query parameters as { name, value } pairs, so the\n    // key holding a bearer token is called 'value'. Redacting by key name alone\n    // would let { name: 'Authorization', value: 'Bearer ...' } straight through.\n    if (typeof value.name === 'string' && SECRET_KEY.test(value.name) && 'value' in value) {\n      return Object.assign({}, value, { value: '[redacted]' });\n    }\n    const out = {};\n    for (const [key, entry] of Object.entries(value)) {\n      if (SECRET_KEY.test(key)) {\n        out[key] = '[redacted]';\n        continue;\n      }\n      out[key] = clean(entry, level + 1);\n    }\n    return out;\n  }\n  return value;\n}\n\nlet workflow = null;\nlet workflowNote = null;\ntry {\n  const found = $('Find Learner Workflow').item.json;\n  if (found && found.resolved) {\n    workflow = {\n      name: String(found.workflowName || '').slice(0, 120),\n      active: found.active === true,\n      nodes: (found.nodes || []).slice(0, 60).map((node) => ({\n        name: String(node.name || '').slice(0, 120),\n        type: String(node.type || '').slice(0, 120),\n        disabled: node.disabled === true,\n        // 'credentials' is never copied across at all.\n        parameters: clean(node.parameters),\n      })),\n    };\n  } else if (found) {\n    workflowNote = found.reason === 'ambiguous'\n      ? 'Several workflows answer on that webhook path, so I cannot tell which one is yours.'\n      : 'No workflow on this n8n answers on that saved webhook path.';\n  }\n} catch (error) {\n  workflow = null;\n}\n\nlet execution = null;\ntry {\n  const payload = $('Latest Execution').item.json;\n  const run = Array.isArray(payload.data) ? payload.data[0] : null;\n  if (run) {\n    const resultData = ((run.data || {}).resultData) || {};\n    const runData = resultData.runData || {};\n    const names = Object.keys(runData);\n    const tail = names.slice(-3).map((name) => {\n      const first = (runData[name] || [])[0] || {};\n      const items = (((first.data || {}).main || [])[0] || []).slice(0, 3);\n      return {\n        node: name,\n        error: first.error ? String(first.error.message || '').slice(0, 300) : null,\n        output: clean(items.map((item) => (item && item.json) || null)),\n      };\n    });\n    execution = {\n      status: run.status,\n      startedAt: run.startedAt,\n      lastNode: resultData.lastNodeExecuted || null,\n      error: resultData.error\n        ? {\n            message: String(resultData.error.message || '').slice(0, 500),\n            node: resultData.error.node ? String(resultData.error.node.name || '') : null,\n          }\n        : null,\n      recentNodes: tail,\n    };\n  }\n} catch (error) {\n  execution = null;\n}\n\nreturn { json: { ...req, workflow, workflowNote, execution } };"
+      }
+    },
+    {
+      "id": "58c084df-ed99-4e0e-aca7-520fb2ddd41a",
+      "name": "Build Kaz Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Assembles one prompt. The teaching policy is already decided: AEP chose the\n// help level and sent only the canonical material that level allows, so this\n// node cannot widen it even by accident.\nconst d = $json;\nconst lesson = d.lesson || {};\nconst progress = d.progress || {};\n\nconst lines = [];\nlines.push(d.persona, '', d.rules, '', d.levelInstruction, '');\nlines.push('=== WHERE THE LEARNER IS ===');\nlines.push('Lab: ' + (lesson.labTitle || 'unknown'));\nlines.push('Step: ' + (lesson.chunkTitle || 'unknown') + ' (' + (lesson.chunkKind || '') + ')');\nif (Array.isArray(lesson.outline) && lesson.outline.length) {\n  lines.push('Lesson steps: ' + lesson.outline.join(' > '));\n}\nlines.push('Labs completed: ' + (progress.completedLabs ?? 0) + '/' + (progress.totalLabs ?? 10));\nlines.push('This lab complete: ' + (progress.labComplete ? 'yes' : 'not yet'));\nconst evidence = progress.evidence || {};\nconst proved = Object.keys(evidence);\nif (proved.length) {\n  lines.push('Proved so far here: ' + proved.map((k) => k + '=' + evidence[k]).join(', '));\n}\nif (Array.isArray(progress.hintsRevealed) && progress.hintsRevealed.length) {\n  lines.push('');\n  lines.push('Hints the lesson has already given (do not go further than these):');\n  progress.hintsRevealed.forEach((hint, index) => lines.push('  ' + (index + 1) + '. ' + hint));\n  lines.push('Hints left in the lesson: ' + (progress.hintsRemaining ?? 0));\n}\n\nlines.push('', '=== THIS STEP OF THE LESSON ===', lesson.chunkText || '(no lesson text)');\n\nlines.push('', '=== REFERENCE WORKFLOW (hidden from the learner) ===');\nif (d.canonical) {\n  lines.push('Name: ' + d.canonical.name);\n  lines.push('Node order: ' + (d.canonical.order || []).join(' > '));\n  const withParams = (d.canonical.nodes || []).filter((n) => n.parameters);\n  if (withParams.length) {\n    lines.push('Node configuration:');\n    lines.push(JSON.stringify(withParams).slice(0, 6000));\n  } else {\n    lines.push('Structure only at this help level - do not invent the configuration.');\n  }\n} else {\n  lines.push('Not available at this help level. Do not guess what it contains.');\n}\n\nlines.push('', \"=== THE LEARNER'S OWN WORKFLOW ===\");\nif (d.workflow) {\n  lines.push('Name: ' + d.workflow.name + (d.workflow.active ? ' (published)' : ' (not published)'));\n  lines.push(JSON.stringify(d.workflow.nodes).slice(0, 8000));\n} else {\n  lines.push(d.workflowNote || 'Not inspected for this question. Say so if it matters; do not invent it.');\n}\n\nlines.push('', '=== LATEST RUN ===');\nif (d.execution) {\n  lines.push(JSON.stringify(d.execution).slice(0, 8000));\n} else {\n  lines.push('Not inspected for this question. Do not invent a run, a node or an error.');\n}\n\nif (Array.isArray(d.history) && d.history.length) {\n  lines.push('', '=== EARLIER IN THIS CONVERSATION ===');\n  d.history.forEach((m) => lines.push((m.role === 'kaz' ? 'Kaz: ' : 'Learner: ') + m.content));\n}\n\nlines.push('', '=== THE LEARNER ASKS ===', d.question, '', 'Answer as Kaz.');\n\nreturn { json: { prompt: lines.filter((line) => line !== undefined).join('\\n'), looked: { workflow: !!d.workflow, execution: !!d.execution } } };"
+      }
+    },
+    {
+      "id": "b3cfce9b-51e8-434d-8617-9cdb8f1cdbb6",
+      "name": "Kaz Model",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1020,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "290d4486-a7ec-45d4-a603-f83fea175bd4",
+      "name": "Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        500
+      ],
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "temperature": 0.7,
+          "maxOutputTokens": 900
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "X8vGNL7vOqXOnHt4",
+          "name": "GoHa Gemini"
+        }
+      }
+    },
+    {
+      "id": "705f1887-4d76-4446-a3b0-034c6348b69b",
+      "name": "Format Answer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// One shape out, whatever the model did. AEP treats a 5xx as a model error and\n// tells the learner honestly, so a failure here must not look like an answer.\nconst answer = String($json.text ?? $json.output ?? '').trim();\nconst looked = $('Build Kaz Prompt').item.json.looked || { workflow: false, execution: false };\nreturn { json: { ok: answer.length > 0, answer: answer.slice(0, 4000), looked } };"
+      }
+    },
+    {
+      "id": "d54f3ad6-5651-46e4-b0db-1e814ff81bc1",
+      "name": "Respond to AEP",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1460,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ answer: $json.answer, looked: $json.looked }) }}",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : 502 }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Receive Kaz Request": {
+      "main": [
+        [
+          {
+            "node": "Read Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Request": {
+      "main": [
+        [
+          {
+            "node": "Inspect n8n?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inspect n8n?": {
+      "main": [
+        [
+          {
+            "node": "List Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sanitize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Workflows": {
+      "main": [
+        [
+          {
+            "node": "Find Learner Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Learner Workflow": {
+      "main": [
+        [
+          {
+            "node": "Need the run?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need the run?": {
+      "main": [
+        [
+          {
+            "node": "Latest Execution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sanitize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Latest Execution": {
+      "main": [
+        [
+          {
+            "node": "Sanitize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize Context": {
+      "main": [
+        [
+          {
+            "node": "Build Kaz Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Kaz Prompt": {
+      "main": [
+        [
+          {
+            "node": "Kaz Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Kaz Model",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kaz Model": {
+      "main": [
+        [
+          {
+            "node": "Format Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Answer": {
+      "main": [
+        [
+          {
+            "node": "Respond to AEP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  }
+}
