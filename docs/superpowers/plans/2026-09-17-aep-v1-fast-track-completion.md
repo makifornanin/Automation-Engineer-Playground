@@ -53,6 +53,11 @@ stays under every Send Test: a deployed AEP cannot reach n8n on a learner's own
 machine, and those learners must still finish. Challenges remain paste-only.
 Either way the evidence is the output the learner's own workflow produced.
 
+**Superseded 2026-09-18 (V1.1).** The Lab 03 and 04 challenges now use Send Test
+as well, through this same action and its same guards — see
+`2026-09-18-aep-v1-1-final-feature-sprint.md`. Every other challenge stays
+paste, and paste stays under every Send Test.
+
 **Send Test is the one learner-chosen outbound request, so it is fenced.** The
 browser names a lab and a chunk and nothing else — the URL comes from the
 learner's own saved row and is re-checked at send time; the payload, case and
@@ -115,6 +120,11 @@ code, not an authoring habit.
 exports, so there is nothing to evaluate against. The page asks the learner to
 prove each scenario in their own executions instead of offering a button that
 would record nothing real.
+
+**Superseded 2026-09-18 (V1.1).** Still no button, and AEP still does not run
+the learner's agent — but the Capstone can now be completed: nine proofs, one
+per scenario, each checked against the response the learner's own agent
+returned. See `2026-09-18-aep-v1-1-final-feature-sprint.md`.
 
 ---
 
@@ -309,16 +319,20 @@ Recorded, not fixed: lab content is outside this program's scope.
 
 ## Deferred — post-V1
 
-- Send Test for challenges (paste-only today); connection pinning to close DNS
-  rebinding; a shared throttle store if AEP runs on many instances
+- ~~Send Test for challenges (paste-only today)~~ — **done 2026-09-18 (V1.1)**
+  for the Lab 03 and 04 challenges; connection pinning to close DNS rebinding; a
+  shared throttle store if AEP runs on many instances
 - Free-form Ask Kaz — blocked on a model credential AEP does not hold; the orb
   opens no panel and does not float in lessons
 - Notes panel inside lessons; the expandable section roadmap; loading states
 - n8n API connection and execution ID in diagnostics
 - Kaz RAG and memory; Tagalog and Taglish
-- Server-side `/admin` role enforcement and the invite UI (manual Supabase user
-  creation is accepted for V1)
-- Verified Capstone completion — needs Capstone workflow exports
+- ~~Server-side `/admin` role enforcement and the invite UI (manual Supabase user
+  creation is accepted for V1)~~ — **done 2026-09-18 (V1.1)**; the invite path
+  itself is not live verified until `SUPABASE_SECRET_KEY` is configured
+- ~~Verified Capstone completion — needs Capstone workflow exports~~ — **done
+  2026-09-18 (V1.1)** without exports: the learner pastes each scenario's real
+  response and the server checks it
 - Completion experience and creator message (Phase 15)
 - Interactive diagrams (Vision §21); screenshots
 - `SUPABASE_SECRET_KEY` rotation before production (existing deferred security task)
