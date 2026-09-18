@@ -54,6 +54,43 @@ beforeEach(() => {
   deliverPayload.mockResolvedValue(answer(LAB_03_CORRECT));
 });
 
+describe("challenge Send Test", () => {
+  const NOT_FOUND = { success: false, message: "External customer data not found" };
+
+  it("sends the challenge's own input and records the pass against the challenge", async () => {
+    getLabWebhookUrl.mockResolvedValue(SAVED);
+    deliverPayload.mockResolvedValue(answer(NOT_FOUND, 404));
+
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "challenge" }));
+
+    expect(state.status === "complete" && state.result.passed).toBe(true);
+    expect(deliverPayload).toHaveBeenCalledWith(expect.anything(), { user_id: 999 });
+    expect(recordVerifiedEvidence).toHaveBeenCalledWith(LAB_03, "challenge");
+    expect(recordVerifiedEvidence).not.toHaveBeenCalledWith(LAB_03, "success-test");
+  });
+
+  /* The success test's answer is not the challenge's answer. */
+  it("records nothing when the workflow answers the challenge with the success response", async () => {
+    getLabWebhookUrl.mockResolvedValue(SAVED);
+    deliverPayload.mockResolvedValue(answer(LAB_03_CORRECT));
+
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "challenge" }));
+
+    expect(state.status === "complete" && state.result.passed).toBe(false);
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing for a locked lab's challenge", async () => {
+    hasHandsOnAccess.mockResolvedValue(false);
+
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "challenge" }));
+
+    expect(state.status === "error" && state.code).toBe("locked");
+    expect(deliverPayload).not.toHaveBeenCalled();
+    expect(recordVerifiedEvidence).not.toHaveBeenCalled();
+  });
+});
+
 describe("locked labs", () => {
   /*
    * Found live in the E2E pass: replayed from a fresh learner's browser, Send
@@ -156,7 +193,15 @@ describe("sendTest", () => {
   });
 
   it("only runs for a send-test chunk", async () => {
-    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "challenge" }));
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "break-it" }));
+
+    expect(state.status === "error" && state.code).toBe("unknown_case");
+    expect(deliverPayload).not.toHaveBeenCalled();
+  });
+
+  /* Challenges that stay paste-only (Lab 07 needs a sequence of events). */
+  it("refuses a challenge that has not opted into Send Test", async () => {
+    const state = await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_07, chunkId: "challenge" }));
 
     expect(state.status === "error" && state.code).toBe("unknown_case");
     expect(deliverPayload).not.toHaveBeenCalled();

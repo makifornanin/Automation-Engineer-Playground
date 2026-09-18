@@ -195,6 +195,18 @@ export interface ChallengeChunk extends LessonChunkBase {
    */
   testCaseId?: string;
   caseName?: string;
+  /**
+   * `send-test` lets a challenge run through Send Test with the lab's saved
+   * webhook, where AEP can meaningfully call the learner's workflow with a
+   * fixed input. Absent means paste the output. Only Labs 03 and 04 opt in:
+   * their challenges are one request with a known answer, while later
+   * challenges need ids from earlier runs or a sequence of calls.
+   */
+  mode?: "send-test" | "self-check";
+  /** Present only for `send-test`: the challenge input AEP posts. */
+  payload?: JsonValue;
+  /** The outcome that counts as a pass, in plain words. */
+  expected?: string;
 }
 
 export type LessonChunk =

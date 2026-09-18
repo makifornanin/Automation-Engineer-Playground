@@ -43,7 +43,7 @@ export const LAB_04_CHALLENGE_CASE: TestCase = {
   id: "lab-04-challenge-lead",
   labSlug: "04-validation-normalization",
   name: "An international lead with a formatted phone number is normalised and accepted",
-  mode: "self-check",
+  mode: "send-test",
   checkpoints: [
     expectField("accepted", "The lead was accepted", "success", "true"),
     expectField("name", "Name trimmed", "data.name", "Alex Rivera"),

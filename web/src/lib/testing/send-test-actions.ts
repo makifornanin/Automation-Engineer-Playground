@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { hasHandsOnAccess, recordVerifiedEvidence } from "@/lib/course/progress-writes";
 import { getLessonChunks } from "@/lib/lesson/registry";
-import type { TestChunk } from "@/lib/lesson/types";
+import type { ChallengeChunk, TestChunk } from "@/lib/lesson/types";
 import { getSession } from "@/lib/session/get-session";
 import { getTestCase } from "./cases";
 import { evaluateCheckpoints, normaliseSubmittedOutput } from "./evaluate";
@@ -39,11 +39,21 @@ import { getLabWebhookUrl, storeLabWebhookUrl } from "./webhook-store";
 const LAB_SLUG_PATTERN = /^[0-9]{2}-[a-z0-9-]+$/;
 const MAX_DELIVERIES = 3;
 
-function sendTestChunk(labSlug: string, chunkId: string): TestChunk | null {
+/**
+ * A chunk Send Test may run: a send-test test, or a challenge that opted in.
+ * Either way the payload and case come from the chunk's own content, so a
+ * challenge is sent exactly the input the lesson shows and judged by its own
+ * case, and its pass is evidence for the challenge, not the success test.
+ */
+function sendTestChunk(
+  labSlug: string,
+  chunkId: string,
+): (TestChunk | (ChallengeChunk & { testCaseId: string })) | null {
   const chunk = getLessonChunks(labSlug)?.find((entry) => entry.id === chunkId);
-  if (!chunk || chunk.kind !== "test" || chunk.mode !== "send-test") return null;
-  if (chunk.payload === undefined) return null;
-  return chunk;
+  if (!chunk || (chunk.kind !== "test" && chunk.kind !== "challenge")) return null;
+  if (chunk.mode !== "send-test" || chunk.payload === undefined) return null;
+  if (!chunk.testCaseId) return null;
+  return chunk as TestChunk | (ChallengeChunk & { testCaseId: string });
 }
 
 function labUsesWebhook(labSlug: string): boolean {
@@ -124,7 +134,7 @@ export async function sendTest(
 
   const chunk = sendTestChunk(labSlug, chunkId);
   const testCase = chunk ? getTestCase(chunk.testCaseId) : null;
-  if (!chunk || !testCase || testCase.labSlug !== labSlug) {
+  if (!chunk || !testCase || testCase.labSlug !== labSlug || testCase.mode !== "send-test") {
     return buildSendTestError("unknown_case");
   }
 
@@ -153,7 +163,8 @@ export async function sendTest(
   // Some tests only prove anything on a repeat — Lab 07's second delivery of
   // the same event is the one that shows duplicate protection. The response to
   // the LAST delivery is the one evaluated.
-  const deliveries = Math.min(Math.max(chunk.deliveries ?? 1, 1), MAX_DELIVERIES);
+  const requested = chunk.kind === "test" ? chunk.deliveries : undefined;
+  const deliveries = Math.min(Math.max(requested ?? 1, 1), MAX_DELIVERIES);
   let last: Delivery | null = null;
   for (let attempt = 0; attempt < deliveries; attempt += 1) {
     last = await deliverPayload(check.url, chunk.payload as JsonValue);

@@ -76,7 +76,7 @@ export default async function LabPage({ params }: LabPageProps) {
   // Only labs with a Send Test read the saved webhook (Vision §25: webhook
   // configuration exists only where a lab needs it). Hostname only.
   const usesSendTest = (chunks ?? []).some(
-    (chunk) => chunk.kind === "test" && chunk.mode === "send-test",
+    (chunk) => (chunk.kind === "test" || chunk.kind === "challenge") && chunk.mode === "send-test",
   );
   const webhookHost = usesSendTest ? await getLabWebhookHost(lab.slug) : null;
 

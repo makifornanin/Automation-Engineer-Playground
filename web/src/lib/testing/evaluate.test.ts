@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LABS } from "@/lib/course/catalog";
+import { CAPSTONE_SLUG, LABS } from "@/lib/course/catalog";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { allTestCases, getTestCase } from "./cases";
 import {
@@ -123,8 +123,8 @@ describe("the test case registry", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("points every case at a real lab", () => {
-    const slugs = new Set(LABS.map((lab) => lab.slug));
+  it("points every case at a real lab or the Capstone", () => {
+    const slugs = new Set([...LABS.map((lab) => lab.slug), CAPSTONE_SLUG]);
     for (const entry of allTestCases()) {
       expect(slugs.has(entry.labSlug)).toBe(true);
     }

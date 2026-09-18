@@ -315,6 +315,34 @@ describe("Send Test placement", () => {
     }
   });
 
+  /*
+   * A challenge uses Send Test only where one fixed request has a known
+   * answer. Listed explicitly so a later challenge cannot opt in by accident.
+   */
+  it("lets only the Lab 03 and 04 challenges use Send Test", () => {
+    const CHALLENGE_SEND_TEST_LABS = new Set(["03-apis-webhooks", "04-validation-normalization"]);
+    for (const slug of AUTHORED) {
+      const optedIn = chunksFor(slug).some(
+        (chunk) => chunk.kind === "challenge" && chunk.mode === "send-test",
+      );
+      expect(optedIn, slug).toBe(CHALLENGE_SEND_TEST_LABS.has(slug));
+    }
+  });
+
+  it("gives every challenge Send Test a payload, an expected outcome and a send-test case", async () => {
+    const { getTestCase } = await import("@/lib/testing/cases");
+    for (const slug of AUTHORED) {
+      for (const chunk of chunksFor(slug)) {
+        if (chunk.kind !== "challenge" || chunk.mode !== "send-test") continue;
+        expect(chunk.payload, slug).toBeDefined();
+        expect(chunk.expected?.trim(), slug).toBeTruthy();
+        const testCase = getTestCase(chunk.testCaseId ?? "");
+        expect(testCase?.labSlug).toBe(slug);
+        expect(testCase?.mode).toBe("send-test");
+      }
+    }
+  });
+
   it("gives every Send Test a payload, an expected outcome and a matching case", async () => {
     const { getTestCase } = await import("@/lib/testing/cases");
     for (const slug of AUTHORED) {
@@ -327,5 +355,59 @@ describe("Send Test placement", () => {
         expect(testCase?.mode).toBe("send-test");
       }
     }
+  });
+});
+
+/*
+ * The Capstone's proofs share the registry, the evidence model and the
+ * writers with the labs, so the rules that keep a milestone honest apply here
+ * too — and a few only the Capstone needs.
+ */
+describe("Capstone proofs", () => {
+  it("gives one proof per scenario, in the same order", async () => {
+    const { CAPSTONE_SLUG } = await import("@/lib/course/catalog");
+    const { CAPSTONE_SCENARIOS } = await import("@/lib/course/capstone");
+    const proofs = chunksFor(CAPSTONE_SLUG);
+
+    expect(proofs.map((proof) => proof.title)).toEqual(
+      CAPSTONE_SCENARIOS.map((scenario) => scenario.name),
+    );
+    expect(new Set(proofs.map((proof) => proof.id)).size).toBe(proofs.length);
+  });
+
+  /* Only a passing check earns `verified`; nothing here can be clicked through. */
+  it("makes every proof a paste-checked test with its own Capstone case", async () => {
+    const { CAPSTONE_SLUG } = await import("@/lib/course/catalog");
+    const { getTestCase } = await import("@/lib/testing/cases");
+
+    for (const proof of chunksFor(CAPSTONE_SLUG)) {
+      expect(proof.kind, proof.id).toBe("test");
+      if (proof.kind !== "test") continue;
+      expect(proof.mode, proof.id).toBe("self-check");
+      expect(proof.expected?.trim(), proof.id).toBeTruthy();
+      const testCase = getTestCase(proof.testCaseId);
+      expect(testCase?.labSlug, proof.id).toBe(CAPSTONE_SLUG);
+      expect(testCase?.mode, proof.id).toBe("self-check");
+    }
+  });
+
+  it("can be completed, and only by verifying every proof", async () => {
+    const { CAPSTONE_SLUG } = await import("@/lib/course/catalog");
+    const { isLabComplete, requiredMilestones } = await import("@/lib/course/progress");
+    const proofs = chunksFor(CAPSTONE_SLUG);
+    const required = requiredMilestones(proofs);
+    const earned = Object.fromEntries(
+      required.map(({ chunkId }) => [chunkId, "verified" as const]),
+    );
+
+    expect(required.length).toBe(9);
+    expect(required.every(({ evidence }) => evidence === "verified")).toBe(true);
+    expect(isLabComplete(proofs, earned)).toBe(true);
+    expect(isLabComplete(proofs, { ...earned, [proofs[8].id]: "acknowledged" })).toBe(false);
+  });
+
+  it("is never served as a lab page", async () => {
+    const { CAPSTONE_SLUG } = await import("@/lib/course/catalog");
+    expect(LABS.some((lab) => lab.slug === CAPSTONE_SLUG)).toBe(false);
   });
 });

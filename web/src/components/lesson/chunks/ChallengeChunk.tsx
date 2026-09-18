@@ -1,6 +1,7 @@
 import { KazHints } from "@/components/kaz/KazHints";
 import type { RevealedHint } from "@/lib/kaz/hint-actions";
 import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
+import { SendTestPanel } from "@/components/testing/SendTestPanel";
 import type { ChallengeChunk as ChallengeChunkData } from "@/lib/lesson/types";
 import { ContentBlocks } from "../blocks/ContentBlocks";
 
@@ -21,11 +22,14 @@ export function ChallengeChunk({
   chunk,
   labSlug,
   revealedHints = [],
+  webhookHost = null,
 }: {
   chunk: ChallengeChunkData;
   labSlug: string;
   /** Hints this learner already asked for, so a reload does not take them back. */
   revealedHints?: readonly RevealedHint[];
+  /** Hostname of the lab's saved webhook, for a challenge that uses Send Test. */
+  webhookHost?: string | null;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -46,11 +50,21 @@ export function ChallengeChunk({
         </section>
       ) : null}
 
-      {chunk.testCaseId && chunk.caseName ? (
+      {chunk.testCaseId && chunk.caseName && chunk.mode === "send-test" && chunk.payload !== undefined ? (
+        <SendTestPanel
+          labSlug={labSlug}
+          chunkId={chunk.id}
+          caseName={chunk.caseName}
+          expected={chunk.expected}
+          payload={chunk.payload}
+          webhookHost={webhookHost}
+        />
+      ) : chunk.testCaseId && chunk.caseName ? (
         <SelfCheckPanel
           labSlug={labSlug}
           chunkId={chunk.id}
           caseName={chunk.caseName}
+          expected={chunk.expected}
         />
       ) : null}
 

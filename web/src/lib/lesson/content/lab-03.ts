@@ -1,5 +1,8 @@
 import type { LessonChunk } from "../types";
 
+/** The challenge's missing customer: shown in the lesson and sent by Send Test. */
+const CHALLENGE_MISSING_CUSTOMER = { user_id: 999 };
+
 /** Lab 03 — APIs & Webhooks. Condensed from the lab README. */
 export const LAB_03_CHUNKS: readonly LessonChunk[] = [
   {
@@ -306,10 +309,13 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
     hintCount: 3,
     testCaseId: "lab-03-customer-not-found",
     caseName: "A customer who does not exist produces an honest not-found answer, not a crash",
+    mode: "send-test",
+    payload: CHALLENGE_MISSING_CUSTOMER,
+    expected: "success is false, with the message External customer data not found — and no crash.",
     content: [
       {
         type: "prose",
-        text: "Send user_id 2, then 7, then 999 to your Production URL. Your workflow must tell the two existing customers from the missing one without knowing any of them in advance.",
+        text: "Send user_id 2, then 7, to your Production URL yourself, with curl as before. Your workflow must tell existing customers from a missing one without knowing any of them in advance.",
       },
       {
         type: "callout",
@@ -319,7 +325,9 @@ export const LAB_03_CHUNKS: readonly LessonChunk[] = [
       },
       {
         type: "prose",
-        text: "Then send an id that does not exist and paste the response below.",
+        text: "Then press Send Test. AEP sends your workflow user_id " +
+          String(CHALLENGE_MISSING_CUSTOMER.user_id) +
+          ", a customer who does not exist, and checks the answer your workflow gives.",
       },
     ],
     verification: [

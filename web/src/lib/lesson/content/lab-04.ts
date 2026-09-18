@@ -1,5 +1,15 @@
 import type { LessonChunk } from "../types";
 
+/** The challenge lead: shown in the lesson and sent by Send Test, from one source. */
+const CHALLENGE_LEAD = {
+  name: "   Alex Rivera   ",
+  company: "   Northstar Commerce   ",
+  email: "  ALEX.RIVERA@EXAMPLE.COM ",
+  phone: "+63 (917) 555-1234",
+  country: " au ",
+  preferred_contact_date: "9/9/2026",
+};
+
 /** Lab 04 — Validation & Normalization. Condensed from the lab README. */
 export const LAB_04_CHUNKS: readonly LessonChunk[] = [
   {
@@ -421,24 +431,18 @@ export const LAB_04_CHUNKS: readonly LessonChunk[] = [
     hintCount: 3,
     testCaseId: "lab-04-challenge-lead",
     caseName: "An international lead with a formatted phone number is normalised and accepted",
+    mode: "send-test",
+    payload: CHALLENGE_LEAD,
+    expected: "The lead is accepted, with every field cleaned into the shape your rules define.",
     content: [
       {
         type: "prose",
-        text: "Before you send this, write down what each field will become and whether the lead will be accepted. Then send it to your Production URL — with curl, as in Lab 03 — and paste the response below.",
+        text: "Before you send this, write down what each field will become and whether the lead will be accepted. Then press Send Test: AEP sends exactly this lead to your saved Production URL and checks every field.",
       },
       {
         type: "code",
         language: "json",
-        code: [
-          "{",
-          '  "name": "   Alex Rivera   ",',
-          '  "company": "   Northstar Commerce   ",',
-          '  "email": "  ALEX.RIVERA@EXAMPLE.COM ",',
-          '  "phone": "+63 (917) 555-1234",',
-          '  "country": " au ",',
-          '  "preferred_contact_date": "9/9/2026"',
-          "}",
-        ].join("\n"),
+        code: JSON.stringify(CHALLENGE_LEAD, null, 2),
       },
       {
         type: "callout",

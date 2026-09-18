@@ -225,6 +225,7 @@ function ChunkBody({
           chunk={chunk}
           labSlug={labSlug}
           revealedHints={revealedHints?.[chunk.id] ?? []}
+          webhookHost={webhookHost}
         />
       );
 
