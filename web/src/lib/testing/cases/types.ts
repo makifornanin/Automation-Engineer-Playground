@@ -129,6 +129,29 @@ export function expectPresent(id: string, label: string, key: string): Checkpoin
 }
 
 /**
+ * A checkpoint asserting a field holds a list with at least one entry.
+ *
+ * For evidence that is a collection rather than a value: a validation failure
+ * proves itself by naming what was wrong, whatever the exact wording.
+ */
+export function expectNonEmptyList(id: string, label: string, key: string): Checkpoint {
+  return {
+    id,
+    label,
+    evaluate: (actual) => {
+      const found = readPath(actual, key);
+      const list = found === undefined ? null : asArray(found);
+      if (list && list.length > 0) return { state: "passed" };
+      return {
+        state: "failed",
+        expected: key + " listing at least one reason",
+        actual: list ? key + " is empty" : key + " is missing",
+      };
+    },
+  };
+}
+
+/**
  * A checkpoint asserting a numeric field reaches at least some floor.
  *
  * Used where the exact number belongs to a system AEP does not control — Lab

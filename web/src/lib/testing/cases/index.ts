@@ -1,5 +1,6 @@
 import "server-only";
 
+import { CAPSTONE_CASES } from "./capstone";
 import { LAB_01_CHALLENGE_CASE, LAB_01_TRANSFORM_CASE } from "./lab-01";
 import { LAB_02_CHALLENGE_CASE, LAB_02_ROUTING_CASE } from "./lab-02";
 import { LAB_03_CHALLENGE_CASE, LAB_03_SUCCESS_CASE } from "./lab-03";
@@ -38,6 +39,7 @@ const ALL: readonly TestCase[] = [
   LAB_09_FALLBACK_CASE,
   LAB_10_HELD_CASE,
   LAB_10_APPROVED_CASE,
+  ...CAPSTONE_CASES,
 ];
 
 const CASES: Readonly<Record<string, TestCase>> = Object.fromEntries(

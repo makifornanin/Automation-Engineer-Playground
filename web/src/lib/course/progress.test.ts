@@ -9,6 +9,7 @@ import {
   isLabComplete,
   isLessonReadable,
   labCompletionPercent,
+  NO_CAPSTONE_PROGRESS,
   openMilestones,
   requiredMilestones,
   visibleChunks,
@@ -20,6 +21,7 @@ const EMPTY: CourseProgress = {
   completedLabSlugs: [],
   inProgressLabSlug: null,
   labs: {},
+  capstone: NO_CAPSTONE_PROGRESS,
 };
 
 function completedThrough(count: number): CourseProgress {
@@ -27,6 +29,7 @@ function completedThrough(count: number): CourseProgress {
     completedLabSlugs: LABS.slice(0, count).map((lab) => lab.slug),
     inProgressLabSlug: null,
     labs: {},
+    capstone: NO_CAPSTONE_PROGRESS,
   };
 }
 
@@ -87,6 +90,7 @@ describe("deriveCourseState", () => {
       completedLabSlugs: [LABS[0].slug],
       inProgressLabSlug: LABS[1].slug,
       labs: {},
+      capstone: NO_CAPSTONE_PROGRESS,
     };
     const state = deriveCourseState(progress);
 
@@ -102,7 +106,33 @@ describe("deriveCourseState", () => {
     const state = deriveCourseState(completedThrough(LABS.length));
 
     expect(state.labs.every(({ status }) => status === "completed")).toBe(true);
-    expect(state.capstone.status).not.toBe("locked");
+    expect(state.capstone.status).toBe("not-started");
+  });
+
+  it("shows the Capstone in progress once started, and completed once every proof is verified", () => {
+    const allLabs = completedThrough(LABS.length);
+
+    expect(
+      deriveCourseState({ ...allLabs, capstone: { started: true, completed: false } }).capstone
+        .status,
+    ).toBe("in-progress");
+    expect(
+      deriveCourseState({ ...allLabs, capstone: { started: true, completed: true } }).capstone
+        .status,
+    ).toBe("completed");
+  });
+
+  /*
+   * If a lab later gains a milestone, that lab re-opens. A Capstone completed
+   * under the old bar must lock again rather than stay complete.
+   */
+  it("keeps the Capstone locked while any lab is incomplete, whatever Capstone evidence exists", () => {
+    const state = deriveCourseState({
+      ...completedThrough(LABS.length - 1),
+      capstone: { started: true, completed: true },
+    });
+
+    expect(state.capstone.status).toBe("locked");
   });
 });
 

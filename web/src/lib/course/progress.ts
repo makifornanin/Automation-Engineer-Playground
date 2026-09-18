@@ -26,10 +26,22 @@ export interface LabProgress {
   hintsUsed?: Readonly<Record<string, number>>;
 }
 
+/**
+ * The Capstone's own progress, read from the same rows as a lab's under
+ * `CAPSTONE_SLUG`. Started means it has a row; completed means every proof is
+ * verified against the current proofs. Neither unlocks it: see
+ * {@link deriveCourseState}.
+ */
+export interface CapstoneProgress {
+  started: boolean;
+  completed: boolean;
+}
+
 export interface CourseProgress {
   completedLabSlugs: readonly string[];
   inProgressLabSlug: string | null;
   labs: Readonly<Record<string, LabProgress>>;
+  capstone: CapstoneProgress;
 }
 
 export interface LabWithStatus {
@@ -43,6 +55,8 @@ export interface CourseState {
   labs: readonly LabWithStatus[];
   capstone: { status: LabStatus };
 }
+
+export const NO_CAPSTONE_PROGRESS: CapstoneProgress = { started: false, completed: false };
 
 export const EMPTY_LAB_PROGRESS: LabProgress = {
   currentChunkId: null,
@@ -167,6 +181,19 @@ function statusForLab(lab: Lab, index: number, progress: CourseProgress): LabSta
 }
 
 /**
+ * The Capstone's status. Locked until all ten labs are complete, whatever
+ * Capstone evidence exists: if a lab later gains a milestone and re-opens,
+ * the Capstone locks again rather than keeping a completion earned under the
+ * old bar.
+ */
+function capstoneStatus(allLabsCompleted: boolean, capstone: CapstoneProgress): LabStatus {
+  if (!allLabsCompleted) return "locked";
+  if (capstone.completed) return "completed";
+  if (capstone.started) return "in-progress";
+  return "not-started";
+}
+
+/**
  * Pure mapping from the catalog + learner progress to the view model Home and
  * Labs render. The Capstone is deterministically locked until all ten labs are
  * completed (Vision §3).
@@ -187,7 +214,7 @@ export function deriveCourseState(progress: CourseProgress): CourseState {
   return {
     currentLab,
     labs,
-    capstone: { status: allLabsCompleted ? "not-started" : "locked" },
+    capstone: { status: capstoneStatus(allLabsCompleted, progress.capstone) },
   };
 }
 

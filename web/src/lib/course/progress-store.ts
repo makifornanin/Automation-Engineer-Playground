@@ -1,13 +1,14 @@
 import "server-only";
 
 import { cache } from "react";
-import { LABS } from "./catalog";
+import { CAPSTONE_SLUG, LABS } from "./catalog";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getSession } from "@/lib/session/get-session";
 import {
   EMPTY_LAB_PROGRESS,
   isLabComplete,
+  NO_CAPSTONE_PROGRESS,
   type CourseProgress,
   type LabProgress,
   type MilestoneEvidence,
@@ -43,6 +44,7 @@ export function fallbackProgress(): CourseProgress {
     completedLabSlugs: [],
     inProgressLabSlug: LABS[0].slug,
     labs: {},
+    capstone: NO_CAPSTONE_PROGRESS,
   };
 }
 
@@ -146,7 +148,18 @@ export function assembleProgress(
   const inProgressLabSlug =
     LABS.find((lab) => labs[lab.slug] && !completedLabSlugs.includes(lab.slug))?.slug ?? null;
 
-  return { completedLabSlugs, inProgressLabSlug, labs };
+  // Completion is recomputed from evidence here too, for the same reason.
+  const capstoneEntry = labs[CAPSTONE_SLUG];
+  const capstoneProofs = getLessonChunks(CAPSTONE_SLUG);
+  const capstone = {
+    started: capstoneEntry !== undefined,
+    completed:
+      capstoneEntry !== undefined && capstoneProofs !== null
+        ? isLabComplete(capstoneProofs, capstoneEntry.evidence)
+        : false,
+  };
+
+  return { completedLabSlugs, inProgressLabSlug, labs, capstone };
 }
 
 let hasWarnedStoreUnavailable = false;

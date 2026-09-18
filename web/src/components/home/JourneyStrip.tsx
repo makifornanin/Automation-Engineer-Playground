@@ -28,6 +28,13 @@ const STATUS_LABEL: Record<LabStatus, string> = {
   locked: "locked",
 };
 
+const CAPSTONE_LINE: Record<LabStatus, string> = {
+  locked: "locked until all ten labs are complete",
+  "not-started": "unlocked",
+  "in-progress": "in progress",
+  completed: "complete",
+};
+
 /** Spoken form for assistive tech — "&" reads oddly aloud. */
 function spokenTitle(title: string): string {
   return title.replace(/ & /g, " and ");
@@ -77,10 +84,7 @@ export function JourneyStrip({ labs, capstoneStatus }: JourneyStripProps) {
         <span aria-hidden>{legend}.</span>
       </p>
       <p className="text-sm text-ink-muted">
-        Capstone — {CAPSTONE.title}:{" "}
-        {capstoneStatus === "locked"
-          ? "locked until all ten labs are complete"
-          : "unlocked"}
+        Capstone — {CAPSTONE.title}: {CAPSTONE_LINE[capstoneStatus]}
       </p>
     </>
   );

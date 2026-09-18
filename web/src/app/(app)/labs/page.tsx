@@ -4,8 +4,15 @@ import { LabGroupSection } from "@/components/labs/LabGroupSection";
 import { CAPSTONE } from "@/lib/course/catalog";
 import { CAPSTONE_FRAMING, labsByGroup } from "@/lib/course/groups";
 import { getLessonChunks } from "@/lib/lesson/registry";
-import { deriveCourseState, labCompletionPercent } from "@/lib/course/progress";
+import { deriveCourseState, labCompletionPercent, type LabStatus } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
+
+const CAPSTONE_STATE: Record<LabStatus, { line: string; action: string }> = {
+  locked: { line: "Locked until all ten labs are complete.", action: "Preview" },
+  "not-started": { line: "Unlocked.", action: "Open" },
+  "in-progress": { line: "In progress.", action: "Continue" },
+  completed: { line: "Complete — all nine scenarios proved.", action: "Review" },
+};
 
 /**
  * The real Labs journey (Vision §16): a featured card for the current lab,
@@ -47,21 +54,13 @@ export default async function LabsPage() {
         <div className="flex flex-col gap-1 pt-2">
           <p className="font-medium text-ink">{CAPSTONE.title}</p>
           <p className="text-sm text-ink-soft">{CAPSTONE.description}</p>
-          <p className="text-sm text-ink-muted">
-            {capstone.status === "locked"
-              ? "Locked until all ten labs are complete."
-              : "Unlocked."}
-          </p>
+          <p className="text-sm text-ink-muted">{CAPSTONE_STATE[capstone.status].line}</p>
           <Link
             href="/capstone"
-            aria-label={
-              (capstone.status === "locked" ? "Preview" : "Open") +
-              " the Capstone — " +
-              CAPSTONE.title
-            }
+            aria-label={CAPSTONE_STATE[capstone.status].action + " the Capstone — " + CAPSTONE.title}
             className="w-fit pt-1 text-sm font-medium text-accent underline-offset-4 hover:underline"
           >
-            {capstone.status === "locked" ? "Preview" : "Open"}
+            {CAPSTONE_STATE[capstone.status].action}
           </Link>
         </div>
       </section>

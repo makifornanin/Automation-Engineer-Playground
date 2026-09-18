@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { CAPSTONE, LABS, labHref, type Lab } from "@/lib/course/catalog";
+import type { LabStatus } from "@/lib/course/progress";
 
 export interface ContinueLearningCardProps {
   lab: Lab;
@@ -10,11 +11,17 @@ export interface ContinueLearningCardProps {
    */
   percent?: number | null;
   /**
-   * Every lab is complete. The one thing left to continue is the Capstone, so
-   * the card points there instead of back at a finished Lab 10.
+   * Once every lab is complete the one thing left to continue is the Capstone,
+   * so the card points there instead of back at a finished Lab 10.
    */
-  capstoneUnlocked?: boolean;
+  capstoneStatus?: LabStatus;
 }
+
+const CAPSTONE_CARD: Record<Exclude<LabStatus, "locked">, { line: string; action: string }> = {
+  "not-started": { line: "Capstone · all ten labs complete", action: "Start the Capstone" },
+  "in-progress": { line: "Capstone · in progress", action: "Continue the Capstone" },
+  completed: { line: "Capstone · complete", action: "Review the Capstone" },
+};
 
 /**
  * Continue Learning (Vision §10) — the current lab, its position in the
@@ -31,21 +38,22 @@ export interface ContinueLearningCardProps {
 export function ContinueLearningCard({
   lab,
   percent = null,
-  capstoneUnlocked = false,
+  capstoneStatus = "locked",
 }: ContinueLearningCardProps) {
   const showPercent = percent !== null && percent > 0;
 
-  if (capstoneUnlocked) {
+  if (capstoneStatus !== "locked") {
+    const card = CAPSTONE_CARD[capstoneStatus];
     return (
       <GlassSurface className="flex flex-col gap-3 p-5">
-        <p className="text-sm text-ink-muted">Capstone · all ten labs complete</p>
+        <p className="text-sm text-ink-muted">{card.line}</p>
         <p className="text-lg font-medium text-ink">{CAPSTONE.title}</p>
         <Link
           href="/capstone"
-          aria-label={`Start the Capstone — ${CAPSTONE.title}`}
+          aria-label={`${card.action} — ${CAPSTONE.title}`}
           className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
-          Start the Capstone
+          {card.action}
         </Link>
       </GlassSurface>
     );

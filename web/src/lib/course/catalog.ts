@@ -119,6 +119,13 @@ export const CAPSTONE = {
 } as const;
 
 /**
+ * The Capstone's key in the learner progress tables. It follows the lab slug
+ * shape the schema's CHECK constraint requires, so Capstone progress and
+ * evidence reuse the same rows, policies and writers as every lab.
+ */
+export const CAPSTONE_SLUG = "11-capstone";
+
+/**
  * Where a lab's Continue/Preview action points.
  */
 export function labHref(lab: Lab): string {

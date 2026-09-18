@@ -1,6 +1,7 @@
 import "server-only";
 
 import { revalidatePath } from "next/cache";
+import { CAPSTONE_SLUG } from "./catalog";
 import { getLessonChunks } from "@/lib/lesson/registry";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getSession } from "@/lib/session/get-session";
@@ -73,9 +74,17 @@ function resolveChunk(labSlug: string, chunkId: string) {
 
 type LabAccess = "none" | "reading" | "hands-on";
 
-/** The same two predicates the lab page uses to decide what to serve. */
+/**
+ * The same two predicates the lab page uses to decide what to serve.
+ *
+ * The Capstone has no reading-only stage: it is either locked, or open for
+ * its proofs once every lab is complete.
+ */
 async function labAccess(labSlug: string): Promise<LabAccess> {
-  const { labs, currentLab } = deriveCourseState(await getCourseProgress());
+  const { labs, currentLab, capstone } = deriveCourseState(await getCourseProgress());
+  if (labSlug === CAPSTONE_SLUG) {
+    return capstone.status === "locked" ? "none" : "hands-on";
+  }
   const entry = labs.find(({ lab }) => lab.slug === labSlug);
   if (!entry) return "none";
   if (isHandsOnAvailable(entry.status)) return "hands-on";

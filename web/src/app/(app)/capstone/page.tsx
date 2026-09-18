@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { CAPSTONE } from "@/lib/course/catalog";
+import { ContentBlocks } from "@/components/lesson/blocks/ContentBlocks";
+import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
+import { CAPSTONE, CAPSTONE_SLUG } from "@/lib/course/catalog";
 import {
   CAPSTONE_FLOW,
   CAPSTONE_FLOW_ALT,
@@ -7,27 +9,51 @@ import {
   CAPSTONE_SCENARIOS,
 } from "@/lib/course/capstone";
 import { CAPSTONE_FRAMING } from "@/lib/course/groups";
-import { deriveCourseState } from "@/lib/course/progress";
+import { deriveCourseState, type LabStatus } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
+import { startLab } from "@/lib/course/progress-writes";
+import { getLessonChunks } from "@/lib/lesson/registry";
+
+const STATUS_LABEL: Record<LabStatus, string> = {
+  locked: "Preview",
+  "not-started": "Unlocked",
+  "in-progress": "In progress",
+  completed: "Completed",
+};
 
 /**
  * The Capstone (Vision §3: it unlocks after Labs 01–10; Vision §12: it has no
  * navigation item and appears at the end of the Labs journey).
  *
  * Previewable before it unlocks, like any future lab — why it matters and the
- * shape of the system — with the requirements and scenarios held back until
- * the course is done, the same way hands-on lab work is.
+ * shape of the system — with the requirements and proofs held back until the
+ * course is done. The proofs are not even read from the registry while locked,
+ * so they never reach the page payload.
  *
- * Honest about its limit: AEP cannot check a Capstone for the learner yet. The
- * runtime lives in n8n with no exported workflow to build an evaluator from,
- * so the page asks the learner to prove each scenario in their own executions
- * rather than offering a completion button that would mean nothing.
+ * Completion is earned, not claimed: one pasted response per scenario, each
+ * checked on the server against the behaviour that scenario proves. All nine
+ * verified completes the Capstone. There is no completion button — the
+ * evidence is the completion.
+ *
+ * Opening the unlocked page starts the Capstone, the same way opening a lab
+ * starts that lab.
  */
 export default async function CapstonePage() {
   const progress = await getCourseProgress();
   const { capstone, labs } = deriveCourseState(progress);
   const unlocked = capstone.status !== "locked";
   const completed = labs.filter(({ status }) => status === "completed").length;
+
+  if (unlocked) {
+    await startLab(CAPSTONE_SLUG);
+  }
+  // The status above was read before that write, so a first visit shows the
+  // Capstone as started without needing a refresh.
+  const status: LabStatus = capstone.status === "not-started" ? "in-progress" : capstone.status;
+
+  const proofs = unlocked ? (getLessonChunks(CAPSTONE_SLUG) ?? []) : [];
+  const earned = progress.labs[CAPSTONE_SLUG]?.evidence ?? {};
+  const proved = proofs.filter((proof) => earned[proof.id] === "verified").length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -36,7 +62,8 @@ export default async function CapstonePage() {
         <h1 className="text-3xl font-semibold tracking-tight text-ink">{CAPSTONE.title}</h1>
         <p className="max-w-prose text-ink-soft">{CAPSTONE_FRAMING}</p>
         <p className="text-sm text-ink-muted">
-          Status: {unlocked ? "Unlocked" : "Preview"}
+          Status: {STATUS_LABEL[status]}
+          {unlocked ? ` · ${proved} of ${proofs.length} scenarios proved` : ""}
         </p>
       </header>
 
@@ -100,30 +127,48 @@ export default async function CapstonePage() {
           <section className="flex flex-col gap-3 border-t border-line pt-6">
             <h2 className="text-lg font-medium text-ink">What you must prove</h2>
             <p className="max-w-prose text-ink-muted">
-              Each of these is its own run with its own expected outcome. A single successful
-              execution proves almost none of them.
+              Build the agent in your own n8n, then prove it one scenario at a time. Each is its
+              own run with its own expected outcome — a single successful execution proves almost
+              none of them. AEP does not run your agent: it checks the response you paste.
             </p>
-            <ol className="flex list-decimal flex-col gap-3 pl-5 marker:text-ink-muted">
-              {CAPSTONE_SCENARIOS.map((scenario) => (
-                <li key={scenario.name} className="pl-1">
-                  <p className="font-medium text-ink">{scenario.name}</p>
-                  <p className="max-w-prose text-sm text-ink-soft">Proves {scenario.proves}.</p>
-                </li>
-              ))}
+            {status === "completed" ? (
+              <p role="status" className="max-w-prose font-medium text-ink">
+                Capstone complete. All nine scenarios are proved by your own agent&rsquo;s
+                responses.
+              </p>
+            ) : null}
+            <ol className="flex flex-col gap-3">
+              {proofs.map((proof, index) => {
+                const scenario = CAPSTONE_SCENARIOS[index];
+                const isProved = earned[proof.id] === "verified";
+                return (
+                  <li key={proof.id}>
+                    <details className="group rounded-card border border-line p-4">
+                      <summary className="flex cursor-pointer flex-col gap-1">
+                        <span className="font-medium text-ink">
+                          {index + 1}. {proof.title}
+                        </span>
+                        <span className="text-sm text-ink-soft">
+                          {isProved ? "✓ Proved" : "Not proved yet"} · Proves {scenario?.proves}.
+                        </span>
+                      </summary>
+                      <div className="mt-4 flex flex-col gap-4">
+                        <ContentBlocks blocks={proof.content} />
+                        {proof.kind === "test" ? (
+                          <SelfCheckPanel
+                            labSlug={CAPSTONE_SLUG}
+                            chunkId={proof.id}
+                            caseName={proof.caseName}
+                            expected={proof.expected}
+                            title="Check the response"
+                          />
+                        ) : null}
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
             </ol>
-          </section>
-
-          <section className="flex flex-col gap-2 border-t border-line pt-6">
-            <h2 className="text-lg font-medium text-ink">How you finish</h2>
-            <p className="max-w-prose text-ink-soft">
-              Build the agent in your own n8n and run every scenario above. Keep the execution
-              and its outcome for each one in your notes — that record is your evidence.
-            </p>
-            <p className="max-w-prose text-ink-muted">
-              AEP cannot check a Capstone for you yet. Proving each scenario in your own
-              executions is the honest version of done; a completion button here would mean
-              nothing.
-            </p>
             <Link
               href="/notes"
               className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"

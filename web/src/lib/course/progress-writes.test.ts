@@ -30,6 +30,7 @@ const IN_LAB_03: CourseProgress = {
   completedLabSlugs: [LAB_01, LAB_02],
   inProgressLabSlug: LAB_03,
   labs: {},
+  capstone: { started: false, completed: false },
 };
 
 /** Labs 01–02 done, Lab 03 not yet opened: 03 is readable but not hands-on. */
@@ -37,6 +38,7 @@ const BEFORE_LAB_03: CourseProgress = {
   completedLabSlugs: [LAB_01, LAB_02],
   inProgressLabSlug: null,
   labs: {},
+  capstone: { started: false, completed: false },
 };
 
 function writtenEvidence() {
@@ -150,6 +152,55 @@ describe("recordPosition and startLab — no row for a lab the learner cannot op
 
   it("refuses to start a locked lab", async () => {
     await startLab(LAB_07);
+
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Capstone — the same writers, gated on all ten labs", () => {
+  const CAPSTONE = "11-capstone";
+  const ALL_LABS: CourseProgress = {
+    completedLabSlugs: [
+      "01-data-mapping-transformation",
+      "02-conditions-routing",
+      "03-apis-webhooks",
+      "04-validation-normalization",
+      "05-pagination-large-data",
+      "06-retry-exponential-backoff",
+      "07-idempotency-duplicate-protection",
+      "08-dead-letter-queue-failure-recovery",
+      "09-structured-ai-output",
+      "10-ai-guardrails-human-in-the-loop",
+    ],
+    inProgressLabSlug: null,
+    labs: {},
+    capstone: { started: false, completed: false },
+  };
+
+  it("refuses to start or record a proof while any lab is incomplete", async () => {
+    await startLab(CAPSTONE);
+    await recordVerifiedEvidence(CAPSTONE, "valid-safe-request");
+
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("starts the Capstone and records a verified proof once every lab is complete", async () => {
+    getCourseProgress.mockResolvedValue(ALL_LABS);
+
+    await startLab(CAPSTONE);
+    await recordVerifiedEvidence(CAPSTONE, "valid-safe-request");
+
+    expect(upsert).toHaveBeenCalledTimes(2);
+    expect(writtenEvidence()[1]).toEqual(
+      expect.objectContaining({ lab_slug: CAPSTONE, chunk_id: "valid-safe-request", evidence: "verified" }),
+    );
+  });
+
+  /* A proof is a test: pressing Next or replaying the evidence action earns nothing. */
+  it("never lets a learner-claimed write complete a proof", async () => {
+    getCourseProgress.mockResolvedValue(ALL_LABS);
+
+    await recordLearnerEvidence(CAPSTONE, "valid-safe-request");
 
     expect(upsert).not.toHaveBeenCalled();
   });

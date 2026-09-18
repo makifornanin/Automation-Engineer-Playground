@@ -12,7 +12,9 @@ describe("<ContinueLearningCard />", () => {
    * finished lab while the Capstone waited unlocked.
    */
   it("points a learner who has finished every lab at the Capstone", () => {
-    render(<ContinueLearningCard lab={LABS[LABS.length - 1]} percent={100} capstoneUnlocked />);
+    render(
+      <ContinueLearningCard lab={LABS[LABS.length - 1]} percent={100} capstoneStatus="not-started" />,
+    );
 
     expect(screen.getByRole("link", { name: /^Start the Capstone/ })).toHaveAttribute(
       "href",

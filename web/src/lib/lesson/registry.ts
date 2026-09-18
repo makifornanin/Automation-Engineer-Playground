@@ -1,3 +1,5 @@
+import { CAPSTONE_SLUG } from "@/lib/course/catalog";
+import { CAPSTONE_PROOFS } from "./content/capstone";
 import { LAB_01_CHUNKS } from "./content/lab-01";
 import { LAB_02_CHUNKS } from "./content/lab-02";
 import { LAB_03_CHUNKS } from "./content/lab-03";
@@ -13,6 +15,10 @@ import type { LessonChunk } from "./types";
 /**
  * Lesson chunks by lab slug. A lab with no entry returns null and its page
  * keeps the honest placeholder rather than pretending a lesson exists.
+ *
+ * The Capstone's proofs live here too, under its own slug, so its evidence is
+ * validated, written and completed by the same code as every lab's. The lab
+ * route only serves slugs from `LABS`, so they are never rendered as a lab.
  */
 const LESSONS: Readonly<Record<string, readonly LessonChunk[]>> = {
   "01-data-mapping-transformation": LAB_01_CHUNKS,
@@ -25,6 +31,7 @@ const LESSONS: Readonly<Record<string, readonly LessonChunk[]>> = {
   "08-dead-letter-queue-failure-recovery": LAB_08_CHUNKS,
   "09-structured-ai-output": LAB_09_CHUNKS,
   "10-ai-guardrails-human-in-the-loop": LAB_10_CHUNKS,
+  [CAPSTONE_SLUG]: CAPSTONE_PROOFS,
 };
 
 export function getLessonChunks(slug: string): readonly LessonChunk[] | null {

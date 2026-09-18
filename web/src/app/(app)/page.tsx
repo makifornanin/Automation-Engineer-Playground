@@ -49,7 +49,7 @@ export default async function HomePage() {
         <ContinueLearningCard
           lab={currentLab.lab}
           percent={percent}
-          capstoneUnlocked={capstone.status !== "locked"}
+          capstoneStatus={capstone.status}
         />
       </section>
 
