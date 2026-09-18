@@ -9,6 +9,7 @@ import {
   type JsonValue,
   type WebhookSaveState,
 } from "@/lib/testing/types";
+import { notifyTestOutcome } from "@/lib/kaz/test-signal";
 import { CheckResultView } from "./CheckResultView";
 import { SelfCheckPanel } from "./SelfCheckPanel";
 
@@ -77,10 +78,12 @@ export function SendTestPanel({
 
   // A pass records evidence and may unlock the next lab; refresh so it shows.
   useEffect(() => {
-    if (testState.status === "complete" && testState.result.passed) {
+    if (testState.status !== "complete") return;
+    notifyTestOutcome({ labSlug, chunkId, passed: testState.result.passed });
+    if (testState.result.passed) {
       router.refresh();
     }
-  }, [testState, router]);
+  }, [testState, router, labSlug, chunkId]);
 
   const technical =
     testState.status === "complete" || testState.status === "error" ? testState.technical : null;

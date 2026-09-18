@@ -16,6 +16,8 @@ import { chunkNote } from "@/lib/kaz/notes";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
 import { ContentBlocks } from "./blocks/ContentBlocks";
 import { TeachingNotes } from "./blocks/TeachingNotes";
+import { KazLauncher } from "@/components/kaz/KazLauncher";
+import type { KazMessage, KazWorkflowVisibility } from "@/lib/kaz/types";
 import { ChallengeChunk } from "./chunks/ChallengeChunk";
 import { GuidedBuildChunk } from "./chunks/GuidedBuildChunk";
 import { PredictChunk } from "./chunks/PredictChunk";
@@ -48,6 +50,15 @@ export interface FocusModeProps {
   webhookHost?: string | null;
   /** Challenge chunk id -> hints this learner has already been given. */
   revealedHints?: Readonly<Record<string, readonly RevealedHint[]>>;
+  /** Kaz's floating companion for this lab, or nothing when she is unavailable. */
+  kaz?: KazLessonProps;
+}
+
+/** What the launcher needs that only the server can know. */
+export interface KazLessonProps {
+  labLabel: string;
+  initialMessages: readonly KazMessage[];
+  visibility: KazWorkflowVisibility;
 }
 
 /** What finishing each kind of open step takes, in the learner's words. */
@@ -259,6 +270,7 @@ export function FocusMode({
   completion,
   webhookHost = null,
   revealedHints,
+  kaz,
 }: FocusModeProps) {
   const router = useRouter();
   // Resume where the learner left off. An unknown id — content reordered since
@@ -415,6 +427,20 @@ export function FocusMode({
           </button>
         )}
       </div>
+
+      {/*
+        Kaz follows the learner through the lesson: the chunk she is asked
+        about is the one on screen, which is client state living here.
+      */}
+      {kaz ? (
+        <KazLauncher
+          labSlug={labSlug}
+          chunkId={chunk.id}
+          contextLabel={kaz.labLabel + " · " + chunk.title}
+          initialMessages={kaz.initialMessages}
+          visibility={kaz.visibility}
+        />
+      ) : null}
     </section>
   );
 }

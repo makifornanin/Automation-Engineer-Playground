@@ -20,22 +20,22 @@ describe("<AppDock />", () => {
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
   });
 
-  it("shows five items and no Admin for a student", () => {
+  it("shows four items and no Admin for a student", () => {
     render(<AppDock role="student" />);
-    expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(screen.getAllByRole("link")).toHaveLength(4);
     expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
   });
 
-  it("shows six items including Admin for an admin", () => {
+  it("shows five items including Admin for an admin", () => {
     render(<AppDock role="admin" />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(6);
+    expect(links).toHaveLength(5);
     expect(screen.getByRole("link", { name: /admin/i })).toBeInTheDocument();
   });
 
   it("exposes every label as the link's accessible name", () => {
     render(<AppDock role="admin" />);
-    for (const label of ["Home", "Labs", "Notes", "Kaz", "Settings", "Admin"]) {
+    for (const label of ["Home", "Labs", "Notes", "Settings", "Admin"]) {
       expect(
         screen.getByRole("link", { name: new RegExp(`^${label}`, "i") }),
       ).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe("<AppDock />", () => {
 
   it("keeps every dock label present as real text, not display:none", () => {
     render(<AppDock role="admin" />);
-    for (const label of ["Home", "Labs", "Notes", "Kaz", "Settings", "Admin"]) {
+    for (const label of ["Home", "Labs", "Notes", "Settings", "Admin"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
@@ -116,13 +116,13 @@ describe("<AppDock />", () => {
     const tabStops = container.querySelectorAll(
       '[tabindex]:not([tabindex="-1"]), a[href]',
     );
-    expect(tabStops).toHaveLength(6);
+    expect(tabStops).toHaveLength(5);
   });
 
   it("keeps every dock <li> out of the tab sequence with tabindex=-1", () => {
     const { container } = render(<AppDock role="admin" />);
     const items = container.querySelectorAll("li");
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(5);
     for (const item of items) {
       expect(item).toHaveAttribute("tabindex", "-1");
     }

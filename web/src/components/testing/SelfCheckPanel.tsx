@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId } from "react";
 import { runSelfCheck } from "@/lib/testing/self-check-action";
 import { IDLE_TEST_STATE } from "@/lib/testing/types";
+import { notifyTestOutcome } from "@/lib/kaz/test-signal";
 import { CheckResultView } from "./CheckResultView";
 
 export interface SelfCheckPanelProps {
@@ -49,10 +50,14 @@ export function SelfCheckPanel({
   // tree is what lets the recap and the Labs journey show the unlock now,
   // rather than only after the learner happens to navigate away.
   useEffect(() => {
-    if (state.status === "complete" && state.result.passed) {
+    if (state.status !== "complete") return;
+    // Kaz's launcher counts repeated failures on this step so she can offer
+    // help once. Local, and only from a result the learner already saw.
+    notifyTestOutcome({ labSlug, chunkId, passed: state.result.passed });
+    if (state.result.passed) {
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, labSlug, chunkId]);
 
   return (
     <div className="flex flex-col gap-4 rounded-card border border-line bg-surface-sunken p-4">

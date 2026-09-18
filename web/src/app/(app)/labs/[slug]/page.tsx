@@ -3,6 +3,7 @@ import { FocusMode } from "@/components/lesson/FocusMode";
 import { LABS, labHref } from "@/lib/course/catalog";
 import {
   deriveCourseState,
+  isHandsOnAvailable,
   isLabComplete,
   isLessonReadable,
   openMilestones,
@@ -11,8 +12,11 @@ import {
 import { getCourseProgress } from "@/lib/course/progress-store";
 import { startLab } from "@/lib/course/progress-writes";
 import { getChallengeHints } from "@/lib/kaz/hints";
+import { webhookPathForGateway } from "@/lib/kaz/gateway";
+import { readMessages } from "@/lib/kaz/thread-store";
+import type { KazWorkflowVisibility } from "@/lib/kaz/types";
 import { getLessonChunks } from "@/lib/lesson/registry";
-import { getLabWebhookHost } from "@/lib/testing/webhook-store";
+import { getLabWebhookHost, getLabWebhookUrl } from "@/lib/testing/webhook-store";
 
 export interface LabPageProps {
   params: Promise<{ slug: string }>;
@@ -80,6 +84,26 @@ export default async function LabPage({ params }: LabPageProps) {
   );
   const webhookHost = usesSendTest ? await getLabWebhookHost(lab.slug) : null;
 
+  /*
+   * What Kaz can honestly see of this learner's n8n. A lab with no webhook has
+   * nothing to link; a saved webhook on some other host is real, but not on the
+   * n8n Kaz can read, and she says so rather than pretending.
+   */
+  const handsOn = isHandsOnAvailable(effectiveStatus);
+  const savedWebhook = usesSendTest && handsOn ? await getLabWebhookUrl(lab.slug) : null;
+  const kazVisibility: KazWorkflowVisibility = !usesSendTest
+    ? { status: "no_webhook_lab" }
+    : webhookPathForGateway(savedWebhook) && webhookHost
+      ? { status: "linked", host: webhookHost }
+      : { status: "not_linked" };
+  const kaz = handsOn
+    ? {
+        labLabel: "Lab " + lab.number,
+        initialMessages: await readMessages(lab.slug),
+        visibility: kazVisibility,
+      }
+    : undefined;
+
   // Completion is decided here, from earned evidence against the lab's full
   // content — never by the client. Lab 10's "next" is the Capstone.
   const nextLab = LABS[index + 1] ?? null;
@@ -144,6 +168,7 @@ export default async function LabPage({ params }: LabPageProps) {
           completion={completion}
           webhookHost={webhookHost}
           revealedHints={revealedHints}
+          kaz={kaz}
         />
       ) : (
         <p className="text-ink-soft">This lesson is not available yet.</p>

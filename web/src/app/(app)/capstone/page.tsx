@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KazLauncher } from "@/components/kaz/KazLauncher";
 import { ContentBlocks } from "@/components/lesson/blocks/ContentBlocks";
 import { SelfCheckPanel } from "@/components/testing/SelfCheckPanel";
 import { CAPSTONE, CAPSTONE_SLUG } from "@/lib/course/catalog";
@@ -12,6 +13,7 @@ import { CAPSTONE_FRAMING } from "@/lib/course/groups";
 import { deriveCourseState, type LabStatus } from "@/lib/course/progress";
 import { getCourseProgress } from "@/lib/course/progress-store";
 import { startLab } from "@/lib/course/progress-writes";
+import { readMessages } from "@/lib/kaz/thread-store";
 import { getLessonChunks } from "@/lib/lesson/registry";
 
 const STATUS_LABEL: Record<LabStatus, string> = {
@@ -54,6 +56,14 @@ export default async function CapstonePage() {
   const proofs = unlocked ? (getLessonChunks(CAPSTONE_SLUG) ?? []) : [];
   const earned = progress.labs[CAPSTONE_SLUG]?.evidence ?? {};
   const proved = proofs.filter((proof) => earned[proof.id] === "verified").length;
+
+  /*
+   * Kaz's Capstone thread. The step she answers about is the first proof still
+   * open, because that is the one the learner is working on; with all nine
+   * proved she stays on the last.
+   */
+  const currentProof = proofs.find((proof) => earned[proof.id] !== "verified") ?? proofs.at(-1);
+  const kazMessages = unlocked ? await readMessages(CAPSTONE_SLUG) : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -178,6 +188,16 @@ export default async function CapstonePage() {
           </section>
         </>
       )}
+
+      {unlocked && currentProof ? (
+        <KazLauncher
+          labSlug={CAPSTONE_SLUG}
+          chunkId={currentProof.id}
+          contextLabel={"Capstone · " + currentProof.title}
+          initialMessages={kazMessages}
+          visibility={{ status: "not_linked" }}
+        />
+      ) : null}
     </div>
   );
 }

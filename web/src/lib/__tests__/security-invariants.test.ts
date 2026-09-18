@@ -123,6 +123,41 @@ describe("security invariants", () => {
     expect(callers.every((file) => file.startsWith("src/lib/admin/"))).toBe(true);
   });
 
+  it("reads the Kaz Gateway secret in gateway.ts only, which is server-only", () => {
+    // The Gateway can read every workflow and execution in the owner's n8n, so
+    // its credential lives in exactly one module, behind `server-only`, and the
+    // browser reaches Kaz only through the Server Action.
+    const readers = findOffenders(SRC_DIR, (text) => text.includes("KAZ_GATEWAY_SECRET"));
+    expect(readers.map(toPosix).sort()).toEqual([
+      "src/lib/kaz/gateway.test.ts",
+      "src/lib/kaz/gateway.ts",
+    ]);
+
+    const gateway = fs.readFileSync(path.join(SRC_DIR, "lib", "kaz", "gateway.ts"), "utf8");
+    expect(gateway.startsWith('import "server-only";')).toBe(true);
+  });
+
+  it("never exposes a Kaz server value to the browser", () => {
+    const offenders = findOffenders(WEB_DIR, (text) => /NEXT_PUBLIC_KAZ/.test(text));
+    expect(offenders).toEqual([]);
+  });
+
+  it("calls the Kaz Gateway from one module, and never from client code", () => {
+    const importers = findOffenders(SRC_DIR, (text) => text.includes("./gateway") || text.includes("kaz/gateway"))
+      .map(toPosix)
+      .filter((file) => !file.endsWith(".test.ts") && !file.endsWith(".test.tsx"));
+    // The action and the page that reads a learner's webhook host; nothing else.
+    expect(importers.every((file) => file.startsWith("src/lib/kaz/") || file.startsWith("src/app/"))).toBe(
+      true,
+    );
+
+    const clientCallers = findOffenders(
+      SRC_DIR,
+      (text) => /^["']use client["']/.test(text) && /kaz\/gateway|x-aep-kaz-secret/.test(text),
+    );
+    expect(clientCallers).toEqual([]);
+  });
+
   it("never references the deleted AEP_PLACEHOLDER_ROLE placeholder anywhere under web/", () => {
     const offenders = findOffenders(WEB_DIR, (text) => text.includes("AEP_PLACEHOLDER_ROLE"));
     expect(offenders).toEqual([]);

@@ -29,26 +29,29 @@ describe("isNavItemActive", () => {
 });
 
 describe("getVisibleNavItems", () => {
-  it("gives a student five items and no Admin", () => {
+  it("gives a student four items and no Admin", () => {
     const items = getVisibleNavItems("student");
+    expect(items).toHaveLength(4);
+    expect(items.map((item) => item.href)).toEqual(["/", "/labs", "/notes", "/settings"]);
+  });
+
+  /*
+   * Kaz V2: she is a companion inside the lesson, not a destination. A dock
+   * item would lead to a second Kaz with no idea which step the learner is on.
+   */
+  it("never offers Kaz as a destination", () => {
+    for (const role of ["student", "admin"] as const) {
+      expect(getVisibleNavItems(role).map((item) => item.href)).not.toContain("/kaz");
+    }
+  });
+
+  it("gives an admin five items with Admin last", () => {
+    const items = getVisibleNavItems("admin");
     expect(items).toHaveLength(5);
     expect(items.map((item) => item.href)).toEqual([
       "/",
       "/labs",
       "/notes",
-      "/kaz",
-      "/settings",
-    ]);
-  });
-
-  it("gives an admin six items with Admin last", () => {
-    const items = getVisibleNavItems("admin");
-    expect(items).toHaveLength(6);
-    expect(items.map((item) => item.href)).toEqual([
-      "/",
-      "/labs",
-      "/notes",
-      "/kaz",
       "/settings",
       "/admin",
     ]);
