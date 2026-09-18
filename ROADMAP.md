@@ -1342,9 +1342,11 @@ Build the intentionally minimal Home screen:
   contract is unit-tested through RTL role and accessible-name queries, not heard
 * [/] Short Kaz note placeholder/event surface — the **placeholder** exists; the **event
   surface does not.** Static copy with no mechanism for a contextual note
-* [ ] Ask Kaz entry — **deferred by the owner at Phase 12 Aim Point 1.** `/kaz` holds a
-  permanent dock slot, so the learner is one tap away on every screen. Vision §10 and this
-  bullet still require it; recorded as sequenced, not dropped
+* [x] Ask Kaz entry — **closed by Kaz V2 (2026-09-18):** the floating orb opens the Kaz
+  panel from inside the lesson, which is where the question actually arises, and Home keeps
+  its contextual note. The original deferral reasoned that `/kaz` held a permanent dock slot
+  so the learner was one tap away; Kaz V2 removed that slot and put her in the lesson
+  instead, which satisfies Vision §10 more directly than a Home entry point would
 * [/] Notes shortcut — the link exists; its destination is still a shell. Notes itself is Step 6
 
 Do not add goals, large analytics, or activity clutter.
@@ -2085,6 +2087,13 @@ the learner's own n8n; no request has reached a real n8n yet.
   invited learner: invite, resend, accept, sign in, revoke, refusal, restore, and no data lost.
   Final `npm run verify` exit 0: 728 tests across 60 files, and the secret-key scan is conclusive
   against a configured key
+* **Kaz V2 (2026-09-18)** — Kaz became a floating companion in the lesson: one thread per learner
+  per lab and for the Capstone, a help ladder enforced by what reaches the model, read-only n8n
+  visibility through one `AEP Kaz Gateway` workflow, and Gemini behind the AEP server. Live
+  verified end to end against real n8n and real Gemini across 21 checks, including cross-learner
+  isolation on the new tables and a scan of ten real model prompts for secrets. The standalone
+  Kaz page is now a redirect. Final `npm run verify` exit 0: 859 tests across 71 files.
+  Evidence: `docs/qa/AEP-KAZ-V2.md`
 
 In the Website Foundation, Learning Experience, Test & Diagnostics and Kaz sections below, a `[/]`
 added by this program means implemented and structurally verified, **not** live verified. Earlier
@@ -2153,13 +2162,30 @@ AEP V1 is considered complete when:
 
 ## Kaz
 
-* [ ] Kaz n8n teacher workflow complete
-* [ ] Knowledge retrieval complete
-* [ ] Learner/test context integration complete
-* [ ] Teaching modes complete
-* [/] Challenge guardrails complete — progressive server-side hints, one per request; no model involved
-* [ ] English/Tagalog/Taglish complete
-* [ ] Alien-orb website experience complete — **partial:** orb states (intensity only) and timing rules; the orb opens no Ask Kaz panel and does not float in lessons (Kaz §11)
+Kaz V2 shipped 2026-09-18 and is live verified end to end — see
+`docs/qa/AEP-KAZ-V2.md` and `docs/superpowers/specs/2026-09-18-kaz-v2-design.md`.
+
+* [x] Kaz n8n teacher workflow complete — one `AEP Kaz Gateway` workflow
+  (exported to `docs/kaz/aep-kaz-gateway.json`): header-auth from the AEP server,
+  read-only workflow and execution reads, sanitize, Gemini, structured answer
+* [x] Knowledge retrieval complete — deterministic by lab and chunk, with the
+  canonical workflow gated by help level (§13 amended: no embeddings)
+* [x] Learner/test context integration complete — progress, evidence, earned
+  hints, the learner's own workflow and its latest run, each only when the
+  question needs it
+* [/] Teaching modes complete — the help ladder (nudge, hint, explain, show me)
+  is built and enforced by what reaches the model; Kaz design §5's named modes
+  are not modelled separately
+* [x] Challenge guardrails complete — progressive server-side hints, one per
+  request, and Kaz is sent no canonical material at all on a challenge chunk, so
+  she cannot become a second hint path
+* [x] English/Tagalog/Taglish complete — she answers in the language the learner
+  wrote in; live verified in Taglish
+* [x] Alien-orb website experience complete — the orb floats in the lesson,
+  opens the Kaz panel on the current step, and pulses once after repeated
+  failures. `/kaz` redirects; Kaz is no longer a dock destination (Vision §12
+  amended)
+* [ ] Persistent language preference and the full personality matrix — still open
 
 ## Completion & Sharing
 

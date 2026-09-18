@@ -114,9 +114,9 @@ lab restores that lab's thread. No cross-lab history, no personal-profile
 memory. Kaz reads normal AEP progress because that is product state.
 
 ```sql
-aep_web_kaz_threads (user_id, lab_slug, help_level, created_at, updated_at)
+aep_web_kaz_threads (user_id, lab_slug, help_level, help_chunk_id, created_at, updated_at)
   primary key (user_id, lab_slug)
-aep_web_kaz_messages (id, user_id, lab_slug, role, content, metadata, created_at)
+aep_web_kaz_messages (id, user_id, lab_slug, role, content, created_at)
 ```
 
 Messages carry `user_id` and `lab_slug` directly rather than a thread id, so
@@ -124,6 +124,11 @@ every policy is the same one-line `user_id = auth.uid()` check the other four
 tables use, with no join to authorise. RLS on and forced, grants limited to
 select/insert (plus update on the thread for the help level), owner-scoped
 policies, **no admin policy** — Vision §8, and these are private conversations.
+
+`help_chunk_id` records the step a level was earned on, so climbing to "show
+me" on one step does not leave Kaz handing out answers for the rest of the lab.
+There is no `metadata` column: an untyped bag beside a conversation is exactly
+where sanitized n8n data would quietly accumulate.
 
 Only the last few turns are sent to the model; context is bounded, not
 unlimited history.
