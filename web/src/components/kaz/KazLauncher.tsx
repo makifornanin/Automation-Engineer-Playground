@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { subscribeTestOutcome } from "@/lib/kaz/test-signal";
 import type { KazMessage, KazWorkflowVisibility } from "@/lib/kaz/types";
 import { KazOrb } from "./KazOrb";
@@ -34,6 +34,7 @@ export function KazLauncher({
   visibility,
 }: KazLauncherProps) {
   const [open, setOpen] = useState(false);
+  const restoreFocus = useRef(false);
   /*
    * The thread lives here, not in the panel: the launcher stays mounted while
    * the panel comes and goes, so closing Kaz and opening her again keeps the
@@ -70,7 +71,10 @@ export function KazLauncher({
         messages={messages}
         onTurn={(question, answer) => setMessages((current) => [...current, question, answer])}
         visibility={visibility}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          restoreFocus.current = true;
+          setOpen(false);
+        }}
       />
     );
   }
@@ -86,6 +90,12 @@ export function KazLauncher({
         </p>
       ) : null}
       <button
+        ref={(node) => {
+          if (node && restoreFocus.current) {
+            restoreFocus.current = false;
+            node.focus();
+          }
+        }}
         type="button"
         onClick={() => {
           setOpen(true);

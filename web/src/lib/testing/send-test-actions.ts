@@ -199,9 +199,9 @@ export async function sendTest(
     normaliseSubmittedOutput(parsed, testCase.shape),
   );
 
-  if (result.passed) {
-    await recordVerifiedEvidence(labSlug, chunkId);
-  }
+  const progressSaved = result.passed
+    ? await recordVerifiedEvidence(labSlug, chunkId).catch(() => false)
+    : undefined;
 
-  return { status: "complete", result, technical };
+  return { status: "complete", progressSaved, result, technical };
 }

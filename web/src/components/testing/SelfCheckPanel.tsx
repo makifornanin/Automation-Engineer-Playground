@@ -54,7 +54,7 @@ export function SelfCheckPanel({
     // Kaz's launcher counts repeated failures on this step so she can offer
     // help once. Local, and only from a result the learner already saw.
     notifyTestOutcome({ labSlug, chunkId, passed: state.result.passed });
-    if (state.result.passed) {
+    if (state.result.passed && state.progressSaved !== false) {
       router.refresh();
     }
   }, [state, router, labSlug, chunkId]);
@@ -102,7 +102,7 @@ export function SelfCheckPanel({
 
       <div role="status" className="flex flex-col gap-3">
         {state.status === "error" ? <p className="text-sm text-ink-soft">{state.message}</p> : null}
-        {state.status === "complete" ? <CheckResultView result={state.result} /> : null}
+        {state.status === "complete" ? <CheckResultView result={state.result} progressSaved={state.progressSaved} /> : null}
       </div>
     </div>
   );

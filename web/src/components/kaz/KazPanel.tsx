@@ -4,6 +4,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { askKaz } from "@/lib/kaz/ask-actions";
 import {
   IDLE_KAZ_STATE,
+  KAZ_ERROR_MESSAGE,
   KAZ_VISIBILITY_MESSAGE,
   MAX_QUESTION_LENGTH,
   type KazAskState,
@@ -85,6 +86,8 @@ export function KazPanel({
   }, [messages, pendingQuestion]);
 
   const error = state.status === "error" ? state.message : null;
+  const unsaved = (state.status === "answered" && !state.saved)
+    || messages.some((message) => message.id.startsWith("local-"));
 
   return (
     <aside
@@ -140,6 +143,11 @@ export function KazPanel({
           </>
         ) : null}
 
+        {unsaved ? (
+          <p role="status" className="text-sm text-ink-soft">
+            {KAZ_ERROR_MESSAGE.store_unavailable}
+          </p>
+        ) : null}
         {error ? (
           <p role="status" className="text-sm text-ink-soft">
             {error}

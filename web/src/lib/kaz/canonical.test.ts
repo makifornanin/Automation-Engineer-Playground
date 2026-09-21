@@ -83,3 +83,9 @@ describe("sanitizeParameters", () => {
     expect(() => sanitizeParameters(deep)).not.toThrow();
   });
 });
+
+it("sanitizes siblings of sensitive name/value pairs recursively", () => {
+  const text = JSON.stringify(sanitizeParameters({ name: "Authorization", value: "fixture-header", password: "fixture-password", nested: { name: "Cookie", value: "fixture-cookie", child: { token: "fixture-token" } }, large: "x".repeat(9000) }));
+  for (const secret of ["fixture-header", "fixture-password", "fixture-cookie", "fixture-token"]) expect(text).not.toContain(secret);
+  expect(text).not.toContain("x".repeat(2002));
+});

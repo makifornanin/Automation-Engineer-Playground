@@ -59,13 +59,11 @@ export function sanitizeParameters(value: unknown, depth = 0): unknown {
    * through — found by running the Gateway's own sanitizer against a hostile
    * node in `gateway-code.test.ts`.
    */
-  if (typeof value.name === "string" && SECRET_KEY.test(value.name) && "value" in value) {
-    return { ...value, value: "[redacted]" };
-  }
+  const sensitivePair = typeof value.name === "string" && SECRET_KEY.test(value.name);
 
   const out: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(value)) {
-    if (SECRET_KEY.test(key)) {
+    if (SECRET_KEY.test(key) || (sensitivePair && key === "value")) {
       out[key] = "[redacted]";
       continue;
     }

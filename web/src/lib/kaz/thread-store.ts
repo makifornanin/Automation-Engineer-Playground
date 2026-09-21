@@ -72,10 +72,14 @@ export async function readMessages(labSlug: string): Promise<readonly KazMessage
       .from(MESSAGES_TABLE)
       .select("id, role, content, created_at")
       .eq("lab_slug", labSlug)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
+      // Legacy pairs share a database timestamp. Reverse kaz/learner here so
+      // reversing the page below restores question before answer, with stable ids.
+      .order("role", { ascending: true })
+      .order("id", { ascending: false })
       .limit(THREAD_PAGE_SIZE);
     if (error || !data) return [];
-    return (data as { id: string; role: string; content: string; created_at: string }[]).map(
+    return [...(data as { id: string; role: string; content: string; created_at: string }[])].reverse().map(
       (row) => ({
         id: row.id,
         role: row.role === "kaz" ? "kaz" : "learner",
@@ -89,6 +93,7 @@ export async function readMessages(labSlug: string): Promise<readonly KazMessage
 }
 
 export interface AppendedTurn {
+  saved: boolean;
   question: KazMessage;
   answer: KazMessage;
 }
@@ -106,14 +111,16 @@ export async function appendTurn(
   question: string,
   answer: string,
 ): Promise<AppendedTurn> {
-  const now = new Date().toISOString();
+  const timestamp = Date.now();
+  const now = new Date(timestamp).toISOString();
+  const answeredAt = new Date(timestamp + 1).toISOString();
   const local = (role: KazRole, content: string): KazMessage => ({
     id: "local-" + role + "-" + now + "-" + Math.random().toString(36).slice(2, 8),
     role,
     content,
-    createdAt: now,
+    createdAt: role === "learner" ? now : answeredAt,
   });
-  const fallback: AppendedTurn = { question: local("learner", question), answer: local("kaz", answer) };
+  const fallback: AppendedTurn = { saved: false, question: local("learner", question), answer: local("kaz", answer) };
 
   try {
     const client = await authorised();
@@ -121,16 +128,17 @@ export async function appendTurn(
 
     // The thread row must exist before its messages: the messages' foreign key
     // points at it, and it is what carries the help level.
-    await client.supabase.from(THREADS_TABLE).upsert(
+    const { error: threadError } = await client.supabase.from(THREADS_TABLE).upsert(
       { user_id: client.userId, lab_slug: labSlug, help_level: level, help_chunk_id: chunkId },
       { onConflict: "user_id,lab_slug" },
     );
+    if (threadError) return fallback;
 
     const { data, error } = await client.supabase
       .from(MESSAGES_TABLE)
       .insert([
-        { user_id: client.userId, lab_slug: labSlug, role: "learner", content: question },
-        { user_id: client.userId, lab_slug: labSlug, role: "kaz", content: answer },
+        { user_id: client.userId, lab_slug: labSlug, role: "learner", content: question, created_at: now },
+        { user_id: client.userId, lab_slug: labSlug, role: "kaz", content: answer, created_at: answeredAt },
       ])
       .select("id, role, content, created_at");
 
@@ -142,11 +150,10 @@ export async function appendTurn(
       content: row.content,
       createdAt: row.created_at,
     }));
-    const saved = {
-      question: mapped.find((message) => message.role === "learner") ?? fallback.question,
-      answer: mapped.find((message) => message.role === "kaz") ?? fallback.answer,
-    };
-    return saved;
+    const savedQuestion = mapped.find((message) => message.role === "learner");
+    const savedAnswer = mapped.find((message) => message.role === "kaz");
+    if (!savedQuestion || !savedAnswer) return fallback;
+    return { saved: true, question: savedQuestion, answer: savedAnswer };
   } catch {
     return fallback;
   }

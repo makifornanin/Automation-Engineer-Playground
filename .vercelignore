@@ -1,0 +1,12 @@
+# Deployment values come from Vercel's environment configuration.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Local verification artifacts must not enter deployment uploads.
+tmp/
+temp/
+**/*.tsbuildinfo

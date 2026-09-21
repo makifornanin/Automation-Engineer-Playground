@@ -21,6 +21,6 @@ export async function setCurrentChunk(labSlug: string, chunkId: string): Promise
  * Records the evidence a build, break, debug or predict step earns. A test or
  * challenge chunk is refused: passing it is the only way to earn `verified`.
  */
-export async function recordChunkEvidence(labSlug: string, chunkId: string): Promise<void> {
-  await recordLearnerEvidence(labSlug, chunkId);
+export async function recordChunkEvidence(labSlug: string, chunkId: string): Promise<boolean> {
+  return recordLearnerEvidence(labSlug, chunkId);
 }

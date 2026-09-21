@@ -205,3 +205,12 @@ describe("the Capstone — the same writers, gated on all ten labs", () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 });
+
+it.each(["reported", "thrown"])("reports %s persistence failure without claiming saved evidence", async (mode) => {
+  if (mode === "reported") upsert.mockResolvedValueOnce({ error: { message: "offline" } } as never);
+  else upsert.mockRejectedValueOnce(new Error("offline"));
+  expect(await recordVerifiedEvidence(LAB_03, "success-test")).toBe(false);
+});
+it("reports true only after a successful evidence write", async () => {
+  expect(await recordLearnerEvidence(LAB_03, "build-webhook")).toBe(true);
+});

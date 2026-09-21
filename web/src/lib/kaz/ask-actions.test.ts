@@ -17,6 +17,7 @@ const readThread = vi.hoisted(() =>
 const readMessages = vi.hoisted(() => vi.fn(async () => []));
 const appendTurn = vi.hoisted(() =>
   vi.fn(async (_lab: string, _chunk: string, _level: number, question: string, answer: string) => ({
+    saved: true,
     question: { id: "q1", role: "learner" as const, content: question, createdAt: "now" },
     answer: { id: "a1", role: "kaz" as const, content: answer, createdAt: "now" },
   })),
@@ -268,4 +269,9 @@ describe("askKaz and the answer", () => {
 
     expect(state.status === "error" && state.message).toMatch(/model error/i);
   });
+});
+
+it("preserves an answer and reports that persistence failed", async () => {
+  appendTurn.mockResolvedValueOnce({ saved: false, question: { id: "local-q", role: "learner", content: "question", createdAt: "now" }, answer: { id: "local-a", role: "kaz", content: "answer", createdAt: "now" } } as never);
+  expect(await ask()).toMatchObject({ status: "answered", saved: false, answer: { content: "answer" } });
 });

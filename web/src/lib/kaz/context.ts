@@ -83,7 +83,7 @@ export function flattenChunk(chunk: LessonChunk, earnedEvidence: boolean): strin
 
   if (chunk.kind === "guided-build") {
     parts.push(...chunk.whyThisMatters.map(blockText));
-    parts.push(...chunk.actions.map((item) => "- " + item.text + (item.expect ? " (expect: " + item.expect + ")" : "")));
+    parts.push(blockText({ type: "actions", items: chunk.actions }));
     parts.push(...chunk.whyWereDoingThis.map(blockText));
   }
 

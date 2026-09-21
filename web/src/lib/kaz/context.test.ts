@@ -131,3 +131,18 @@ describe("recentTurns", () => {
     expect(trimmed.content.length).toBeLessThanOrEqual(1_201);
   });
 });
+
+it("includes single and multiple guided-build action code values within the context cap", () => {
+  const base = getLessonChunks(LAB_03)?.find(chunk => chunk.kind === "guided-build");
+  if (!base || base.kind !== "guided-build") throw new Error("Missing guided build fixture");
+  const chunk = { ...base, whyThisMatters: [], whyWereDoingThis: [], content: [], actions: [
+    { text: "Set expression", code: { language: "text" as const, code: "={{ $json.email }}" }, expect: "email" },
+    { text: "Configure two nodes", code: [{ language: "text" as const, code: "FIRST_VALUE" }, { language: "text" as const, code: "SECOND_VALUE" }] },
+  ] };
+  const text = flattenChunk(chunk, false);
+  expect(text).toContain("={{ $json.email }}");
+  expect(text).toContain("FIRST_VALUE");
+  expect(text).toContain("SECOND_VALUE");
+  expect(text).toContain("email");
+  expect(flattenChunk({ ...chunk, actions: [{ text: "Large", code: { language: "text", code: "x".repeat(8000) } }] }, false).length).toBeLessThanOrEqual(4001);
+});

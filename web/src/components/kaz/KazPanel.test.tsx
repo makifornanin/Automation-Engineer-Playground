@@ -6,6 +6,7 @@ import type { KazMessage } from "@/lib/kaz/types";
 const askKaz = vi.hoisted(() =>
   vi.fn(async (_previous: unknown, formData: FormData) => ({
     status: "answered" as const,
+    saved: true,
     question: {
       id: "q",
       role: "learner" as const,
@@ -72,6 +73,7 @@ describe("<KazPanel />", () => {
     expect(formData.get("message")).toBe("why did my test fail?");
     // The launcher owns the thread, so the panel hands the finished turn up.
     await waitFor(() => expect(onTurn).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/cannot save this conversation/i)).not.toBeInTheDocument();
   });
 
   /* Honest about her own eyes: the panel never implies she can see more. */
@@ -115,4 +117,20 @@ describe("<KazPanel />", () => {
     renderPanel();
     expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
   });
+});
+
+it("keeps the unsaved warning when the panel reopens with a local turn", () => {
+  renderPanel({ messages: [{ ...HISTORY[1], id: "local-kaz-answer" }] });
+  expect(screen.getByText(/cannot save this conversation/i)).toHaveAttribute("role", "status");
+  expect(screen.getByText(HISTORY[1].content)).toBeInTheDocument();
+});
+
+it("warns about an unsaved answer while retaining the turn", async () => {
+  askKaz.mockResolvedValueOnce({ status: "answered", saved: false, question: HISTORY[0], answer: HISTORY[1], helpLevel: 1, looked: { workflow: false, execution: false } } as never);
+  const user = userEvent.setup();
+  const { onTurn } = renderPanel();
+  await user.type(screen.getByLabelText("Ask Kaz"), "help");
+  await user.click(screen.getByRole("button", { name: "Send" }));
+  expect(await screen.findByText(/cannot save this conversation/i)).toHaveAttribute("role", "status");
+  expect(onTurn).toHaveBeenCalledWith(HISTORY[0], HISTORY[1]);
 });

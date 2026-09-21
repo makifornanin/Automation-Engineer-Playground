@@ -60,6 +60,7 @@ export type KazAskState =
   | { status: "idle" }
   | {
       status: "answered";
+      saved: boolean;
       question: KazMessage;
       answer: KazMessage;
       helpLevel: HelpLevel;

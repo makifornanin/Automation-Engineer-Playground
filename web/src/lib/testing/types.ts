@@ -56,7 +56,7 @@ export type TestErrorCode =
 
 export type TestState =
   | { status: "idle" }
-  | { status: "complete"; result: TestResult }
+  | { status: "complete"; progressSaved?: boolean; result: TestResult }
   | { status: "error"; code: TestErrorCode; message: string };
 
 export const IDLE_TEST_STATE: TestState = { status: "idle" };
@@ -113,7 +113,7 @@ export interface SendTechnicalDetails {
 
 export type SendTestState =
   | { status: "idle" }
-  | { status: "complete"; result: TestResult; technical: SendTechnicalDetails }
+  | { status: "complete"; progressSaved?: boolean; result: TestResult; technical: SendTechnicalDetails }
   | {
       status: "error";
       code: SendTestErrorCode;

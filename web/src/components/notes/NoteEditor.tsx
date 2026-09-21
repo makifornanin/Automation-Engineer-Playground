@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { upsertNote } from "@/lib/notes/notes-actions";
 import type { Note, NoteSaveState } from "@/lib/notes/types";
 
@@ -40,49 +40,74 @@ export interface NoteEditorProps {
  */
 export function NoteEditor({ label, labSlug, note, placeholder }: NoteEditorProps) {
   const [body, setBody] = useState(note?.body ?? "");
-  const [noteId, setNoteId] = useState<string | null>(note?.id ?? null);
+  const noteId = useRef<string | null>(note?.id ?? null);
   const [saveState, setSaveState] = useState<NoteSaveState>("idle");
 
   const fieldId = useId();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef(body);
+  const dirty = useRef(false);
+  const inFlight = useRef(false);
+  const mounted = useRef(true);
 
-  // A pending save must not fire after the editor has gone, or React warns
-  // about setting state on an unmounted component and the learner sees a
-  // status that no longer belongs to anything.
+  // One write at a time: a slow first insert must finish before another edit
+  // can reuse its id. Drain any newer text before claiming the note is saved.
+  const save = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      while (dirty.current) {
+        dirty.current = false;
+        const submitted = latest.current;
+        if (noteId.current === null && submitted.trim().length === 0) {
+          if (mounted.current) setSaveState("idle");
+          continue;
+        }
+        let saved: Note | null = null;
+        try {
+          saved = await upsertNote({ id: noteId.current, labSlug, body: submitted });
+        } catch {
+          // Keep the learner's text and show the same failure as a refused save.
+        }
+        if (saved) noteId.current = saved.id;
+        if (mounted.current && !dirty.current) {
+          setSaveState(saved?.body === submitted ? "saved" : "error");
+        }
+      }
+    } finally {
+      inFlight.current = false;
+    }
+  }, [labSlug]);
+
+  // Flush a debounced edit on in-app navigation, without updating an unmounted
+  // editor. A hard browser close still requires waiting for the Saved indicator.
   useEffect(() => {
+    mounted.current = true;
     return () => {
+      mounted.current = false;
       if (timer.current) clearTimeout(timer.current);
+      void save();
     };
-  }, []);
+  }, [save]);
 
   function scheduleSave(next: string) {
     setBody(next);
     latest.current = next;
+    dirty.current = true;
 
     if (timer.current) clearTimeout(timer.current);
 
     // Never create a row for a note the learner has not actually written.
     // Opening the page and clicking into three textareas should leave nothing
     // behind.
-    if (noteId === null && next.trim().length === 0) {
+    if (noteId.current === null && !inFlight.current && next.trim().length === 0) {
+      dirty.current = false;
       setSaveState("idle");
       return;
     }
 
     setSaveState("saving");
-    timer.current = setTimeout(() => {
-      void upsertNote({ id: noteId, labSlug, body: latest.current })
-        .then((saved) => {
-          if (saved) {
-            setNoteId(saved.id);
-            setSaveState("saved");
-          } else {
-            setSaveState("error");
-          }
-        })
-        .catch(() => setSaveState("error"));
-    }, AUTOSAVE_DELAY_MS);
+    timer.current = setTimeout(() => { void save(); }, AUTOSAVE_DELAY_MS);
   }
 
   return (

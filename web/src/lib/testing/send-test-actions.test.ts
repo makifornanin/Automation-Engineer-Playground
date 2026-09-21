@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Delivery } from "./send-test";
 
-const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => true));
 const getSession = vi.hoisted(() => vi.fn());
 const getLabWebhookUrl = vi.hoisted(() => vi.fn());
 const storeLabWebhookUrl = vi.hoisted(() => vi.fn());
@@ -314,4 +314,10 @@ describe("saveLabWebhook", () => {
 
     expect(state.status === "error" && state.message).toMatch(/cannot save/i);
   });
+});
+
+it.each(["false", "throw"])("preserves a passing Send Test when saving returns %s", async mode => {
+  if (mode === "false") recordVerifiedEvidence.mockResolvedValueOnce(false as never);
+  else recordVerifiedEvidence.mockRejectedValueOnce(new Error("offline"));
+  expect(await sendTest(IDLE_SEND_TEST_STATE, form({ labSlug: LAB_03, chunkId: "success-test" }))).toMatchObject({ status: "complete", progressSaved: false, result: { passed: true } });
 });

@@ -151,19 +151,19 @@ async function writeEvidence(
   labSlug: string,
   chunkId: string,
   permitted: (evidence: MilestoneEvidence) => boolean,
-): Promise<void> {
+): Promise<boolean> {
   const chunk = resolveChunk(labSlug, chunkId);
-  if (!chunk || !isEvidencingKind(chunk.kind)) return;
+  if (!chunk || !isEvidencingKind(chunk.kind)) return false;
 
   const evidence = EVIDENCING_KINDS[chunk.kind];
-  if (!permitted(evidence)) return;
+  if (!permitted(evidence)) return false;
 
   const client = await authorisedClient();
-  if (!client) return;
-  if ((await labAccess(labSlug)) !== "hands-on") return;
+  if (!client) return false;
+  if ((await labAccess(labSlug)) !== "hands-on") return false;
 
   try {
-    await client.supabase.from(CHUNK_STATE_TABLE).upsert(
+    const { error } = await client.supabase.from(CHUNK_STATE_TABLE).upsert(
       {
         user_id: client.userId,
         lab_slug: labSlug,
@@ -173,13 +173,15 @@ async function writeEvidence(
       },
       { onConflict: "user_id,lab_slug,chunk_id" },
     );
+    if (error) return false;
   } catch {
-    return;
+    return false;
   }
 
   // Completing a chunk can complete a lab, which can unlock the next one, so
   // the journey surfaces have to re-derive. Unlike position, this one matters.
   revalidatePath("/", "layout");
+  return true;
 }
 
 /**
@@ -188,7 +190,7 @@ async function writeEvidence(
  * Refuses any chunk whose kind earns `verified` — that tier is not the
  * learner's to claim.
  */
-export function recordLearnerEvidence(labSlug: string, chunkId: string): Promise<void> {
+export function recordLearnerEvidence(labSlug: string, chunkId: string): Promise<boolean> {
   return writeEvidence(labSlug, chunkId, (evidence) => evidence !== "verified");
 }
 
@@ -199,6 +201,6 @@ export function recordLearnerEvidence(labSlug: string, chunkId: string): Promise
  * callers are the self-check and Send Test actions; nothing browser-reachable
  * may call this directly.
  */
-export function recordVerifiedEvidence(labSlug: string, chunkId: string): Promise<void> {
+export function recordVerifiedEvidence(labSlug: string, chunkId: string): Promise<boolean> {
   return writeEvidence(labSlug, chunkId, (evidence) => evidence === "verified");
 }

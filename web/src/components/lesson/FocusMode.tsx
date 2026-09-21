@@ -292,6 +292,7 @@ export function FocusMode({
   // fire-and-forget, so the recap would otherwise list a step the learner has
   // just finished until the next navigation.
   const [recordedHere, setRecordedHere] = useState<ReadonlySet<string>>(() => new Set());
+  const [unsavedSteps, setUnsavedSteps] = useState<ReadonlySet<string>>(() => new Set());
   const openSteps = (completion?.openSteps ?? []).filter((open) => !recordedHere.has(open.id));
 
   const chunk = chunks[index];
@@ -334,12 +335,26 @@ export function FocusMode({
    * landed the server re-derives completion. Steps already earned change
    * nothing and cost no refresh.
    */
-  function noteRecorded(chunkId: string, write: Promise<void>) {
+  function noteRecorded(chunkId: string, write: Promise<boolean>) {
     const wasOpen = (completion?.openSteps ?? []).some((open) => open.id === chunkId);
     setRecordedHere((current) => new Set(current).add(chunkId));
-    if (wasOpen) {
-      void write.then(() => router.refresh()).catch(() => {});
-    }
+    void write.catch(() => false).then((saved) => {
+      if (!saved) {
+        setRecordedHere((current) => {
+          const next = new Set(current);
+          next.delete(chunkId);
+          return next;
+        });
+        setUnsavedSteps((current) => new Set(current).add(chunkId));
+        return;
+      }
+      setUnsavedSteps((current) => {
+        const next = new Set(current);
+        next.delete(chunkId);
+        return next;
+      });
+      if (wasOpen) router.refresh();
+    });
   }
 
   function finishAndAdvance() {
@@ -386,8 +401,17 @@ export function FocusMode({
         webhookHost={webhookHost}
         revealedHints={revealedHints}
         onGoTo={goTo}
-        onPredicted={(chunkId) => noteRecorded(chunkId, Promise.resolve())}
+        onPredicted={(chunkId) => noteRecorded(chunkId, Promise.resolve(true))}
       />
+
+      {unsavedSteps.size > 0 ? (
+        <div className="flex flex-col gap-2">
+          <p role="status" className="text-sm text-ink-soft">Your progress was not saved. You can keep learning and retry the save.</p>
+          <button type="button" className="w-fit text-sm font-medium text-accent hover:underline" onClick={() => {
+            for (const id of unsavedSteps) noteRecorded(id, recordChunkEvidence(labSlug, id));
+          }}>Retry progress save</button>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-4 pt-2">
         <button

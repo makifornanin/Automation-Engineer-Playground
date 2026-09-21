@@ -108,9 +108,9 @@ export async function runSelfCheck(
    * check is not a failure of the learner's session — it returns the result
    * and records nothing.
    */
-  if (result.passed) {
-    await recordVerifiedEvidence(labSlug, chunkId);
-  }
+  const progressSaved = result.passed
+    ? await recordVerifiedEvidence(labSlug, chunkId).catch(() => false)
+    : undefined;
 
-  return { status: "complete", result };
+  return { status: "complete", progressSaved, result };
 }

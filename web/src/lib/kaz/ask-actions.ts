@@ -115,6 +115,7 @@ export async function askKaz(
   const turn = await appendTurn(labSlug, chunkId, helpLevel, question, result.answer);
   return {
     status: "answered",
+    saved: turn.saved,
     question: turn.question,
     answer: turn.answer,
     helpLevel,

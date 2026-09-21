@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Note } from "@/lib/notes/types";
@@ -33,10 +33,46 @@ const idle = () => new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_M
 
 beforeEach(() => {
   upsertNote.mockReset();
-  upsertNote.mockResolvedValue(savedNote());
+  upsertNote.mockImplementation(async (input: { body: string }) => savedNote({ body: input.body }));
 });
 
 describe("<NoteEditor />", () => {
+  it("flushes an unsaved edit when navigating away before the debounce", async () => {
+    const { unmount } = render(<NoteEditor label="Lab notes" labSlug={LAB} note={null} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "keep this thought" } });
+    unmount();
+    await waitFor(() => expect(upsertNote).toHaveBeenCalledWith({ id: null, labSlug: LAB, body: "keep this thought" }));
+  });
+
+  it("queues edits behind an unfinished insert and saves the latest text to that same note", async () => {
+    let finishFirst!: (note: Note) => void;
+    let finishSecond!: (note: Note) => void;
+    upsertNote
+      .mockImplementationOnce(() => new Promise<Note>((resolve) => { finishFirst = resolve; }))
+      .mockImplementationOnce(() => new Promise<Note>((resolve) => { finishSecond = resolve; }));
+    render(<NoteEditor label="Lab notes" labSlug={LAB} note={null} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "first" } });
+    await waitFor(() => expect(upsertNote).toHaveBeenCalledTimes(1), SETTLE);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "latest thought" } });
+    await act(async () => { await idle(); });
+    expect(upsertNote).toHaveBeenCalledTimes(1);
+    await act(async () => { finishFirst(savedNote({ body: "first" })); });
+    await waitFor(() => expect(upsertNote).toHaveBeenCalledTimes(2), SETTLE);
+    expect(upsertNote.mock.calls[1][0]).toEqual({ id: savedNote().id, labSlug: LAB, body: "latest thought" });
+    expect(screen.queryByText("Saved")).not.toBeInTheDocument();
+    await act(async () => { finishSecond(savedNote({ body: "latest thought" })); });
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("latest thought");
+  });
+
+  it("does not report Saved when the server only persisted a truncated body", async () => {
+    upsertNote.mockResolvedValue(savedNote({ body: "only part" }));
+    render(<NoteEditor label="Lab notes" labSlug={LAB} note={null} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "only part plus unsaved text" } });
+    expect(await screen.findByText(/not saved/i, undefined, SETTLE)).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("only part plus unsaved text");
+  });
+
   /* Vision §17 rules out a separate Save control anywhere in the product. */
   it("offers no save button", () => {
     render(<NoteEditor label="General notes" labSlug={null} note={null} />);

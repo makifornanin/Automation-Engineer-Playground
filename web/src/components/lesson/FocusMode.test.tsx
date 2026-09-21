@@ -11,7 +11,7 @@ import { FocusMode } from "./FocusMode";
  * the part worth guarding.
  */
 const setCurrentChunk = vi.hoisted(() => vi.fn(async () => {}));
-const recordChunkEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const recordChunkEvidence = vi.hoisted(() => vi.fn(async () => true));
 
 vi.mock("@/lib/course/progress-actions", () => ({
   setCurrentChunk,
@@ -545,4 +545,18 @@ describe("<FocusMode /> - the end of a lab", () => {
 
     expect(screen.queryByRole("img", { name: /Kaz/ })).not.toBeInTheDocument();
   });
+});
+
+it.each(["false", "throw"])("keeps a failed acknowledgement open and retryable after %s", async mode => {
+  if (mode === "false") recordChunkEvidence.mockResolvedValueOnce(false as never);
+  else recordChunkEvidence.mockRejectedValueOnce(new Error("offline"));
+  const user = userEvent.setup();
+  render(<FocusMode chunks={[{ kind: "guided-build", id: "build", title: "Build", content: [], whyThisMatters: [], actions: [], whyWereDoingThis: [] }, { kind: "recap", id: "recap", title: "Recap", content: [] }]} labSlug={LAB} completion={{ complete: false, next: null, openSteps: [{ id: "build", title: "Build", evidence: "acknowledged" }] }} />);
+  await user.click(screen.getByRole("button", { name: /Done.*next/i }));
+  expect(screen.getByRole("heading", { name: "Recap" })).toBeInTheDocument();
+  expect(await screen.findByText(/progress.*not saved/i)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Build" })).toBeInTheDocument();
+  recordChunkEvidence.mockResolvedValueOnce(true as never);
+  await user.click(screen.getByRole("button", { name: /retry.*save/i }));
+  await vi.waitFor(() => expect(screen.queryByText(/progress.*not saved/i)).not.toBeInTheDocument());
 });

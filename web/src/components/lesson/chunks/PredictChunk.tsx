@@ -33,6 +33,7 @@ export function PredictChunk({
 }) {
   const [prediction, setPrediction] = useState("");
   const [revealed, setRevealed] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const fieldId = useId();
 
   const ready = prediction.trim().length > 0;
@@ -40,16 +41,31 @@ export function PredictChunk({
   function reveal() {
     if (!ready) return;
     setRevealed(true);
-    // Fire and forget, like every other position/evidence write in the
-    // stepper: a failed write must never block the learner seeing the answer.
+    saveEvidence();
+  }
+
+  function saveEvidence() {
+    setSaveState("saving");
     void recordChunkEvidence(labSlug, chunk.id)
-      .then(() => onRecorded?.())
-      .catch(() => {});
+      .catch(() => false)
+      .then((saved) => {
+        setSaveState(saved ? "saved" : "failed");
+        if (saved) onRecorded?.();
+      });
   }
 
   return (
     <div className="flex flex-col gap-4">
       <ContentBlocks blocks={chunk.content} />
+
+      {saveState === "failed" || (revealed && saveState === "saving") ? (
+        <div className="flex flex-col gap-2">
+          <p role="status" className="text-sm text-ink-soft">
+            {saveState === "saving" ? "Saving your progress…" : "Your progress was not saved. Your prediction and the answer are still here."}
+          </p>
+          <button type="button" onClick={saveEvidence} disabled={saveState === "saving"} className="w-fit text-sm font-medium text-accent hover:underline disabled:text-ink-muted">Retry progress save</button>
+        </div>
+      ) : null}
 
       <label htmlFor={fieldId} className="max-w-prose font-medium text-ink">
         {chunk.prompt}

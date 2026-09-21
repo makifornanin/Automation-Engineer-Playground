@@ -45,7 +45,7 @@ export function KazOrb({
       role="img"
       aria-label={"Kaz, a small glass orb" + STATE_LABEL[state]}
       data-state={state}
-      className={clsx("relative size-28 shrink-0", className)}
+      className={clsx("relative shrink-0", className ?? "size-28")}
     >
       <div
         aria-hidden
@@ -62,7 +62,7 @@ export function KazOrb({
       />
       <div
         aria-hidden
-        className="absolute left-1/2 top-1/2 size-9 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
+        className="absolute left-1/2 top-1/2 aspect-square w-[32%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
         style={{
           background:
             "radial-gradient(circle at 50% 45%, var(--kaz-core), var(--kaz-glow) 62%, transparent 72%)",

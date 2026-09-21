@@ -1,42 +1,38 @@
-# AEP Web App
+﻿# AEP Web App
 
 The learner-facing Automation Engineer Playground website.
 
-Next.js (App Router) · TypeScript · Tailwind CSS v4 · Motion · Vitest.
-
-## Status
-
-Phase 10, Aim Point 1: scaffold and app shell only. There is no
-authentication, no database, no lesson content and no Kaz AI yet. Every screen
-is a placeholder.
-
-`/admin` is **not** access-controlled at this stage. Hiding the Admin item in
-the dock is presentation, not authorization. Server-side enforcement arrives in
-Phase 11.
+Next.js App Router, TypeScript, Tailwind CSS v4, Motion, Supabase and Vitest.
+Requires Node.js 24.x. Current release includes invite-only authentication,
+learning content, server-authorized admin actions and Kaz.
 
 ## Run
 
-```bash
-npm install
-cp .env.example .env.local   # optional; no secrets required yet
-npm run dev                  # http://localhost:3000
-```
+From `web/`, run `npm ci`, copy `.env.example` to `.env.local` only if the local
+file does not already exist, then run `npm run dev`.
+
+Populate `.env.local` privately using the names in `.env.example` before testing
+connected features. Never commit secrets. The development site is
+`http://localhost:3000`.
 
 ## Verify
 
-```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run build
-npm run verify   # all four in sequence
+```powershell
+npm run verify
 ```
+
+Runs lint, typecheck, tests and the production build in sequence.
+
+## Production
+
+Follow the [production deployment runbook](../docs/production-deployment.md).
+Vercel uses `web/` as its Root Directory and must include repository files outside
+that directory: Kaz reads the sibling `labs/` canonical workflows on the server.
+Deployment readiness and live verification remain separate from a passing local build.
 
 ## Layout
 
-- `src/app/(app)/` — the six shell routes, wrapped by the dock and providers
-- `src/components/` — shell, dock, theme, session, ui, kaz
-- `src/lib/` — theme resolver, nav model, session seam, motion tokens
-
-Design tokens live in `src/app/globals.css`. Tailwind v4 is CSS-first, so there
-is no `tailwind.config.ts`.
+- `src/app/` - application and sign-in routes.
+- `src/components/` - shell, learning UI, notes, themes and Kaz.
+- `src/lib/` - server actions, Supabase access, learning state and integrations.
+- `src/app/globals.css` - design tokens and CSS-first Tailwind configuration.

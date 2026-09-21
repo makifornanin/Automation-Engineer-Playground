@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => {}));
+const recordVerifiedEvidence = vi.hoisted(() => vi.fn(async () => true));
 const hasHandsOnAccess = vi.hoisted(() => vi.fn(async () => true));
 
 vi.mock("@/lib/course/progress-writes", () => ({ recordVerifiedEvidence, hasHandsOnAccess }));
@@ -123,4 +123,10 @@ describe("runSelfCheck", () => {
     const broken = await submit({ labSlug: LAB_01, chunkId: "success-test", output: "{ nope" });
     expect(broken.status === "error" && broken.code).toBe("invalid_json");
   });
+});
+
+it.each(["false", "throw"])("preserves a passing self-check when saving returns %s", async mode => {
+  if (mode === "false") recordVerifiedEvidence.mockResolvedValueOnce(false as never);
+  else recordVerifiedEvidence.mockRejectedValueOnce(new Error("offline"));
+  expect(await submit({ labSlug: LAB_01, chunkId: "success-test", output: EASY_CORRECT })).toMatchObject({ status: "complete", progressSaved: false, result: { passed: true } });
 });

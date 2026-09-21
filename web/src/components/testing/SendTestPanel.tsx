@@ -80,7 +80,7 @@ export function SendTestPanel({
   useEffect(() => {
     if (testState.status !== "complete") return;
     notifyTestOutcome({ labSlug, chunkId, passed: testState.result.passed });
-    if (testState.result.passed) {
+    if (testState.result.passed && testState.progressSaved !== false) {
       router.refresh();
     }
   }, [testState, router, labSlug, chunkId]);
@@ -170,7 +170,7 @@ export function SendTestPanel({
         {testState.status === "error" ? (
           <p className="max-w-prose text-sm text-ink-soft">{testState.message}</p>
         ) : null}
-        {testState.status === "complete" ? <CheckResultView result={testState.result} /> : null}
+        {testState.status === "complete" ? <CheckResultView result={testState.result} progressSaved={testState.progressSaved} /> : null}
       </div>
 
       <details className="text-sm">

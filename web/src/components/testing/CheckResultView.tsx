@@ -21,7 +21,7 @@ const SPOKEN: Record<CheckpointResult["state"], string> = {
  * them for passing checkpoints would hand the learner the rest of an answer
  * they have not reached yet.
  */
-export function CheckResultView({ result }: { result: TestResult }) {
+export function CheckResultView({ result, progressSaved }: { result: TestResult; progressSaved?: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-medium text-ink">
@@ -29,6 +29,10 @@ export function CheckResultView({ result }: { result: TestResult }) {
           ? "Pass — your workflow did exactly what this test expects."
           : "Not there yet. Here is where it first went wrong."}
       </p>
+
+      {result.passed && progressSaved === false ? (
+        <p className="text-sm text-ink-soft">Your progress was not saved. Run this check again to retry saving it.</p>
+      ) : null}
 
       <ul className="flex flex-col gap-1">
         {result.checkpoints.map((checkpoint) => (

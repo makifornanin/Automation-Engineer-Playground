@@ -299,3 +299,62 @@ describe("Build Kaz Prompt", () => {
     expect(text).toMatch(/do not go further than these/i);
   });
 });
+
+it("sanitizes siblings and nested secrets in sensitive header pairs", () => {
+  const out = run("Sanitize Context", { nodes: { "Read Request": REQUEST, "Find Learner Workflow": { resolved: true, nodes: [{ name: "HTTP", parameters: { name: "Authorization", value: "fixture-header", password: "fixture-password", nested: { name: "Cookie", value: "fixture-cookie", token: "fixture-token" }, large: "x".repeat(5000) } }] } } });
+  const text = JSON.stringify(out);
+  for (const secret of ["fixture-header", "fixture-password", "fixture-cookie", "fixture-token"]) expect(text).not.toContain(secret);
+  expect(text).not.toContain("x".repeat(802));
+});
+
+it("preserves trigger input evidence and latest nonempty branches with provenance", () => {
+  const output = (value: unknown) => ({ json: value });
+  const out = run("Sanitize Context", { nodes: {
+    "Read Request": REQUEST,
+    "Find Learner Workflow": { resolved: true, nodes: [{ name: "Incoming", type: "n8n-nodes-base.webhook" }] },
+    "Latest Execution": { data: [{ id: "execution-fixture", status: "success", data: { resultData: { runData: {
+      Incoming: [{ data: { main: [[output({ body: { user_id: 5 }, headers: { authorization: "fixture-secret" } })]] } }],
+      Normalize: [{ data: { main: [[output({ user_id: 5 })]] } }],
+      IF: [{ data: { main: [[], [output({ user_id: 5 })]] } }],
+      HTTP: [{ data: { main: [[output({ stale: true })]] } }, { data: { main: [[output({ body: {}, current: true })]] } }],
+    } } } }] },
+  } }).json;
+  const execution = out.execution as { id: string; partial: boolean; triggerOutput: { node: string; output: unknown[] }; recentNodes: { node: string; runIndex: number; outputIndex: number; output: unknown[] }[] };
+  expect(execution.id).toBe("execution-fixture");
+  expect(execution.partial).toBe(true);
+  expect(execution.triggerOutput.node).toBe("Incoming");
+  expect(JSON.stringify(execution.triggerOutput.output)).toContain('"user_id":5');
+  expect(JSON.stringify(execution)).not.toContain("fixture-secret");
+  expect(execution.recentNodes).toContainEqual(expect.objectContaining({ node: "IF", runIndex: 0, outputIndex: 1, output: [{ user_id: 5 }] }));
+  expect(execution.recentNodes).toContainEqual(expect.objectContaining({ node: "HTTP", runIndex: 1, outputIndex: 0, output: [{ body: {}, current: true }] }));
+});
+
+it("warns the model that sampled outputs are not inputs or complete evidence", () => {
+  const text = String(run("Build Kaz Prompt", { json: { ...REQUEST, execution: { status: "success" } } }).json.prompt);
+  expect(text).toMatch(/outputs.*not.*inputs/i);
+  expect(text).toMatch(/partial/i);
+  expect(text).toMatch(/response body.*request body/i);
+});
+
+it("reasserts the current help boundary after historical fixes and the question", () => {
+  const instruction = "NUDGE: no exact values or multiple-node fixes.";
+  const prompt = String(run("Build Kaz Prompt", { json: { ...REQUEST, levelInstruction: instruction, history: [{ role: "kaz", content: "Earlier exact fix: historical-expression" }], question: "Repeat that fix" } }).json.prompt);
+  expect(prompt.lastIndexOf(instruction)).toBeGreaterThan(prompt.indexOf("Repeat that fix"));
+  expect(prompt).toMatch(/current help.*override.*earlier/i);
+});
+
+it("bounds branch and item samples and explicitly reports missing trigger evidence", () => {
+  const main = Array.from({ length: 12 }, () => Array.from({ length: 25 }, () => ({ json: { value: "x".repeat(5000) } })));
+  const execution = run("Sanitize Context", { nodes: { "Read Request": REQUEST, "Latest Execution": { data: [{ data: { resultData: { runData: { IF: [{ data: { main } }] } } } }] } } }).json.execution as { triggerOutput: unknown; triggerNote: string; recentNodes: { output: unknown[] }[] };
+  expect(execution.triggerOutput).toBeNull();
+  expect(execution.triggerNote).toMatch(/not available/i);
+  expect(execution.recentNodes).toHaveLength(4);
+  for (const node of execution.recentNodes) expect(node.output).toHaveLength(3);
+  expect(JSON.stringify(execution)).not.toContain("x".repeat(802));
+});
+
+it("identifies the webhook from the executed workflow snapshot", () => {
+  const execution = run("Sanitize Context", { nodes: { "Read Request": REQUEST, "Latest Execution": { data: [{ workflowData: { nodes: [{ name: "Old webhook", type: "n8n-nodes-base.webhook" }] }, data: { resultData: { runData: { "Old webhook": [{ data: { main: [[{ json: { body: { received: true } } }]] } }] } } } }] } } }).json.execution as { triggerOutput: { node: string }; triggerTypeSource: string };
+  expect(execution.triggerOutput.node).toBe("Old webhook");
+  expect(execution.triggerTypeSource).toBe("execution_snapshot");
+});

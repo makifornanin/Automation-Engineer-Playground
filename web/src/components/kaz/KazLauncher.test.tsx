@@ -30,6 +30,16 @@ beforeEach(() => {
 });
 
 describe("<KazLauncher />", () => {
+  it.each(["button", "escape"])("returns keyboard focus to the orb after closing with %s", async (method) => {
+    const user = userEvent.setup();
+    renderLauncher();
+    await user.click(screen.getByRole("button", { name: /Ask Kaz/ }));
+    expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
+    if (method === "escape") await user.keyboard("{Escape}");
+    else await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("button", { name: /Ask Kaz/ })).toHaveFocus();
+  });
+
   it("is a quiet orb until the learner opens it", () => {
     renderLauncher();
 

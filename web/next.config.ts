@@ -2,13 +2,20 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Kaz reads canonical workflow exports dynamically from the sibling labs tree.
+  // Keep these server assets in deployment traces without copying the whole repo.
+  outputFileTracingRoot: path.resolve(import.meta.dirname, ".."),
+  outputFileTracingIncludes: {
+    "/*": ["../labs/*/workflow/*.json"],
+  },
+
   /*
-   * Pin the Turbopack root to this app. Without it Next walks up looking for a
-   * lockfile, finds an unrelated one outside the repository and warns that it
-   * is ignoring it. `web/` is also the Vercel Root Directory.
+   * Use the same repository root for Turbopack and output tracing. This keeps
+   * sibling lab assets available and avoids unrelated lockfiles above the repo.
+   * `web/` remains the Vercel Root Directory.
    */
   turbopack: {
-    root: path.resolve(import.meta.dirname),
+    root: path.resolve(import.meta.dirname, ".."),
   },
 
   /*
