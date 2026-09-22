@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AEP — Automation Engineer Playground",
+  title: "AEP",
   description:
     "A hands-on playground for learning how reliable automation systems are designed, built, tested and debugged.",
 };
