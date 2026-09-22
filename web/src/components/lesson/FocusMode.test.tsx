@@ -209,11 +209,11 @@ describe("<FocusMode /> — chunk kinds", () => {
    * Vision §19's own terminal control, scoped to one build step. This is not
    * the lab-level "Mark complete" Vision §3 rules out.
    */
-  it("offers Done — Next on a build chunk and records acknowledgement", async () => {
+  it("offers Done / Next on a build chunk and records acknowledgement", async () => {
     const user = userEvent.setup();
     renderFocus([BUILD, CHUNKS[1]]);
 
-    await user.click(screen.getByRole("button", { name: "Done — next: The concept" }));
+    await user.click(screen.getByRole("button", { name: "Done / Next: The concept" }));
 
     expect(recordChunkEvidence).toHaveBeenCalledWith(LAB, "build");
     expect(screen.getByRole("heading", { name: "The concept" })).toBeInTheDocument();
@@ -459,7 +459,7 @@ describe("<FocusMode /> - the end of a lab", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /^Done — next/ }));
+    await user.click(screen.getByRole("button", { name: /^Done \/ Next/ }));
 
     expect(screen.queryByRole("button", { name: "Build the workflow" })).not.toBeInTheDocument();
     expect(recordChunkEvidence).toHaveBeenCalledWith(LAB, "build");
@@ -559,4 +559,36 @@ it.each(["false", "throw"])("keeps a failed acknowledgement open and retryable a
   recordChunkEvidence.mockResolvedValueOnce(true as never);
   await user.click(screen.getByRole("button", { name: /retry.*save/i }));
   await vi.waitFor(() => expect(screen.queryByText(/progress.*not saved/i)).not.toBeInTheDocument());
+});
+
+
+it("offers an upper Back control and returns focus and scroll before the next step paints", async () => {
+  const user = userEvent.setup();
+  const scrollIntoView = vi.fn();
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+  renderFocus();
+  expect(scrollIntoView).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Next: The concept" }));
+  expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "start", behavior: "instant" });
+  await user.click(screen.getByRole("button", { name: "Back to The problem (top)" }));
+  expect(screen.getByRole("heading", { name: "The problem" })).toHaveFocus();
+  expect(screen.getAllByRole("region")).toHaveLength(1);
+  expect(recordChunkEvidence).not.toHaveBeenCalled();
+  delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+});
+
+
+it("keeps the scroll position when the incoming heading is already visible", async () => {
+  const user = userEvent.setup();
+  const scrollIntoView = vi.fn();
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+  const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    top: 100, bottom: 200, left: 0, right: 500, width: 500, height: 100, x: 0, y: 100, toJSON: () => ({}),
+  });
+  renderFocus();
+  await user.click(screen.getByRole("button", { name: "Next: The concept" }));
+  expect(scrollIntoView).not.toHaveBeenCalled();
+  expect(screen.getByRole("heading", { name: "The concept" })).toHaveFocus();
+  rect.mockRestore();
+  delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
 });

@@ -286,6 +286,10 @@ main:has([data-workspace]) { max-width: 88rem; }
 .lesson-lab-header { border-bottom: 1px solid var(--line); padding-bottom: 1.25rem; }
 .lesson-lab-header > p:last-child { font-size: .75rem; }
 .lesson-focus { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.lesson-orientation { display: flex; align-items: center; gap: 1rem; }
+.lesson-orientation .lesson-position { flex: 1; gap: 1rem; }
+.lesson-step-motion { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.lesson-focus { scroll-margin-top: 1.5rem; }
 .lesson-position { display: flex; align-items: center; justify-content: space-between; font-size: .75rem; color: var(--ink-muted); }
 .lesson-kind { text-transform: uppercase; letter-spacing: .12em; font-size: .65rem; }
 .lesson-progress { height: 2px; background: var(--line); margin-top: -1rem; }
@@ -309,15 +313,18 @@ main:has([data-workspace]) { max-width: 88rem; }
 .lesson-explanation { display: flex; flex-direction: column; gap: 2rem; }
 .lesson-explanation p { line-height: 1.75; }
 .lesson-navigation { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-top: 1px solid var(--line); padding-top: 1.5rem; margin-top: 1rem; }
-.lesson-back { min-height: 44px; padding: .5rem 1rem; }
+.lesson-back { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 48px; min-width: 100px; padding: .65rem 1.1rem; border: 1px solid var(--line-strong); border-radius: .65rem; background: var(--surface-raised); transition: background .15s, border-color .15s; }
+.lesson-back:not(:disabled):hover, .lesson-back:focus-visible { border-color: var(--accent); background: var(--surface-sunken); }
+.lesson-back:disabled { opacity: .5; }
+.lesson-back-top { min-width: 88px; }
 .lesson-test-workspace, .lesson-challenge-workspace { display: grid; gap: 2rem 3rem; align-items: start; }
 .test-panel { min-width: 0; border-top: 2px solid var(--line-strong); padding-top: 1.5rem; }
 .test-panel .test-panel { border-top: 1px solid var(--line); padding-top: 1rem; }
-.workflow-overview { padding: 2rem; border: 1px solid var(--line); border-radius: 1rem; background: radial-gradient(var(--line-strong) 1px, transparent 1px) 0 0 / 18px 18px, var(--surface-sunken); }
-.workflow-nodes { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; }
-.workflow-node { display: flex; align-items: center; gap: 1rem; background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: .65rem; padding: 1rem 1.25rem; font-size: .875rem; }
-.workflow-node + .workflow-node::before { content: '\2193'; color: var(--accent); }
-.workflow-node:first-child { border-color: var(--accent); }
+.workflow-overview { padding: 2rem; border-radius: 1rem; background: var(--surface-sunken); }
+.workflow-nodes { display: flex; flex-direction: column; align-items: stretch; counter-reset: workflow; }
+.workflow-node { position: relative; display: flex; align-items: center; gap: 1rem; min-height: 64px; padding: 1rem 0; font-size: .875rem; counter-increment: workflow; }
+.workflow-node::before { content: counter(workflow, decimal-leading-zero); display: grid; place-items: center; align-self: center; flex: 0 0 2rem; height: 2rem; color: var(--accent); background: var(--surface-sunken); font-family: var(--font-mono); font-size: .7rem; z-index: 1; }
+.workflow-node:not(:last-child)::after { content: ''; position: absolute; top: calc(50% + 1rem); bottom: -1rem; left: 1rem; width: 1px; background: var(--line-strong); }
 .workflow-overview figcaption { color: var(--ink-muted); font-size: .75rem; margin-top: 1.25rem; line-height: 1.6; }
 @media (min-width: 1100px) {
   .build-workspace { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }

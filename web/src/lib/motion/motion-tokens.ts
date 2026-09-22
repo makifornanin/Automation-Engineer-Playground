@@ -22,7 +22,7 @@ export const SPRING_HOVER: Transition = {
 };
 
 export const PAGE_ENTER: Transition = {
-  duration: 0.26,
+  duration: 0.4,
   ease: [0.22, 1, 0.36, 1],
 };
 
@@ -38,4 +38,4 @@ export const DOCK_MAGNIFY_SCALE = 1.08;
 export const DOCK_NEIGHBOUR_SCALE = 1.06;
 export const DOCK_PRESS_SCALE = 0.92;
 
-export const PAGE_ENTER_OFFSET_PX = 8;
+export const PAGE_ENTER_OFFSET_PX = 18;
