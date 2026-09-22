@@ -15,7 +15,7 @@ export const LAB_04_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "problem",
     id: "problem",
-    title: "The problem",
+    title: "Stop bad data at the door",
     content: [
       {
         type: "prose",
@@ -39,7 +39,7 @@ export const LAB_04_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "concept",
     id: "concept",
-    title: "The concept",
+    title: "Validate first. Then normalize.",
     content: [
       {
         type: "prose",

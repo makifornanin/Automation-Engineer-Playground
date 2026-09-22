@@ -32,7 +32,7 @@ export function ChallengeChunk({
   webhookHost?: string | null;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="lesson-challenge-workspace">
       <ContentBlocks blocks={chunk.content} />
 
       {chunk.verification && chunk.verification.length > 0 ? (

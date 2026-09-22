@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GlassSurface } from "@/components/ui/GlassSurface";
 import { CAPSTONE, LABS, labHref, type Lab } from "@/lib/course/catalog";
 import type { LabStatus } from "@/lib/course/progress";
 
@@ -45,34 +44,36 @@ export function ContinueLearningCard({
   if (capstoneStatus !== "locked") {
     const card = CAPSTONE_CARD[capstoneStatus];
     return (
-      <GlassSurface className="flex flex-col gap-3 p-5">
+      <div className="home-launch">
         <p className="text-sm text-ink-muted">{card.line}</p>
-        <p className="text-lg font-medium text-ink">{CAPSTONE.title}</p>
+        <p className="home-launch-title">{CAPSTONE.title}</p>
+        <p className="home-launch-description">{CAPSTONE.description}</p>
         <Link
           href="/capstone"
           aria-label={`${card.action} — ${CAPSTONE.title}`}
-          className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
+          className="workspace-primary"
         >
           {card.action}
         </Link>
-      </GlassSurface>
+      </div>
     );
   }
 
   return (
-    <GlassSurface className="flex flex-col gap-3 p-5">
+    <div className="home-launch">
       <p className="text-sm text-ink-muted">
         Lab {lab.number} of {LABS.length}
         {showPercent ? ` · ${percent}% complete` : ""}
       </p>
-      <p className="text-lg font-medium text-ink">{lab.title}</p>
+      <p className="home-launch-title">{lab.title}</p>
+      <p className="home-launch-description">{lab.description}</p>
       <Link
         href={labHref(lab)}
         aria-label={`Continue Lab ${lab.number} — ${lab.title}`}
-        className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
+        className="workspace-primary"
       >
         Continue
       </Link>
-    </GlassSurface>
+    </div>
   );
 }

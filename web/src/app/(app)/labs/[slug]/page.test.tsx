@@ -59,7 +59,7 @@ describe("<LabPage />", () => {
     const ui = await LabPage({ params: Promise.resolve({ slug: lab01.slug }) });
     render(ui);
 
-    expect(screen.getByRole("heading", { name: "The problem" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Make the lead fit the CRM" })).toBeInTheDocument();
     // Deliberately not pinned to a chunk count: Lab 01 gains chunks as the
     // lesson is authored, and this test is about which branch rendered.
     expect(screen.getByText(/^Step 1 of \d+$/)).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe("<LabPage />", () => {
     const ui = await LabPage({ params: Promise.resolve({ slug: futureLab.slug }) });
     render(ui);
 
-    expect(screen.queryByRole("heading", { name: "The problem" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Make the lead fit the CRM" })).not.toBeInTheDocument();
     expect(screen.queryByText(/^Step \d+ of \d+$/)).not.toBeInTheDocument();
   });
 });

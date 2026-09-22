@@ -19,11 +19,11 @@ const CALLOUT_CLASS: Record<CalloutTone, string> = {
  */
 export function CodeBlock({ code, caption }: { code: string; caption?: string }) {
   return (
-    <figure className="flex flex-col gap-1">
-      <pre className="overflow-x-auto rounded-card border border-line bg-surface-sunken p-3 text-sm">
+    <figure className="lesson-code">
+      <figcaption className="lesson-code-label">{caption ?? "Code / value"}</figcaption>
+      <pre className="overflow-x-auto p-5 text-sm">
         <code className="font-mono text-ink">{code}</code>
       </pre>
-      {caption ? <figcaption className="text-sm text-ink-muted">{caption}</figcaption> : null}
     </figure>
   );
 }
@@ -35,6 +35,25 @@ export function CodeBlock({ code, caption }: { code: string; caption?: string })
  * directly under its question turns "work out why" into "read why".
  */
 export type ActionVariant = "steps" | "questions";
+
+function Diagram({ ascii, alt }: { ascii: string; alt: string }) {
+  const lines = ascii.trim().split("\n").map((line) => line.trim());
+  // Only the unambiguous label / vertical connector format is enhanced.
+  // Branches, annotations and other ASCII drawings retain their exact source.
+  const linear = lines.length >= 3 && lines.length % 2 === 1 && lines.every((line, index) =>
+    index % 2 === 1 ? /^[|│↓]$/.test(line) : line.length > 0 && !/[|│┌┐└┘├┤─+<>]/.test(line),
+  );
+  if (linear) {
+    return <div role="img" aria-label={alt} className="lesson-diagram p-5">
+      <div aria-hidden className="workflow-nodes">
+        {lines.filter((_, index) => index % 2 === 0).map((line, index) => <div className="workflow-node" key={index}>{line}</div>)}
+      </div>
+    </div>;
+  }
+  return <pre role="img" aria-label={alt} className="lesson-diagram overflow-x-auto p-5 text-sm">
+    <code aria-hidden className="font-mono text-ink-soft">{ascii}</code>
+  </pre>;
+}
 
 /**
  * The ordered steps of a chunk. `expect` gets its own line because "what you
@@ -49,10 +68,10 @@ export function ActionList({
   variant?: ActionVariant;
 }) {
   return (
-    <ol className="flex list-decimal flex-col gap-4 pl-5 marker:text-ink-muted">
+    <ol className="lesson-actions">
       {items.map((action, index) => (
-        <li key={index} className="flex flex-col gap-2 pl-1">
-          <p className="max-w-prose text-ink-soft">{action.text}</p>
+        <li key={index} className="lesson-action">
+          <p className="lesson-action-instruction"><span className="lesson-action-number" aria-hidden>{String(index + 1).padStart(2, "0")}</span>{action.text}</p>
           {(action.code === undefined ? [] : Array.isArray(action.code) ? action.code : [action.code]).map(
             (block: LessonCode, blockIndex: number) => (
               <CodeBlock key={blockIndex} code={block.code} caption={block.caption} />
@@ -67,7 +86,7 @@ export function ActionList({
             </details>
           ) : null}
           {action.expect && variant === "steps" ? (
-            <p className="text-sm text-ink-muted">
+            <p className="lesson-expect">
               <span className="font-medium text-ink">You should see: </span>
               {action.expect}
             </p>
@@ -85,7 +104,7 @@ function Block({ block, actionVariant }: { block: ContentBlock; actionVariant: A
 
     case "callout":
       return (
-        <aside className={`flex flex-col gap-1 rounded-card border p-4 ${CALLOUT_CLASS[block.tone]}`}>
+        <aside className={`lesson-callout flex flex-col gap-1 border-l-2 p-4 ${CALLOUT_CLASS[block.tone]}`}>
           {block.title ? <p className="text-sm font-medium text-ink">{block.title}</p> : null}
           <p className="max-w-prose text-sm text-ink-soft">{block.text}</p>
         </aside>
@@ -100,17 +119,7 @@ function Block({ block, actionVariant }: { block: ContentBlock; actionVariant: A
      * description is the only thing that makes it comprehensible aloud.
      */
     case "diagram":
-      return (
-        <pre
-          role="img"
-          aria-label={block.alt}
-          className="overflow-x-auto rounded-card border border-line bg-surface-sunken p-3 text-sm"
-        >
-          <code aria-hidden className="font-mono text-ink-soft">
-            {block.ascii}
-          </code>
-        </pre>
-      );
+      return <Diagram ascii={block.ascii} alt={block.alt} />;
 
     case "actions":
       return <ActionList items={block.items} variant={actionVariant} />;
@@ -137,7 +146,7 @@ export function ContentBlocks({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="lesson-blocks flex min-w-0 flex-col gap-4">
       {blocks.map((block, index) => (
         <Block key={index} block={block} actionVariant={actionVariant} />
       ))}

@@ -5,7 +5,7 @@ export const LAB_10_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "problem",
     id: "problem",
-    title: "The problem",
+    title: "Keep risky actions under human control",
     content: [
       {
         type: "prose",
@@ -24,7 +24,7 @@ export const LAB_10_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "concept",
     id: "concept",
-    title: "The concept",
+    title: "Confidence is not permission",
     content: [
       {
         type: "prose",

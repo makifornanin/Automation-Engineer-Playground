@@ -55,7 +55,7 @@ export function PredictChunk({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="predict-workspace flex flex-col gap-4">
       <ContentBlocks blocks={chunk.content} />
 
       {saveState === "failed" || (revealed && saveState === "saving") ? (
@@ -100,7 +100,7 @@ export function PredictChunk({
             type="button"
             onClick={reveal}
             disabled={!ready}
-            className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline disabled:text-ink-muted disabled:no-underline"
+            className="workspace-primary"
           >
             Show me what happens
           </button>

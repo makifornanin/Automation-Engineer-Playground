@@ -6,6 +6,15 @@ import { ContinueLearningCard } from "./ContinueLearningCard";
 const LAB = LABS[0];
 
 describe("<ContinueLearningCard />", () => {
+  it.each([
+    ["in-progress", "Continue the Capstone"],
+    ["completed", "Review the Capstone"],
+  ] as const)("keeps the %s Capstone useful", (capstoneStatus, action) => {
+    render(<ContinueLearningCard lab={LABS[9]} percent={100} capstoneStatus={capstoneStatus} />);
+    const link = screen.getByRole("link", { name: new RegExp(`^${action}`) });
+    expect(link).toHaveAttribute("href", "/capstone");
+    expect(link).toHaveTextContent(action);
+  });
   /*
    * Found in the live E2E pass: with every lab complete, Home still offered
    * "Lab 10 · 100% complete — Continue", pointing a finished learner back at a

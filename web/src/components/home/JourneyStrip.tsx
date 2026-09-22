@@ -1,3 +1,4 @@
+import { labsByGroup } from "@/lib/course/groups";
 import { CAPSTONE } from "@/lib/course/catalog";
 import type { LabStatus, LabWithStatus } from "@/lib/course/progress";
 
@@ -45,47 +46,26 @@ export interface JourneyStripProps {
   capstoneStatus: LabStatus;
 }
 
-/**
- * Lightweight Your Journey indicator (Vision §10). Non-interactive: ten
- * identical `/labs` links would be worse than none.
- *
- * Each item's number and glyph are decorative and hidden from assistive tech;
- * the sr-only text carries the full equivalent — number, title and status — so
- * AT users get the same journey sighted users get from the notation, without
- * ten titles appearing on screen at small widths.
- *
- * The Capstone renders as one line after the strip, not an eleventh numbered
- * item.
- */
+/** Curriculum phases with one status-labelled entry per lab and a Capstone endpoint. */
 export function JourneyStrip({ labs, capstoneStatus }: JourneyStripProps) {
-  // Only name the states actually present, so a first-time learner is not
-  // handed a glossary of four symbols for a strip showing two.
-  const present = new Set(labs.map(({ status }) => status));
-  const legend = (["completed", "in-progress", "not-started", "locked"] as const)
-    .filter((status) => present.has(status))
-    .map((status) => `${GLYPH[status]} ${STATUS_LABEL[status]}`)
-    .join(" · ");
-
   return (
-    <>
-      <ol className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-soft">
-        {labs.map(({ lab, status }) => (
-          <li key={lab.slug} className="tabular-nums">
-            <span aria-hidden>
-              {lab.number} {GLYPH[status]}
-            </span>
-            <span className="sr-only">
-              {`Lab ${lab.number}, ${spokenTitle(lab.title)}, ${STATUS_LABEL[status]}`}
-            </span>
-          </li>
-        ))}
-      </ol>
-      <p className="text-sm text-ink-muted">
-        <span aria-hidden>{legend}.</span>
-      </p>
-      <p className="text-sm text-ink-muted">
-        Capstone — {CAPSTONE.title}: {CAPSTONE_LINE[capstoneStatus]}
-      </p>
-    </>
+    <div className="journey-path">
+      {labsByGroup(labs, (item) => item.lab.group).map(({ group, labs: entries }, index) => (
+        <section className="journey-phase" key={group.name} data-state={entries.every((entry) => entry.status === "completed") ? "completed" : entries.some((entry) => entry.status === "in-progress") ? "current" : "upcoming"}>
+          <h3><span aria-hidden className="journey-phase-number">0{index + 1}</span>{group.name}</h3>
+          <ol className="journey-labs" aria-label={group.name}>
+            {entries.map(({ lab, status }) => (
+              <li key={lab.slug} data-state={status}>
+                <span aria-hidden className="journey-lab-number">{lab.number}</span>
+                <span aria-hidden className="journey-lab-title">{lab.title}</span>
+                <span aria-hidden className="journey-lab-state">{GLYPH[status]} <span>{STATUS_LABEL[status]}</span></span>
+                <span className="sr-only">{`Lab ${lab.number}, ${spokenTitle(lab.title)}, ${STATUS_LABEL[status]}`}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+      <p className="journey-capstone"><span aria-hidden className="journey-phase-number">04</span>Capstone &mdash; {CAPSTONE.title}: {CAPSTONE_LINE[capstoneStatus]}</p>
+    </div>
   );
 }

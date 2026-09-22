@@ -26,7 +26,7 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "problem",
     id: "problem",
-    title: "The problem",
+    title: "Make the lead fit the CRM",
     content: [
       {
         type: "prose",
@@ -49,7 +49,7 @@ export const LAB_01_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "concept",
     id: "concept",
-    title: "The concept",
+    title: "Map the fields. Clean the values.",
     content: [
       {
         type: "prose",

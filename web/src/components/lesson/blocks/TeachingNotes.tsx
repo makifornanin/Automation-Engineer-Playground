@@ -75,12 +75,12 @@ export function TeachingNotes({ notes }: { notes: readonly TeachingNote[] }) {
   return (
     <div className="flex flex-col gap-4 border-t border-line pt-4">
       {notes.map((note) => (
-        <section key={`${note.subject}-${note.name}`} className="flex flex-col gap-2">
-          <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
+        <details key={`${note.subject}-${note.name}`} className="lesson-teaching">
+          <summary className="cursor-pointer text-sm font-medium text-ink">
             {note.name}
-          </h3>
-          <NoteBody note={note} />
-        </section>
+          </summary>
+          <div className="pt-4"><NoteBody note={note} /></div>
+        </details>
       ))}
     </div>
   );

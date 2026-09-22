@@ -10,6 +10,12 @@ const ALL_NOT_STARTED: readonly LabWithStatus[] = LABS.map((lab) => ({
 }));
 
 describe("<JourneyStrip />", () => {
+  it("groups the ten labs by their curriculum phase", () => {
+    render(<JourneyStrip labs={ALL_NOT_STARTED} capstoneStatus="locked" />);
+    expect(screen.getByRole("list", { name: "Foundations" }).children).toHaveLength(4);
+    expect(screen.getByRole("list", { name: "Reliability" }).children).toHaveLength(4);
+    expect(screen.getByRole("list", { name: "AI Engineering" }).children).toHaveLength(2);
+  });
   it("renders exactly ten list items", () => {
     render(<JourneyStrip labs={ALL_NOT_STARTED} capstoneStatus="locked" />);
     expect(screen.getAllByRole("listitem")).toHaveLength(10);
@@ -43,8 +49,7 @@ describe("<JourneyStrip />", () => {
   it("renders the Capstone as text outside the numbered strip", () => {
     render(<JourneyStrip labs={ALL_NOT_STARTED} capstoneStatus="locked" />);
 
-    const list = screen.getByRole("list");
-    expect(list).not.toHaveTextContent("Capstone");
+    for (const list of screen.getAllByRole("list")) expect(list).not.toHaveTextContent("Capstone");
     expect(screen.getByText(/Capstone/)).toBeInTheDocument();
   });
 

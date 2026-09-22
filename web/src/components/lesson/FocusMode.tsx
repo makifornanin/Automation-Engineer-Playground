@@ -1,5 +1,8 @@
 "use client";
 
+import { motion } from "motion/react";
+import { usePrefersReducedMotion } from "@/lib/motion/use-prefers-reduced-motion";
+import { INSTANT, PAGE_ENTER } from "@/lib/motion/motion-tokens";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
@@ -14,6 +17,7 @@ import {
 import type { RevealedHint } from "@/lib/kaz/hint-actions";
 import { chunkNote } from "@/lib/kaz/notes";
 import { recordChunkEvidence, setCurrentChunk } from "@/lib/course/progress-actions";
+import { WorkflowOverview } from "./blocks/WorkflowOverview";
 import { ContentBlocks } from "./blocks/ContentBlocks";
 import { TeachingNotes } from "./blocks/TeachingNotes";
 import { KazLauncher } from "@/components/kaz/KazLauncher";
@@ -134,7 +138,7 @@ function RecapCompletion({
       {completion.next ? (
         <Link
           href={completion.next.href}
-          className="w-fit text-sm font-medium text-accent underline-offset-4 hover:underline"
+          className="workspace-primary mt-3"
         >
           {"Go to " + completion.next.label}
         </Link>
@@ -154,19 +158,23 @@ function isAcknowledgeable(chunk: LessonChunk): boolean {
   return isEvidencingKind(chunk.kind) && EVIDENCING_KINDS[chunk.kind] === "acknowledged";
 }
 
-/**
- * The base layout — content blocks then teaching notes — is the *correct final*
- * rendering for problem, concept, break-it, debug and recap, not a placeholder.
- * Those kinds are prose and visuals by nature; only the kinds that carry their
- * own structure get a bespoke arm.
- */
-function BaseChunk({ chunk }: { chunk: LessonChunk }) {
+/** Readable explanation with optional context and a problem-specific system map. */
+function BaseChunk({ chunk, labSlug }: { chunk: LessonChunk; labSlug: string }) {
   return (
-    <div className="flex flex-col gap-4">
-      <ContentBlocks
-        blocks={chunk.content}
-        actionVariant={chunk.kind === "debug" ? "questions" : "steps"}
-      />
+    <div className={`lesson-explanation lesson-explanation-${chunk.kind}`}>
+      <div className="min-w-0 flex flex-col gap-5">
+        <ContentBlocks
+          blocks={chunk.kind === "problem" || chunk.kind === "recap" ? chunk.content.slice(0, 2) : chunk.content}
+          actionVariant={chunk.kind === "debug" ? "questions" : "steps"}
+        />
+        {(chunk.kind === "problem" || chunk.kind === "recap") && chunk.content.length > 2 ? (
+          <details className="lesson-teaching">
+            <summary>{chunk.kind === "recap" ? "Revisit the details" : "Why this matters in a real workflow"}</summary>
+            <div className="pt-4"><ContentBlocks blocks={chunk.content.slice(2)} /></div>
+          </details>
+        ) : null}
+      </div>
+      {chunk.kind === "problem" ? <WorkflowOverview labSlug={labSlug} /> : null}
       {chunk.teaches ? <TeachingNotes notes={chunk.teaches} /> : null}
     </div>
   );
@@ -196,12 +204,13 @@ function ChunkBody({
     case "concept":
     case "break-it":
     case "debug":
-      return <BaseChunk chunk={chunk} />;
+      return <BaseChunk chunk={chunk} labSlug={labSlug} />;
 
     case "recap":
       return (
-        <div className="flex flex-col gap-4">
-          <BaseChunk chunk={chunk} />
+        <div className="recap-workspace">
+          <BaseChunk chunk={chunk} labSlug={labSlug} />
+          <aside className="recap-next flex min-w-0 flex-col gap-5">
           <RecapCompletion completion={completion} openSteps={openSteps} onGoTo={onGoTo} />
           <SaveToNotesButton
             labSlug={labSlug}
@@ -216,6 +225,7 @@ function ChunkBody({
               <ContentBlocks blocks={chunk.bridge} />
             </section>
           ) : null}
+          </aside>
         </div>
       );
 
@@ -273,6 +283,9 @@ export function FocusMode({
   kaz,
 }: FocusModeProps) {
   const router = useRouter();
+  const reducedMotion = usePrefersReducedMotion();
+  // Zero keeps the first paint visible; navigation sets the entry direction.
+  const [direction, setDirection] = useState(0);
   // Resume where the learner left off. An unknown id — content reordered since
   // they were last here — falls back to the start rather than to nothing.
   const resumeIndex = Math.max(
@@ -309,6 +322,7 @@ export function FocusMode({
 
   function goToIndex(next: number) {
     hasStepped.current = true;
+    setDirection(next >= index ? 1 : -1);
     setIndex(next);
 
     /*
@@ -363,10 +377,12 @@ export function FocusMode({
   }
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <p id={stepId} className="text-sm text-ink-muted">
+    <section aria-labelledby={headingId} className="lesson-focus" data-kind={chunk.kind}>
+      <p id={stepId} className="lesson-position">
         Step {index + 1} of {chunks.length}
+        <span aria-hidden className="lesson-kind">{chunk.kind.replace("-", " ")}</span>
       </p>
+      <div className="lesson-progress" aria-hidden><span style={{ width: `${((index + 1) / chunks.length) * 100}%` }} /></div>
 
       {/*
         `aria-describedby` on the heading is what makes the visible position
@@ -381,7 +397,7 @@ export function FocusMode({
         ref={headingRef}
         tabIndex={-1}
         aria-describedby={stepId}
-        className="text-xl font-medium text-ink focus-visible:-outline-offset-4"
+        className="lesson-step-title focus-visible:-outline-offset-4"
       >
         {chunk.title}
       </h2>
@@ -393,6 +409,13 @@ export function FocusMode({
         </div>
       ) : null}
 
+      <motion.div
+        key={chunk.id}
+        initial={direction !== 0 && !reducedMotion ? { opacity: 0, x: direction * 12 } : false}
+        animate={{ opacity: 1, x: 0 }}
+        transition={reducedMotion ? INSTANT : PAGE_ENTER}
+        className="min-w-0"
+      >
       <ChunkBody
         chunk={chunk}
         labSlug={labSlug}
@@ -403,6 +426,7 @@ export function FocusMode({
         onGoTo={goTo}
         onPredicted={(chunkId) => noteRecorded(chunkId, Promise.resolve(true))}
       />
+      </motion.div>
 
       {unsavedSteps.size > 0 ? (
         <div className="flex flex-col gap-2">
@@ -413,13 +437,13 @@ export function FocusMode({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-4 pt-2">
+      <div className="lesson-navigation">
         <button
           type="button"
           onClick={() => step(-1)}
           disabled={isFirst}
           aria-label={isFirst ? "Back" : `Back to ${chunks[index - 1].title}`}
-          className="text-sm font-medium text-accent underline-offset-4 hover:underline disabled:text-ink-muted disabled:no-underline"
+          className="lesson-back text-sm font-medium text-ink-soft disabled:text-ink-muted"
         >
           Back
         </button>
@@ -435,7 +459,7 @@ export function FocusMode({
             type="button"
             onClick={finishAndAdvance}
             aria-label={`Done — next: ${chunks[index + 1].title}`}
-            className="text-sm font-medium text-accent underline-offset-4 hover:underline"
+            className="workspace-primary"
           >
             Done — Next
           </button>
@@ -445,7 +469,7 @@ export function FocusMode({
             onClick={() => step(1)}
             disabled={isLast}
             aria-label={isLast ? "Next" : `Next: ${chunks[index + 1].title}`}
-            className="text-sm font-medium text-accent underline-offset-4 hover:underline disabled:text-ink-muted disabled:no-underline"
+            className="workspace-primary"
           >
             Next
           </button>

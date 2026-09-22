@@ -22,7 +22,7 @@ export function TestChunk({
   webhookHost: string | null;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="lesson-test-workspace">
       <ContentBlocks blocks={chunk.content} />
 
       {chunk.mode === "send-test" && chunk.payload !== undefined ? (

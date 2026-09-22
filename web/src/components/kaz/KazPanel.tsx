@@ -93,7 +93,7 @@ export function KazPanel({
     <aside
       role="dialog"
       aria-label={"Kaz — " + contextLabel}
-      className="fixed inset-x-0 bottom-0 z-40 flex h-[85dvh] flex-col rounded-t-card border border-line bg-surface shadow-xl sm:inset-y-0 sm:right-0 sm:left-auto sm:h-dvh sm:w-[26rem] sm:rounded-none sm:border-y-0 sm:border-r-0"
+      className="fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex h-[min(70dvh,calc(100dvh-8rem))] flex-col rounded-t-card border border-line bg-surface shadow-xl md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-[26rem] md:rounded-none md:border-y-0 md:border-r-0"
     >
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
         <KazOrb className="size-8" state={sending ? "thinking" : "neutral"} />

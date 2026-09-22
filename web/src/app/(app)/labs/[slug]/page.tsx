@@ -146,13 +146,13 @@ export default async function LabPage({ params }: LabPageProps) {
     effectiveStatus === "completed" ? "Completed" : isCurrent ? "Current" : "Preview";
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
+    <div data-workspace="lesson" className="flex flex-col gap-8">
+      <header className="lesson-lab-header flex flex-col gap-2">
         <p className="text-sm text-ink-muted">
           Lab {lab.number} of {LABS.length} · {lab.group}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">{lab.title}</h1>
-        <p className="max-w-prose text-ink-soft">{lab.description}</p>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{lab.title}</h1>
+        <p className="sr-only">{lab.description}</p>
         <p className="text-sm text-ink-muted">Status: {stateLabel}</p>
       </header>
 

@@ -36,7 +36,7 @@ export interface KazNote {
  */
 const SPEAKS_AT: Partial<Record<LessonChunkKind, KazNote>> = {
   "break-it": {
-    text: "My favourite part. Watch closely — what you are about to cause is exactly what will surprise you for real one day.",
+    text: "Okay, this is the fun part — break it on purpose.",
     state: "amused",
   },
 };
@@ -75,7 +75,7 @@ export function homeNote(completedLabSlugs: readonly string[], currentLab: Lab):
 
   if (completed.length === LABS.length) {
     return {
-      text: "All ten labs. The Capstone is unlocked — the one place every piece you have built has to work together.",
+      text: "All ten labs done. Now put the pieces together in the Capstone.",
       state: "celebrating",
     };
   }
@@ -84,17 +84,7 @@ export function homeNote(completedLabSlugs: readonly string[], currentLab: Lab):
   const remaining = LABS.length - completed.length;
 
   return {
-    text:
-      "Lab " +
-      latest.number +
-      " is behind you — " +
-      latest.title +
-      " is a real skill now, not a chapter. " +
-      currentLab.title +
-      " is next, with " +
-      String(remaining) +
-      (remaining === 1 ? " lab" : " labs") +
-      " to go.",
+    text: "Lab " + latest.number + " done. Next up: " + currentLab.title + ". " + String(remaining) + (remaining === 1 ? " lab to go." : " labs to go."),
     state: "neutral",
   };
 }

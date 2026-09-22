@@ -60,7 +60,7 @@ describe("homeNote — motivation from real progress", () => {
   it("names the lab just finished and the one that is next", () => {
     const note = homeNote([LABS[0].slug, LABS[1].slug], LABS[2]);
 
-    expect(note.text).toContain(LABS[1].title);
+    expect(note.text).toContain("Lab " + LABS[1].number + " done");
     expect(note.text).toContain(LABS[2].title);
     expect(note.text).toContain("8 labs");
     expect(note.text).not.toMatch(/you can do it/i);

@@ -10,7 +10,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "problem",
     id: "problem",
-    title: "The problem",
+    title: "Send each lead to the right team",
     content: [
       {
         type: "prose",
@@ -33,7 +33,7 @@ export const LAB_02_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "concept",
     id: "concept",
-    title: "The concept",
+    title: "Turn conditions into routes",
     content: [
       {
         type: "prose",

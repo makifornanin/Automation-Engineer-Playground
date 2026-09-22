@@ -29,7 +29,9 @@ export default async function HomePage() {
   // learner has actually earned something: a permanent "0%" on a first-time
   // learner's Home is less useful than the position it would replace.
   // Kaz speaks from real progress, not a fixed greeting (Kaz §4).
-  const kazNote = homeNote(progress.completedLabSlugs, currentLab.lab);
+  const kazNote = capstone.status === "completed"
+    ? { text: "Ten labs and a working Capstone. Nice. Come back to a tricky part whenever you need it.", state: "celebrating" as const }
+    : homeNote(progress.completedLabSlugs, currentLab.lab);
 
   const currentChunks = getLessonChunks(currentLab.lab.slug);
   const percent = currentChunks
@@ -37,12 +39,12 @@ export default async function HomePage() {
     : null;
 
   return (
-    <div className="flex flex-col gap-10">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">
+    <div data-workspace="home" className="home-workspace">
+      <h1 className="text-sm font-medium text-ink-muted">
         Welcome back, {name}.
       </h1>
 
-      <section className="flex flex-col gap-3">
+      <section className="home-primary flex flex-col gap-3">
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Continue learning
         </h2>
@@ -53,14 +55,14 @@ export default async function HomePage() {
         />
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="home-journey flex flex-col gap-6">
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           Your journey
         </h2>
         <JourneyStrip labs={labs} capstoneStatus={capstone.status} />
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="home-kaz flex flex-col gap-3">
         <h2 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">
           A note from Kaz
         </h2>
@@ -70,7 +72,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section>
+      <section className="home-notes">
         <Link
           href="/notes"
           className="text-sm font-medium text-accent underline-offset-4 hover:underline"

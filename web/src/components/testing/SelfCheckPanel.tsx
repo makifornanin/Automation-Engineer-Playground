@@ -60,7 +60,7 @@ export function SelfCheckPanel({
   }, [state, router, labSlug, chunkId]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-card border border-line bg-surface-sunken p-4">
+    <div className="test-panel flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h3 className="text-sm font-medium tracking-[0.14em] text-ink-muted uppercase">{title}</h3>
         {caseName ? <p className="max-w-prose text-ink-soft">{caseName}</p> : null}

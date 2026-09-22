@@ -5,7 +5,7 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "problem",
     id: "problem",
-    title: "The problem",
+    title: "Process the event once",
     content: [
       {
         type: "prose",
@@ -24,7 +24,7 @@ export const LAB_07_CHUNKS: readonly LessonChunk[] = [
   {
     kind: "concept",
     id: "concept",
-    title: "The concept",
+    title: "Check identity before doing the work",
     content: [
       {
         type: "prose",

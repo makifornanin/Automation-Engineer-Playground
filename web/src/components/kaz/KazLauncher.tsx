@@ -80,7 +80,7 @@ export function KazLauncher({
   }
 
   return (
-    <div className="fixed right-5 bottom-24 z-30 flex items-center gap-2 md:bottom-8">
+    <div className="flex items-center justify-end gap-2 md:fixed md:right-5 md:bottom-8 md:z-30">
       {offering ? (
         <p
           role="status"
@@ -102,9 +102,10 @@ export function KazLauncher({
           setFailures({ chunkId, count: 0 });
         }}
         aria-label={"Ask Kaz about " + contextLabel}
-        className="rounded-full border border-line bg-surface p-1.5 shadow-md transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="flex items-center gap-2 rounded-full border border-line bg-surface p-1.5 pr-4 text-sm text-ink-soft shadow-md transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:pr-1.5"
       >
         <KazOrb className="size-11" state={offering ? "uh-oh" : "neutral"} />
+        <span className="md:hidden">Ask Kaz</span>
       </button>
     </div>
   );
