@@ -288,7 +288,7 @@ main:has([data-workspace]) { max-width: 88rem; }
 .lesson-focus { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 .lesson-orientation { display: flex; align-items: center; gap: 1rem; }
 .lesson-orientation .lesson-position { flex: 1; gap: 1rem; }
-.lesson-step-motion { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.lesson-step-content { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 .lesson-focus { scroll-margin-top: 1.5rem; }
 .lesson-position { display: flex; align-items: center; justify-content: space-between; font-size: .75rem; color: var(--ink-muted); }
 .lesson-kind { text-transform: uppercase; letter-spacing: .12em; font-size: .65rem; }
@@ -318,21 +318,6 @@ main:has([data-workspace]) { max-width: 88rem; }
 .lesson-back:disabled { opacity: .5; }
 .lesson-back-top { justify-content: flex-start; }
 
-/* Local horizontal clipping contains entry motion; the small margin preserves
-   focus rings. No transform/contain is set here, so fixed Kaz stays viewport-bound. */
-.lesson-focus, .page-switch-viewport { overflow-x: clip; overflow-clip-margin: 4px; }
-.page-switch { --page-switch-offset: 24px; }
-@media (min-width: 768px) { .page-switch { --page-switch-offset: 48px; } }
-/* Start when streamed content arrives, not while the loading boundary is shown.
-   No fill mode: the wrapper has no transform after entry, preserving fixed Kaz. */
-.page-switch-ready:not(:has([data-route-loading])) { animation: page-switch-in .45s cubic-bezier(.22, 1, .36, 1); }
-@keyframes page-switch-in {
-  from { opacity: .7; transform: translateX(var(--page-switch-offset)) scale(.98); }
-  to { opacity: 1; transform: none; }
-}
-.dock-pending { position: absolute; left: 50%; bottom: calc(100% + .5rem); transform: translateX(-50%); display: flex; align-items: center; gap: .4rem; padding: .4rem .6rem; border-radius: .5rem; background: var(--surface-raised); color: var(--ink); font-size: .75rem; white-space: nowrap; box-shadow: 0 2px 12px #0001; }
-@media (min-width: 768px) { .dock-pending { left: calc(100% + .75rem); bottom: auto; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .page-switch-ready:not(:has([data-route-loading])) { animation: none; } }
 .lesson-test-workspace, .lesson-challenge-workspace { display: grid; gap: 2rem 3rem; align-items: start; }
 .test-panel { min-width: 0; border-top: 2px solid var(--line-strong); padding-top: 1.5rem; }
 .test-panel .test-panel { border-top: 1px solid var(--line); padding-top: 1rem; }

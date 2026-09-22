@@ -1,8 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
-import { usePrefersReducedMotion } from "@/lib/motion/use-prefers-reduced-motion";
-import { INSTANT, PAGE_ENTER, PAGE_ENTER_OFFSET_PX } from "@/lib/motion/motion-tokens";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useId, useRef, useState } from "react";
 import { assertNeverBlock, type LessonChunk } from "@/lib/lesson/types";
@@ -283,9 +280,6 @@ export function FocusMode({
   kaz,
 }: FocusModeProps) {
   const router = useRouter();
-  const reducedMotion = usePrefersReducedMotion();
-  // Zero keeps the first paint visible; navigation sets the entry direction.
-  const [direction, setDirection] = useState(0);
   // Resume where the learner left off. An unknown id — content reordered since
   // they were last here — falls back to the start rather than to nothing.
   const resumeIndex = Math.max(
@@ -318,7 +312,7 @@ export function FocusMode({
 
   useLayoutEffect(() => {
     if (!hasStepped.current) return;
-    // Position before paint so long-page navigation shows the full entry motion.
+    // Keep the new heading in view before paint when leaving a long step.
     const sectionTop = sectionRef.current?.getBoundingClientRect().top;
     const headingBottom = headingRef.current?.getBoundingClientRect().bottom;
     if (sectionTop !== undefined && headingBottom !== undefined &&
@@ -330,7 +324,6 @@ export function FocusMode({
 
   function goToIndex(next: number) {
     hasStepped.current = true;
-    setDirection(next >= index ? 1 : -1);
     setIndex(next);
 
     /*
@@ -404,13 +397,7 @@ export function FocusMode({
       </div>
       <div className="lesson-progress" aria-hidden><span style={{ width: `${((index + 1) / chunks.length) * 100}%` }} /></div>
 
-      <motion.div
-        key={chunk.id}
-        initial={direction !== 0 && !reducedMotion ? { opacity: 0.7, x: direction * PAGE_ENTER_OFFSET_PX, scale: 0.98 } : false}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        transition={reducedMotion ? INSTANT : PAGE_ENTER}
-        className="lesson-step-motion"
-      >
+      <div key={chunk.id} className="lesson-step-content">
       {/*
         `aria-describedby` on the heading is what makes the visible position
         text reach a screen reader. Focus lands here on every step, and without
@@ -446,7 +433,7 @@ export function FocusMode({
         onGoTo={goTo}
         onPredicted={(chunkId) => noteRecorded(chunkId, Promise.resolve(true))}
       />
-      </motion.div>
+      </div>
 
       {unsavedSteps.size > 0 ? (
         <div className="flex flex-col gap-2">

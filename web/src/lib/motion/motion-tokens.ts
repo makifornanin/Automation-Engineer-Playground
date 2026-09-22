@@ -2,7 +2,7 @@ import type { Transition } from "motion/react";
 
 /**
  * Motion constants. Vision §11 asks for polished, purposeful movement — spring
- * interactions and smooth page transitions, never constant motion.
+ * interactions, never constant motion. Page and lesson switches are immediate.
  *
  * Every consumer must fall back to `INSTANT` when the learner has asked for
  * reduced motion.
@@ -21,11 +21,6 @@ export const SPRING_HOVER: Transition = {
   mass: 0.5,
 };
 
-export const PAGE_ENTER: Transition = {
-  duration: 0.45,
-  ease: [0.22, 1, 0.36, 1],
-};
-
 export const INSTANT: Transition = { duration: 0 };
 
 /**
@@ -37,5 +32,3 @@ export const INSTANT: Transition = { duration: 0 };
 export const DOCK_MAGNIFY_SCALE = 1.08;
 export const DOCK_NEIGHBOUR_SCALE = 1.06;
 export const DOCK_PRESS_SCALE = 0.92;
-
-export const PAGE_ENTER_OFFSET_PX = 48;

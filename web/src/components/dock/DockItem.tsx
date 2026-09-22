@@ -1,6 +1,6 @@
 "use client";
 
-import Link, { useLinkStatus } from "next/link";
+import Link from "next/link";
 import clsx from "clsx";
 import { motion } from "motion/react";
 import type { NavItem } from "@/lib/nav/nav-items";
@@ -20,16 +20,6 @@ interface DockItemProps {
   reducedMotion: boolean;
   onMagnify: () => void;
   onRelease: () => void;
-}
-
-function NavigationFeedback() {
-  const { pending } = useLinkStatus();
-  return pending ? (
-    <span role="status" className="dock-pending">
-      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-      Opening…
-    </span>
-  ) : null;
 }
 
 export function DockItem({
@@ -103,7 +93,6 @@ export function DockItem({
         >
           {item.label}
         </span>
-        <NavigationFeedback />
       </Link>
     </motion.li>
   );
