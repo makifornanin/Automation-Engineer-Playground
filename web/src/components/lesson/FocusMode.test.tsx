@@ -53,6 +53,12 @@ beforeEach(() => {
 });
 
 describe("<FocusMode />", () => {
+  it("labels both Back controls with plain text and no decorative arrow", () => {
+    renderFocus(CHUNKS, "concept");
+    for (const button of screen.getAllByRole("button", { name: /^Back to/ })) {
+      expect(button.textContent?.trim()).toBe("Back");
+    }
+  });
   it("shows one chunk at a time, starting at the first", () => {
     renderFocus();
 

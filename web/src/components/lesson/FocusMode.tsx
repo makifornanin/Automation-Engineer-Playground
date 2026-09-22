@@ -394,7 +394,7 @@ export function FocusMode({
             aria-label={`Back to ${chunks[index - 1].title} (top)`}
             className="lesson-back lesson-back-top text-sm font-medium text-ink-soft"
           >
-            <span aria-hidden="true">&larr;</span> Back
+            Back
           </button>
         ) : null}
       <p id={stepId} className="lesson-position">
@@ -406,8 +406,8 @@ export function FocusMode({
 
       <motion.div
         key={chunk.id}
-        initial={direction !== 0 && !reducedMotion ? { opacity: 0, x: direction * PAGE_ENTER_OFFSET_PX } : false}
-        animate={{ opacity: 1, x: 0 }}
+        initial={direction !== 0 && !reducedMotion ? { opacity: 0.7, x: direction * PAGE_ENTER_OFFSET_PX, scale: 0.98 } : false}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
         transition={reducedMotion ? INSTANT : PAGE_ENTER}
         className="lesson-step-motion"
       >
@@ -465,7 +465,7 @@ export function FocusMode({
           aria-label={isFirst ? "Back" : `Back to ${chunks[index - 1].title}`}
           className="lesson-back text-sm font-medium text-ink-soft disabled:text-ink-muted"
         >
-          <span aria-hidden="true">&larr;</span> Back
+          Back
         </button>
 
         {/*

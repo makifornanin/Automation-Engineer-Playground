@@ -23,6 +23,7 @@ describe("<PageTransition /> server render", () => {
   });
 
   it("does not offset the page with a transform", () => {
-    expect(html).not.toContain("translateY");
+    expect(html).not.toContain("transform");
+    expect(html).not.toContain("page-switch-ready");
   });
 });

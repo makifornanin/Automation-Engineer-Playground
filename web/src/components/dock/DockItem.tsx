@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import clsx from "clsx";
 import { motion } from "motion/react";
 import type { NavItem } from "@/lib/nav/nav-items";
@@ -20,6 +20,16 @@ interface DockItemProps {
   reducedMotion: boolean;
   onMagnify: () => void;
   onRelease: () => void;
+}
+
+function NavigationFeedback() {
+  const { pending } = useLinkStatus();
+  return pending ? (
+    <span role="status" className="dock-pending">
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+      Opening…
+    </span>
+  ) : null;
 }
 
 export function DockItem({
@@ -58,10 +68,11 @@ export function DockItem({
     >
       <Link
         href={item.href}
+        aria-label={item.label}
         aria-current={active ? "page" : undefined}
         data-active={active ? "true" : undefined}
         className={clsx(
-          "group glass-chip flex flex-col items-center gap-1 rounded-pill px-2 py-2 text-ink-soft",
+          "group glass-chip relative flex flex-col items-center gap-1 rounded-pill px-2 py-2 text-ink-soft",
           "transition-colors md:flex-row md:gap-0 md:p-3",
           "hover:text-ink focus-visible:text-ink",
           // --accent on an --accent-soft tint composites to 4.21:1 and fails
@@ -92,6 +103,7 @@ export function DockItem({
         >
           {item.label}
         </span>
+        <NavigationFeedback />
       </Link>
     </motion.li>
   );
